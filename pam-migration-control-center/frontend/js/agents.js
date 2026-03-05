@@ -106,12 +106,21 @@ async function viewAgentOutput(agentId) {
       </div>
     `);
   } else {
-    const outputs = result.outputs.map(o => `
-      <div style="margin-bottom:16px">
-        <div style="font-weight:600;color:var(--text-bright);margin-bottom:6px">${o.name} <span class="badge badge-muted">${o.phase.toUpperCase()}</span> <span class="badge badge-teal">${o.format}</span></div>
-        <div class="json-viewer">${JSON.stringify(o.data, null, 2)}</div>
-      </div>
-    `).join('');
+    const outputs = result.outputs.map(o => {
+      const rendered = renderDeliverable(o.name, o.data, o.format, o.phase);
+      return `
+        <div style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div style="font-weight:700;font-size:0.88rem;color:var(--text-bright)">${o.name}</div>
+            <div style="display:flex;gap:6px">
+              <span class="badge badge-muted">${o.phase.toUpperCase()}</span>
+              <span class="badge badge-teal">${o.format}</span>
+            </div>
+          </div>
+          ${rendered}
+        </div>
+      `;
+    }).join('');
     openDrill(`Agent ${result.agent_name} — Output`, outputs);
   }
 }
