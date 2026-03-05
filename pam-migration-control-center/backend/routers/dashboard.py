@@ -16,7 +16,7 @@ async def get_stats(option: str = "a"):
             AGENTS.get(str(a), AGENTS.get(a, {})).get("status") == "active"
             for a in p["agents"]
         )),
-        PHASES["p2"],
+        PHASES["p7"],
     )
     return {
         "option": option,
@@ -72,7 +72,7 @@ async def get_timeline():
 
 def _phase_status(phase):
     if not phase["agents"]:
-        return "complete" if phase["id"] == "p0" else "pending"
+        return "complete"
     statuses = [
         AGENTS.get(str(a), AGENTS.get(a, {})).get("status", "pending")
         for a in phase["agents"]
