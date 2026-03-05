@@ -22,7 +22,7 @@ async def list_waves(option: str = "a"):
             "type": w["type"],
             "account_pct": w["account_pct"],
             "account_count": w["account_count"],
-            "weeks": w["weeks"],
+            "weeks": w.get("weeks_b", w["weeks"]) if option == "b" else w["weeks"],
             "description": w["description"],
             "gate": w["gate"],
             "status": w["status"],

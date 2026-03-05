@@ -5,14 +5,14 @@ router = APIRouter()
 
 
 @router.get("")
-async def list_agents():
+async def list_agents(option: str = "a"):
     return [
         {
             "id": aid,
             "num": a["num"],
             "name": a["name"],
             "phases": a["phases"],
-            "weeks": a["weeks"],
+            "weeks": a.get("weeks_b", a["weeks"]) if option == "b" else a["weeks"],
             "status": a["status"],
             "desc": a["desc"],
             "blocked_by": a.get("blocked_by", []),
@@ -22,14 +22,14 @@ async def list_agents():
 
 
 @router.get("/{agent_id}")
-async def get_agent(agent_id: str):
+async def get_agent(agent_id: str, option: str = "a"):
     a = AGENTS.get(agent_id)
     if not a:
         return {"error": f"Agent {agent_id} not found"}
-    return {
-        "id": agent_id,
-        **a,
-    }
+    result = {"id": agent_id, **a}
+    if option == "b":
+        result["weeks"] = a.get("weeks_b", a["weeks"])
+    return result
 
 
 @router.get("/{agent_id}/output")

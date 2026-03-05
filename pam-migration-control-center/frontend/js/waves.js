@@ -95,17 +95,18 @@ async function viewWaveDetail(waveId) {
 }
 
 function renderHeartbeatChecks() {
+  const isOptB = API.option === 'b';
   const checks = [
     { name: 'Count Comparison', msg: '2847 source = 2847 target (0.0% variance)', status: 'pass' },
     { name: 'Heartbeat Status', msg: '2705/2847 verified (95.0%)', status: 'pass' },
-    { name: 'Permission Mapping', msg: '0 permission exceptions found', status: 'pass' },
-    { name: 'Folder Structure', msg: '142 folders created, hierarchy correct', status: 'pass' },
+    { name: 'Permission Mapping', msg: isOptB ? '22→22 parity verified, 0 exceptions' : '22→4 role mapping verified, 0 exceptions', status: 'pass' },
+    { name: isOptB ? 'Safe Structure' : 'Folder Structure', msg: isOptB ? '142 safes created in Privilege Cloud' : '142 folders created, hierarchy correct', status: 'pass' },
     { name: 'Metadata Integrity', msg: 'All description/custom fields preserved', status: 'pass' },
     { name: 'Group Assignments', msg: '234 group memberships translated', status: 'pass' },
-    { name: 'Password Policies', msg: 'Rotation policies applied per template', status: 'pass' },
+    { name: 'Password Policies', msg: isOptB ? 'Cloud CPM rotation active per platform' : 'Rotation policies applied per template', status: 'pass' },
     { name: 'Access Patterns', msg: '0 unexpected permission escalations', status: 'pass' },
-    { name: 'Audit Continuity', msg: 'Audit entries present for all accounts', status: 'pass' },
-    { name: 'Recording Preservation', msg: 'Manual verification required in P7', status: 'warn' },
+    { name: 'Audit Continuity', msg: isOptB ? 'Audit logs migrated to Privilege Cloud' : 'Audit entries present for all accounts', status: 'pass' },
+    { name: 'Recording Preservation', msg: isOptB ? 'PSM recordings transferred to cloud storage' : 'Manual verification required in P7', status: isOptB ? 'pass' : 'warn' },
   ];
 
   document.getElementById('heartbeatChecks').innerHTML = checks.map(c => `

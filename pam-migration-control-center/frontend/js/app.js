@@ -30,14 +30,22 @@ function switchOption(opt) {
 
   const ind = document.getElementById('optionIndicator');
   if (opt === 'a') {
-    ind.textContent = 'OPTION A: SECRET SERVER';
+    ind.textContent = 'DELINEA: SECRET SERVER + STRONGDM';
     ind.style.background = 'var(--blue-dim)';
     ind.style.color = 'var(--blue)';
   } else {
-    ind.textContent = 'OPTION B: PRIVILEGE CLOUD';
+    ind.textContent = 'CYBERARK CLOUD: PRIVILEGE CLOUD';
     ind.style.background = 'var(--green-dim)';
     ind.style.color = 'var(--green)';
   }
+
+  // Update week plan labels
+  const weekLabel = document.getElementById('weekPlanLabel');
+  const missionSub = document.getElementById('missionSubtitle');
+  if (weekLabel) weekLabel.textContent = opt === 'a' ? '80-WEEK PLAN' : '50-WEEK PLAN';
+  if (missionSub) missionSub.textContent = opt === 'a'
+    ? '80-Week PAM Migration — Real-Time Dashboard'
+    : '50-Week PAM Migration — Real-Time Dashboard';
 
   // Re-render current page with new option
   showPage(currentPage, document.querySelector('.nav-link.active'));

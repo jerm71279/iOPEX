@@ -5,16 +5,19 @@ router = APIRouter()
 
 
 @router.get("")
-async def list_gates():
-    return GATES
+async def list_gates(option: str = "a"):
+    return [
+        {**g, "week": g.get("week_b", g["week"]) if option == "b" else g["week"]}
+        for g in GATES
+    ]
 
 
 @router.get("/{gate_id}")
-async def get_gate(gate_id: str):
+async def get_gate(gate_id: str, option: str = "a"):
     gate = next((g for g in GATES if g["id"] == gate_id), None)
     if not gate:
         return {"error": f"Gate {gate_id} not found"}
-    return gate
+    return {**gate, "week": gate.get("week_b", gate["week"]) if option == "b" else gate["week"]}
 
 
 @router.post("/{gate_id}/approve")

@@ -13,7 +13,7 @@ from backend.mock_data import PHASES, AGENTS, WAVES, GATES, OPTIONS, DELIVERABLE
 app = FastAPI(
     title="PAM Migration Control Center",
     version="1.0.0",
-    description="Interactive control center for 80-week PAM migration journey",
+    description="Interactive control center for PAM migration journey (80-week Delinea / 50-week CyberArk Cloud)",
 )
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
@@ -100,8 +100,11 @@ def _load_imports_on_startup():
 _load_imports_on_startup()
 
 # ── Static Files (frontend) ─────────────────────────────────────────
+DOCS_DIR = Path(__file__).parent.parent / "docs"
 app.mount("/css", StaticFiles(directory=str(FRONTEND_DIR / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(FRONTEND_DIR / "js")), name="js")
+if DOCS_DIR.exists():
+    app.mount("/docs", StaticFiles(directory=str(DOCS_DIR), html=True), name="docs")
 
 
 @app.get("/")

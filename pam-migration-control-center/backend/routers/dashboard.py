@@ -18,10 +18,12 @@ async def get_stats(option: str = "a"):
         )),
         PHASES["p7"],
     )
+    weeks_key = "weeks_b" if option == "b" else "weeks"
     return {
         "option": option,
         "option_name": opt["short"],
         "target": opt["target"],
+        "total_weeks": 50 if option == "b" else 80,
         "total_accounts": total_accounts,
         "nhi_accounts": 412,
         "integrations": 89,
@@ -34,7 +36,7 @@ async def get_stats(option: str = "a"):
         "current_phase": {
             "id": current_phase["id"],
             "name": current_phase["name"],
-            "weeks": current_phase["weeks"],
+            "weeks": current_phase.get(weeks_key, current_phase["weeks"]),
         },
     }
 
@@ -54,14 +56,14 @@ async def get_risks(option: str = "a"):
 
 
 @router.get("/timeline")
-async def get_timeline():
+async def get_timeline(option: str = "a"):
     return [
         {
             "id": p["id"],
             "name": p["name"],
-            "weeks": p["weeks"],
-            "week_start": p["week_start"],
-            "week_end": p["week_end"],
+            "weeks": p.get("weeks_b", p["weeks"]) if option == "b" else p["weeks"],
+            "week_start": p.get("week_start_b", p["week_start"]) if option == "b" else p["week_start"],
+            "week_end": p.get("week_end_b", p["week_end"]) if option == "b" else p["week_end"],
             "risk": p["risk"],
             "color": p["color"],
             "status": _phase_status(p),

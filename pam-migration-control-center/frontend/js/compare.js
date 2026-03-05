@@ -18,8 +18,8 @@ async function renderComparison() {
           <thead>
             <tr>
               <th style="width:160px">Category</th>
-              <th>Option A — Secret Server + StrongDM</th>
-              <th>Option B — Privilege Cloud</th>
+              <th>Delinea — Secret Server + StrongDM</th>
+              <th>CyberArk Cloud — Privilege Cloud</th>
             </tr>
           </thead>
           <tbody>
@@ -41,7 +41,7 @@ async function renderComparison() {
       <div class="panel-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
           <div>
-            <div class="section-label" style="color:var(--blue)">Option A: ${permMap.option_a?.description || ''}</div>
+            <div class="section-label" style="color:var(--blue)">Delinea: ${permMap.option_a?.description || ''}</div>
             ${(permMap.option_a?.roles || []).map(r => `
               <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px">
                 <div style="font-weight:600;color:var(--blue);font-size:0.82rem">${r.role}</div>
@@ -55,7 +55,7 @@ async function renderComparison() {
             </div>
           </div>
           <div>
-            <div class="section-label" style="color:var(--green)">Option B: ${permMap.option_b?.description || ''}</div>
+            <div class="section-label" style="color:var(--green)">CyberArk Cloud: ${permMap.option_b?.description || ''}</div>
             <div class="callout teal">
               <div class="callout-title" style="color:var(--green)">1:1 Parity</div>
               <p>${permMap.option_b?.note || 'All 22 permissions map directly.'}</p>
@@ -74,8 +74,8 @@ async function renderComparison() {
           <thead>
             <tr>
               <th>CyberArk Platform</th>
-              <th>Option A (SS Template)</th>
-              <th>Option B (PC Platform)</th>
+              <th>Delinea (SS Template)</th>
+              <th>CyberArk Cloud (PC Platform)</th>
             </tr>
           </thead>
           <tbody>

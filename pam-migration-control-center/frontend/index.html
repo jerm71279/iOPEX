@@ -16,12 +16,12 @@
   <div class="sidebar-sub">Migration Control Center</div>
 
   <div class="option-switch">
-    <button class="option-btn active" id="opt-a" onclick="switchOption('a')">Option A</button>
-    <button class="option-btn" id="opt-b" onclick="switchOption('b')">Option B</button>
+    <button class="option-btn active" id="opt-a" onclick="switchOption('a')">Delinea</button>
+    <button class="option-btn" id="opt-b" onclick="switchOption('b')">CyberArk Cloud</button>
   </div>
   <div class="option-indicator" id="optionIndicator"
        style="background:var(--blue-dim);color:var(--blue);">
-    OPTION A: SECRET SERVER
+    DELINEA: SECRET SERVER + STRONGDM
   </div>
 
   <button class="nav-link active" onclick="showPage('mission',this)">
@@ -48,7 +48,7 @@
 
   <div class="sidebar-footer">
     iOPEX PAM MIGRATION v2.0<br>
-    80-WEEK PLAN / 15+2 AGENTS<br>
+    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+2 AGENTS<br>
     FastAPI + Vanilla JS
   </div>
 </nav>
@@ -60,7 +60,7 @@
   <div class="page active" id="page-mission">
     <div class="page-header">
       <div class="page-title">Mission Control</div>
-      <div class="page-subtitle">80-Week PAM Migration — Real-Time Dashboard</div>
+      <div class="page-subtitle" id="missionSubtitle">80-Week PAM Migration — Real-Time Dashboard</div>
     </div>
     <div id="missionStats" class="stats-grid"></div>
     <div class="panel">
@@ -163,7 +163,7 @@
   <div class="page" id="page-compare">
     <div class="page-header">
       <div class="page-title">Option Comparison</div>
-      <div class="page-subtitle">Option A (Delinea + StrongDM) vs Option B (Privilege Cloud)</div>
+      <div class="page-subtitle" id="compareSubtitle">Delinea (Secret Server + StrongDM) vs CyberArk Cloud (Privilege Cloud)</div>
     </div>
     <div id="comparisonContent"></div>
   </div>

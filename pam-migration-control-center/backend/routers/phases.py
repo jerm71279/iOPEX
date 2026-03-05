@@ -27,14 +27,14 @@ async def list_phases(option: str = "a"):
                     "num": agent["num"],
                     "name": agent["name"],
                     "status": agent["status"],
-                    "weeks": agent["weeks"],
+                    "weeks": agent.get("weeks_b", agent["weeks"]) if option == "b" else agent["weeks"],
                 })
         result.append({
             "id": p["id"],
             "name": p["name"],
-            "weeks": p["weeks"],
-            "week_start": p["week_start"],
-            "week_end": p["week_end"],
+            "weeks": p.get("weeks_b", p["weeks"]) if option == "b" else p["weeks"],
+            "week_start": p.get("week_start_b", p["week_start"]) if option == "b" else p["week_start"],
+            "week_end": p.get("week_end_b", p["week_end"]) if option == "b" else p["week_end"],
             "risk": p["risk"],
             "color": p["color"],
             "summary": p["summary"],
@@ -61,11 +61,16 @@ async def get_phase(phase_id: str, option: str = "a"):
                 "num": agent["num"],
                 "name": agent["name"],
                 "status": agent["status"],
-                "weeks": agent["weeks"],
+                "weeks": agent.get("weeks_b", agent["weeks"]) if option == "b" else agent["weeks"],
                 "desc": agent["desc"],
             })
+    base = {k: v for k, v in p.items() if k not in ("activities", "deliverables")}
+    if option == "b":
+        base["weeks"] = p.get("weeks_b", p["weeks"])
+        base["week_start"] = p.get("week_start_b", p["week_start"])
+        base["week_end"] = p.get("week_end_b", p["week_end"])
     return {
-        **{k: v for k, v in p.items() if k not in ("activities", "deliverables")},
+        **base,
         "activities": activities,
         "deliverables": _build_deliverables(phase_id),
         "agents": agent_details,
