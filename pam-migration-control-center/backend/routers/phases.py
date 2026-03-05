@@ -1,7 +1,16 @@
 from fastapi import APIRouter
-from backend.mock_data.data import PHASES, AGENTS
+from backend.mock_data.data import PHASES, AGENTS, DELIVERABLES
 
 router = APIRouter()
+
+
+def _build_deliverables(phase_id):
+    """Return deliverables with keys from DELIVERABLES data so frontend can drill down."""
+    phase_data = DELIVERABLES.get(phase_id, {})
+    return [
+        {"key": key, "label": d["name"], "agent": d["agent"], "has_data": bool(d.get("data"))}
+        for key, d in phase_data.items()
+    ]
 
 
 @router.get("")
@@ -30,7 +39,7 @@ async def list_phases(option: str = "a"):
             "color": p["color"],
             "summary": p["summary"],
             "activities": activities,
-            "deliverables": p["deliverables"],
+            "deliverables": _build_deliverables(p["id"]),
             "agents": agent_details,
             "gates": p["gates"],
         })
@@ -56,7 +65,8 @@ async def get_phase(phase_id: str, option: str = "a"):
                 "desc": agent["desc"],
             })
     return {
-        **{k: v for k, v in p.items() if k != "activities"},
+        **{k: v for k, v in p.items() if k not in ("activities", "deliverables")},
         "activities": activities,
+        "deliverables": _build_deliverables(phase_id),
         "agents": agent_details,
     }

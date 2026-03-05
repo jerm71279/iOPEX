@@ -683,6 +683,76 @@ GATES = [
 # ── Deliverables (sample agent outputs in real format) ───────────────
 
 DELIVERABLES = {
+    "p0": {
+        "vm_provisioning": {
+            "name": "AI Orchestration VM Provisioning",
+            "agent": "00",
+            "format": "JSON",
+            "data": {
+                "vm_name": "pam-orch-prod-01",
+                "os": "Ubuntu 22.04 LTS (CIS Level 2 hardened)",
+                "vcpus": 8, "ram_gb": 32, "storage_gb": 500,
+                "network": "VLAN 42 — PAM Management Zone",
+                "python": "3.12.3",
+                "packages": ["requests", "urllib3", "python-docx", "cryptography"],
+                "hardening": ["CIS Level 2 benchmark applied", "SELinux enforcing", "Fail2ban active", "SSH key-only (password disabled)", "UFW: only 443, 22, 6514 inbound"],
+                "status": "provisioned",
+            },
+        },
+        "connectivity_check": {
+            "name": "Connectivity Verification",
+            "agent": "00",
+            "format": "JSON",
+            "data": {
+                "checks": [
+                    {"target": "CyberArk PVWA", "url": "https://pvwa.corp.local/PasswordVault", "status": "pass", "latency_ms": 12},
+                    {"target": "Secret Server", "url": "https://ss.corp.local/SecretServer", "status": "pass", "latency_ms": 18},
+                    {"target": "Privilege Cloud", "url": "https://company.privilegecloud.cyberark.cloud", "status": "pass", "latency_ms": 45},
+                    {"target": "SIEM (Splunk)", "url": "syslog-tls://siem.corp.local:6514", "status": "pass", "latency_ms": 8},
+                    {"target": "ServiceNow", "url": "https://company.service-now.com/api", "status": "pass", "latency_ms": 67},
+                ],
+                "all_passed": True,
+            },
+        },
+        "preflight_results": {
+            "name": "Preflight Check Results",
+            "agent": "00",
+            "format": "JSON",
+            "data": {
+                "command": "python3 cli.py preflight",
+                "overall": "PASS",
+                "agents_checked": 15,
+                "all_passed": True,
+                "checks": [
+                    {"agent": "01", "name": "Discovery", "status": "pass"},
+                    {"agent": "04", "name": "Migration Pipeline", "status": "pass"},
+                    {"agent": "05", "name": "Heartbeat", "status": "pass"},
+                    {"agent": "10", "name": "Staging Validation", "status": "pass"},
+                    {"agent": "11", "name": "Source Adapter", "status": "pass"},
+                ],
+            },
+        },
+        "siem_integration": {
+            "name": "ServiceNow + SIEM Integration",
+            "agent": "00",
+            "format": "JSON",
+            "data": {
+                "siem": {"type": "Splunk", "protocol": "syslog-ng TLS", "port": 6514, "status": "active"},
+                "servicenow": {"instance": "company.service-now.com", "integration": "REST API v2", "status": "active"},
+            },
+        },
+        "state_initialization": {
+            "name": "Migration State File",
+            "agent": "00",
+            "format": "JSON",
+            "data": {
+                "migration_id": "mig-2025-001",
+                "state_file": "output/state/migration_state.json",
+                "initialized": "2025-04-28T09:00:00Z",
+                "status": "initialized",
+            },
+        },
+    },
     "p1": {
         "normalized_inventory": {
             "name": "Normalized Source Inventory",

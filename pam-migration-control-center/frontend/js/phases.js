@@ -35,10 +35,10 @@ async function renderPhaseExplorer() {
           ${p.activities.map(a => `<div class="activity-item">${a}</div>`).join('')}
 
           <div class="section-label" style="margin-top:14px">Deliverables</div>
-          ${p.deliverables.map((d, i) => `
-            <div class="deliverable-item" onclick="drillDeliverable('${p.id}','${i}','${d}')">
+          ${p.deliverables.map(d => `
+            <div class="deliverable-item" onclick="drillDeliverable('${p.id}','${d.key}')">
               <span class="badge badge-teal" style="font-size:0.5rem">&#x25A0;</span>
-              ${d}
+              ${d.label} <span style="color:var(--text-muted);font-size:0.62rem">(Agent ${d.agent})</span>
             </div>
           `).join('')}
 
@@ -81,22 +81,13 @@ function collapseAllPhases() {
   expandedPhases = {};
 }
 
-async function drillDeliverable(phaseId, index, name) {
-  // Try to fetch actual deliverable data from API
-  const delivs = await API.get(`/deliverables/${phaseId}`);
-  if (delivs.length > 0) {
-    const key = delivs[0]?.key;
-    if (key) {
-      const data = await API.get(`/deliverables/${phaseId}/${key}`);
-      if (data && data.data) {
-        openDrill(
-          `${data.name} (Agent ${data.agent})`,
-          `<div style="margin-bottom:10px"><span class="badge badge-teal">${data.format}</span> <span class="badge badge-muted">${phaseId.toUpperCase()}</span></div>
-           <div class="json-viewer">${JSON.stringify(data.data, null, 2)}</div>`
-        );
-        return;
-      }
-    }
+async function drillDeliverable(phaseId, key) {
+  const data = await API.get(`/deliverables/${phaseId}/${key}`);
+  if (data && data.data) {
+    openDrill(
+      `${data.name} (Agent ${data.agent})`,
+      `<div style="margin-bottom:10px"><span class="badge badge-teal">${data.format}</span> <span class="badge badge-muted">${phaseId.toUpperCase()}</span></div>
+       <div class="json-viewer">${JSON.stringify(data.data, null, 2)}</div>`
+    );
   }
-  openDrill(name, `<div class="callout amber"><div class="callout-title">No Data Available Yet</div><p>This deliverable will be populated when the agent completes its run. Import your own data via the <code>POST /api/import/deliverables</code> endpoint.</p></div>`);
 }
