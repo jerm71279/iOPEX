@@ -84,10 +84,15 @@ function collapseAllPhases() {
 async function drillDeliverable(phaseId, key) {
   const data = await API.get(`/deliverables/${phaseId}/${key}`);
   if (data && data.data) {
+    const rendered = renderDeliverable(data.name, data.data, data.format, phaseId);
     openDrill(
       `${data.name} (Agent ${data.agent})`,
-      `<div style="margin-bottom:10px"><span class="badge badge-teal">${data.format}</span> <span class="badge badge-muted">${phaseId.toUpperCase()}</span></div>
-       <div class="json-viewer">${JSON.stringify(data.data, null, 2)}</div>`
+      `<div style="margin-bottom:14px;display:flex;gap:6px">
+        <span class="badge badge-muted">${phaseId.toUpperCase()}</span>
+        <span class="badge badge-teal">${data.format || 'JSON'}</span>
+        <span class="badge badge-cyan">Agent ${data.agent}</span>
+      </div>
+      ${rendered}`
     );
   }
 }
