@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sessions — PAM DX Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-logo">PAM DX</div>
+    <div class="sidebar-vendor" th:text="'VENDOR: ' + ${vendor}">VENDOR: CyberArk</div>
+    <a th:href="@{/}"><span>&#x25A3;</span> Dashboard</a>
+    <a th:href="@{/secrets}"><span>&#x1F511;</span> Secrets</a>
+    <a th:href="@{/sessions}" class="active"><span>&#x25B6;</span> Sessions</a>
+    <a th:href="@{/swagger-ui.html}" target="_blank" style="margin-top:auto;"><span>&#x2194;</span> API Docs</a>
+    <a th:href="@{/logout}"><span>&#x23FB;</span> Logout</a>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title">Session Launch</div>
+      <div class="page-subtitle">Start a privileged session through the PAM proxy</div>
+    </div>
+
+    <div class="data-table-wrapper" style="max-width:600px;">
+      <div class="table-header">
+        <div class="table-title">Connect to Target</div>
+      </div>
+      <div style="padding:24px;">
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); letter-spacing:1.5px; margin-bottom:6px;">TARGET HOST</label>
+          <input type="text" class="search-input" style="width:100%;" placeholder="e.g., server01.corp.com">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); letter-spacing:1.5px; margin-bottom:6px;">PROTOCOL</label>
+          <select class="search-input" style="width:100%;">
+            <option>SSH</option>
+            <option>RDP</option>
+            <option>Database (SQL)</option>
+            <option>Kubernetes</option>
+            <option>HTTP/S</option>
+          </select>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); letter-spacing:1.5px; margin-bottom:6px;">ACCOUNT</label>
+          <input type="text" class="search-input" style="width:100%;" placeholder="Select privileged account...">
+        </div>
+        <div style="margin-bottom:24px;">
+          <label style="display:block; font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); letter-spacing:1.5px; margin-bottom:6px;">BUSINESS JUSTIFICATION</label>
+          <input type="text" class="search-input" style="width:100%;" placeholder="Reason for access...">
+        </div>
+        <button class="btn btn-primary" style="width:100%;">Launch Session</button>
+
+        <div style="margin-top:16px; padding:12px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius);">
+          <div style="font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); letter-spacing:1px; margin-bottom:4px;">SESSION ROUTING</div>
+          <div style="font-size:0.78rem; color:var(--text-muted);">
+            <span th:if="${vendor == 'CyberArk'}">Via CyberArk PSM / Privilege Cloud session proxy</span>
+            <span th:if="${vendor == 'Delinea'}">Via Delinea RPC launcher / session connector</span>
+            <span th:if="${vendor == 'StrongDM'}">Via StrongDM gateway &rarr; relay &rarr; target (Cedar policy enforced, session recorded)</span>
+            <span th:if="${vendor != 'CyberArk' && vendor != 'Delinea' && vendor != 'StrongDM'}">Session proxy configuration pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

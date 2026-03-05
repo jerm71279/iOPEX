@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iOPEX PAM Migration — Proposal Comparison</title>
+<style>
+  :root {
+    --bg: #030712;
+    --bg-nav: #0A1628;
+    --bg-toggle: #0D1F33;
+    --border: #1E3050;
+    --cyan: #00C8E8;
+    --green: #06D6A0;
+    --blue: #3B82F6;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --text: #CBD5E1;
+    --text-bright: #F1F5F9;
+    --text-muted: #64748B;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ── Top Nav ── */
+  .top-nav {
+    height: 56px;
+    background: var(--bg-nav);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 1000;
+    position: relative;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--cyan), var(--green));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--bg);
+  }
+
+  .brand-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 0.5px;
+  }
+
+  .brand-sub {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── A/B Toggle Switch ── */
+  .ab-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-toggle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    position: relative;
+  }
+
+  .ab-btn {
+    padding: 8px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+    white-space: nowrap;
+  }
+
+  .ab-btn.active-a {
+    background: var(--blue);
+    color: var(--bg);
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+  }
+
+  .ab-btn.active-b {
+    background: var(--green);
+    color: var(--bg);
+    box-shadow: 0 0 16px rgba(6, 214, 160, 0.4);
+  }
+
+  .ab-btn:hover:not(.active-a):not(.active-b) {
+    color: var(--text-bright);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .ab-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+  }
+
+  .ab-label small {
+    font-size: 0.6rem;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  /* ── Section Nav ── */
+  .section-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .section-btn {
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .section-btn:hover {
+    border-color: var(--cyan);
+    color: var(--text);
+  }
+
+  .section-btn.active {
+    background: rgba(0, 200, 232, 0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  /* ── Main Content ── */
+  .main {
+    height: calc(100vh - 56px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Slide container for A/B transition */
+  .slide-container {
+    display: flex;
+    width: 200%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .slide-container.show-b {
+    transform: translateX(-50%);
+  }
+
+  .option-panel {
+    width: 50%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Section frames within each option */
+  .section-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .section-frame.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .section-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--bg);
+  }
+
+  /* ── Loading Overlay ── */
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 5;
+    transition: opacity 0.4s ease;
+  }
+
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Bottom Info Bar ── */
+  .info-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: var(--bg-nav);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 1000;
+    font-size: 0.7rem;
+  }
+
+  .info-left {
+    color: var(--text-muted);
+    display: flex;
+    gap: 16px;
+  }
+
+  .info-right {
+    display: flex;
+    gap: 12px;
+  }
+
+  .info-pill {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+  }
+
+  .info-pill.a {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .info-pill.b {
+    background: rgba(6, 214, 160, 0.15);
+    color: var(--green);
+    border: 1px solid rgba(6, 214, 160, 0.3);
+  }
+
+  /* ── Keyboard hint ── */
+  .kbd-hints {
+    position: fixed;
+    bottom: 44px;
+    right: 24px;
+    background: var(--bg-nav);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .kbd-hints.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  .kbd-hints kbd {
+    display: inline-block;
+    background: var(--bg-toggle);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: var(--text-bright);
+    margin: 0 2px;
+  }
+
+  .kbd-row {
+    margin-bottom: 4px;
+  }
+
+  /* ── Option Label Overlay ── */
+  .option-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .option-label.a {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--blue);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+  }
+
+  .option-label.b {
+    background: rgba(6, 214, 160, 0.2);
+    color: var(--green);
+    border: 1px solid rgba(6, 214, 160, 0.4);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .top-nav { padding: 0 12px; }
+    .brand-text { display: none; }
+    .ab-btn { padding: 6px 14px; font-size: 0.7rem; }
+    .section-btn { padding: 5px 10px; font-size: 0.7rem; }
+    .info-bar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ TOP NAVIGATION ═══════════════ -->
+<nav class="top-nav">
+  <div class="brand">
+    <div class="brand-icon">iO</div>
+    <div>
+      <div class="brand-text">PAM Migration Proposals</div>
+      <div class="brand-sub">Agentic AI Migration System</div>
+    </div>
+  </div>
+
+  <!-- A/B Toggle -->
+  <div class="ab-toggle">
+    <button class="ab-btn active-a" id="btn-a" onclick="switchOption('a')">
+      <div class="ab-label">
+        OPTION A
+        <small>Delinea Platform + StrongDM</small>
+      </div>
+    </button>
+    <button class="ab-btn" id="btn-b" onclick="switchOption('b')">
+      <div class="ab-label">
+        OPTION B
+        <small>CyberArk Privilege Cloud</small>
+      </div>
+    </button>
+  </div>
+
+  <!-- Section Nav -->
+  <div class="section-nav">
+    <button class="section-btn active" data-section="pam" onclick="switchSection('pam')">
+      Life of a PAM File
+    </button>
+    <button class="section-btn" data-section="arch" onclick="switchSection('arch')">
+      AI Architecture
+    </button>
+    <button class="section-btn" data-section="lifecycle" onclick="switchSection('lifecycle')">
+      Migration Lifecycle
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<div class="main">
+  <div class="slide-container" id="slide-container">
+
+    <!-- ── OPTION A PANEL ── -->
+    <div class="option-panel" id="panel-a">
+      <div class="option-label a">Option A — Delinea Platform + StrongDM</div>
+
+      <!-- Section: PAM File -->
+      <div class="section-frame visible" id="a-pam">
+        <div class="loading-overlay" id="loading-a-pam">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading Option A — Life of a PAM File...</div>
+        </div>
+        <iframe src="CyberArk migration/Life of a PAM file.html"
+                onload="hideLoading('loading-a-pam')"
+                title="Option A — Life of a PAM File"></iframe>
+      </div>
+
+      <!-- Section: Architecture -->
+      <div class="section-frame" id="a-arch">
+        <div class="loading-overlay" id="loading-a-arch">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading AI Orchestration Architecture...</div>
+        </div>
+        <iframe data-src="ai_orchestration.html"
+                onload="hideLoading('loading-a-arch')"
+                title="AI Orchestration Architecture"></iframe>
+      </div>
+
+      <!-- Section: Lifecycle -->
+      <div class="section-frame" id="a-lifecycle">
+        <div class="loading-overlay" id="loading-a-lifecycle">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading Option A — Migration Lifecycle...</div>
+        </div>
+        <iframe data-src="CA_migration_lifecycle.html"
+                onload="hideLoading('loading-a-lifecycle')"
+                title="Option A — Migration Lifecycle"></iframe>
+      </div>
+    </div>
+
+    <!-- ── OPTION B PANEL ── -->
+    <div class="option-panel" id="panel-b">
+      <div class="option-label b">Option B — CyberArk Privilege Cloud</div>
+
+      <!-- Section: PAM File -->
+      <div class="section-frame visible" id="b-pam">
+        <div class="loading-overlay" id="loading-b-pam">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading Option B — Life of a PAM File...</div>
+        </div>
+        <iframe data-src="SS_Life_of_a_PAM_File.html"
+                onload="hideLoading('loading-b-pam')"
+                title="Option B — Life of a PAM File"></iframe>
+      </div>
+
+      <!-- Section: Architecture -->
+      <div class="section-frame" id="b-arch">
+        <div class="loading-overlay" id="loading-b-arch">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading AI Orchestration Architecture...</div>
+        </div>
+        <iframe data-src="ai_orchestration.html"
+                onload="hideLoading('loading-b-arch')"
+                title="AI Orchestration Architecture"></iframe>
+      </div>
+
+      <!-- Section: Lifecycle -->
+      <div class="section-frame" id="b-lifecycle">
+        <div class="loading-overlay" id="loading-b-lifecycle">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading Option B — Migration Lifecycle...</div>
+        </div>
+        <iframe data-src="migration_lifecycle.html"
+                onload="hideLoading('loading-b-lifecycle')"
+                title="Option B — Migration Lifecycle"></iframe>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ BOTTOM INFO BAR ═══════════════ -->
+<div class="info-bar">
+  <div class="info-left">
+    <span>iOPEX PAM Migration — Agentic AI System</span>
+    <span id="current-view-label">Option A &bull; Life of a PAM File</span>
+  </div>
+  <div class="info-right">
+    <span class="info-pill a">A: 22→200+ Permissions (Granular)</span>
+    <span class="info-pill b">B: 22→22 Permissions (1:1 Parity)</span>
+    <span style="color: var(--text-muted); cursor: pointer;" onclick="toggleKbd()" title="Keyboard shortcuts">?</span>
+  </div>
+</div>
+
+<!-- ═══════════════ KEYBOARD HINTS ═══════════════ -->
+<div class="kbd-hints" id="kbd-hints">
+  <div class="kbd-row"><kbd>A</kbd> Option A (Delinea Platform + StrongDM)</div>
+  <div class="kbd-row"><kbd>B</kbd> Option B (CyberArk Privilege Cloud)</div>
+  <div class="kbd-row"><kbd>1</kbd> Life of a PAM File</div>
+  <div class="kbd-row"><kbd>2</kbd> AI Architecture</div>
+  <div class="kbd-row"><kbd>3</kbd> Migration Lifecycle</div>
+  <div class="kbd-row"><kbd>←</kbd><kbd>→</kbd> Switch Option</div>
+  <div class="kbd-row"><kbd>?</kbd> Toggle this panel</div>
+</div>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+  let currentOption = 'a';
+  let currentSection = 'pam';
+  const sectionNames = { pam: 'Life of a PAM File', arch: 'AI Architecture', lifecycle: 'Migration Lifecycle' };
+  const optionNames = { a: 'Option A', b: 'Option B' };
+
+  // ── Lazy-load iframes ──
+  function lazyLoadIframe(frameId) {
+    const frame = document.getElementById(frameId);
+    if (!frame) return;
+    const iframe = frame.querySelector('iframe');
+    if (iframe && iframe.dataset.src && !iframe.src) {
+      iframe.src = iframe.dataset.src;
+    }
+  }
+
+  // ── Hide loading overlay ──
+  function hideLoading(id) {
+    const overlay = document.getElementById(id);
+    if (overlay) {
+      setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+  }
+
+  // ── Switch Option A/B ──
+  function switchOption(opt) {
+    currentOption = opt;
+    const container = document.getElementById('slide-container');
+    const btnA = document.getElementById('btn-a');
+    const btnB = document.getElementById('btn-b');
+
+    if (opt === 'b') {
+      container.classList.add('show-b');
+      btnA.classList.remove('active-a');
+      btnB.classList.add('active-b');
+    } else {
+      container.classList.remove('show-b');
+      btnA.classList.add('active-a');
+      btnB.classList.remove('active-b');
+    }
+
+    // Lazy-load the current section for this option
+    lazyLoadIframe(`${opt}-${currentSection}`);
+    updateLabel();
+  }
+
+  // ── Switch Section ──
+  function switchSection(section) {
+    currentSection = section;
+
+    // Update nav buttons
+    document.querySelectorAll('.section-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.section === section);
+    });
+
+    // Toggle frames for BOTH panels
+    ['a', 'b'].forEach(opt => {
+      document.querySelectorAll(`#panel-${opt} .section-frame`).forEach(frame => {
+        const frameSection = frame.id.split('-')[1];
+        frame.classList.toggle('visible', frameSection === section);
+      });
+    });
+
+    // Lazy-load the current frames
+    lazyLoadIframe(`a-${section}`);
+    lazyLoadIframe(`b-${section}`);
+    updateLabel();
+  }
+
+  // ── Update bottom label ──
+  function updateLabel() {
+    const label = document.getElementById('current-view-label');
+    label.textContent = `${optionNames[currentOption]} \u2022 ${sectionNames[currentSection]}`;
+  }
+
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    switch (e.key.toLowerCase()) {
+      case 'a': switchOption('a'); break;
+      case 'b': switchOption('b'); break;
+      case '1': switchSection('pam'); break;
+      case '2': switchSection('arch'); break;
+      case '3': switchSection('lifecycle'); break;
+      case 'arrowleft':
+        switchOption(currentOption === 'b' ? 'a' : 'b');
+        break;
+      case 'arrowright':
+        switchOption(currentOption === 'a' ? 'b' : 'a');
+        break;
+      case '?':
+        toggleKbd();
+        break;
+    }
+  });
+
+  function toggleKbd() {
+    document.getElementById('kbd-hints').classList.toggle('show');
+  }
+
+  // ── Initialize: lazy-load Option A PAM (already has src), preload B-pam ──
+  window.addEventListener('DOMContentLoaded', () => {
+    // A-pam loads immediately (has src, not data-src)
+    // Pre-load B-pam for quick switching
+    setTimeout(() => lazyLoadIframe('b-pam'), 1000);
+  });
+</script>
+
+</body>
+</html>

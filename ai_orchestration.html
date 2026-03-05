@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Orchestration Architecture — iOPEX PAM Migration</title>
+<style>body { margin: 0; background: #060D16; overflow-x: hidden; }</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const C = {
+  bg: "#060D16",
+  bgMid: "#0A1628",
+  card: "#0D1F33",
+  cardDark: "#081422",
+  border: "#1A3350",
+  borderBright: "#1E4060",
+  cyan: "#00C8E8",
+  cyanDim: "rgba(0,200,232,0.12)",
+  cyanGlow: "rgba(0,200,232,0.25)",
+  green: "#06D6A0",
+  greenDim: "rgba(6,214,160,0.12)",
+  amber: "#F59E0B",
+  amberDim: "rgba(245,158,11,0.12)",
+  red: "#EF4444",
+  redDim: "rgba(239,68,68,0.1)",
+  purple: "#A855F7",
+  purpleDim: "rgba(168,85,247,0.12)",
+  blue: "#3B82F6",
+  blueDim: "rgba(59,130,246,0.12)",
+  teal: "#14B8A6",
+  tealDim: "rgba(20,184,166,0.12)",
+  rose: "#F472B6",
+  roseDim: "rgba(244,114,182,0.12)",
+  slate: "#64748B",
+  slateLight: "#94A3B8",
+  text: "#CBD5E1",
+  textBright: "#F1F5F9",
+};
+
+const COMPONENTS = {
+  vm: {
+    id: "vm", zone: "vm", label: "AI ORCHESTRATION VM", sublabel: "Ubuntu 22.04 LTS · Hardened",
+    color: C.cyan, icon: "\u2B21",
+    spec: "8 vCPU · 32GB RAM · 500GB NVMe (Encrypted)",
+    details: [
+      { label: "OS", value: "Ubuntu 22.04 LTS (CIS Level 2 Hardened)" },
+      { label: "Isolation", value: "Air-gapped VM \u2014 whitelisted egress only" },
+      { label: "Access", value: "SSH via Jump Host + MFA (no direct RDP)" },
+      { label: "Credentials", value: "All service accounts in CyberArk Vault" },
+      { label: "Disk", value: "LUKS full-disk encryption + Secure Boot" },
+      { label: "Logging", value: "All sessions \u2192 SIEM via syslog-ng (TLS)" },
+    ]
+  },
+  agents: {
+    id: "agents", zone: "vm", label: "AI AGENT LAYER", sublabel: "Multi-LLM Orchestration Engine",
+    color: C.cyan, icon: "\u25C8",
+    details: [
+      { label: "Claude", value: "Primary orchestrator (Anthropic API)" },
+      { label: "Grok", value: "Secondary analysis (xAI API)" },
+      { label: "Gemini", value: "Document processing (Google API)" },
+      { label: "ChatGPT", value: "Fallback / validation (OpenAI API)" },
+      { label: "API Keys", value: "Stored in Conjur Cloud \u2014 never on disk" },
+      { label: "Rotation", value: "API keys rotated via CPM on schedule" },
+    ]
+  },
+  runbook: {
+    id: "runbook", zone: "vm", label: "MIGRATION ENGINE", sublabel: "8-Phase Runbook Automation",
+    color: C.green, icon: "\u25E7",
+    details: [
+      { label: "Agents 01\u201315", value: "multi-agent Python orchestration system" },
+      { label: "State", value: "PostgreSQL (localhost, encrypted)" },
+      { label: "Approval Gates", value: "ServiceNow API integration" },
+      { label: "Audit Trail", value: "Every action logged with timestamp + user" },
+      { label: "Secrets", value: "Retrieved from Conjur at runtime \u2014 no .env files" },
+      { label: "Rollback", value: "Automated rollback scripts per phase" },
+    ]
+  },
+  conjur_scripts: {
+    id: "conjur_scripts", zone: "vm", label: "CONJUR MIGRATOR", sublabel: "OSS \u2192 Cloud Pipeline",
+    color: C.purple, icon: "\u25EB",
+    details: [
+      { label: "export-secrets.sh", value: "Reads all OSS variables via REST API" },
+      { label: "import-secrets.sh", value: "Writes to Conjur Cloud with data/ prefix" },
+      { label: "Policy Converter", value: "Adapts MAML YAML for Cloud namespace" },
+      { label: "GitLab Scanner", value: "Discovers all CI_JOB_JWT usage in pipelines" },
+      { label: "Validation", value: "Post-migration secret count + auth test" },
+      { label: "Encryption", value: "secrets_export.txt AES-256 at rest, TTL 4hrs" },
+    ]
+  },
+  pvwa: {
+    id: "pvwa", zone: "onprem", label: "CyberArk PVWA", sublabel: "PAM Web Interface",
+    color: C.amber, icon: "\u25C9",
+    details: [
+      { label: "Version", value: "PAM Self-Hosted (current)" },
+      { label: "Port", value: "HTTPS 443" },
+      { label: "Auth", value: "LDAP + CyberArk native + MFA" },
+      { label: "Role", value: "Primary PAM management during migration" },
+      { label: "Freeze", value: "Set read-only at Phase 6 cutover gate" },
+      { label: "Decommission", value: "Phase 7 \u2014 shutdown last after PSM/CPM" },
+    ]
+  },
+  vault: {
+    id: "vault", zone: "onprem", label: "CyberArk Vault", sublabel: "Credential Store",
+    color: C.amber, icon: "\u25A3",
+    details: [
+      { label: "Type", value: "On-prem PAM Vault Server (HA pair)" },
+      { label: "Port", value: "1858 (PVWA \u2194 Vault internal)" },
+      { label: "Stores", value: "All service account credentials + AI API keys" },
+      { label: "Also stores", value: "VM local admin, SSH keys, service accounts" },
+      { label: "Sync target", value: "Vault Synchronizer pushes selected secrets to Conjur Cloud" },
+      { label: "Decommission", value: "LAST to shut down in Phase 7 sequence" },
+    ]
+  },
+  cpm: {
+    id: "cpm", zone: "onprem", label: "CPM", sublabel: "Central Policy Manager",
+    color: C.amber, icon: "\u25CE",
+    details: [
+      { label: "Function", value: "Rotates all credentials in Vault on schedule" },
+      { label: "Rotation", value: "VM SSH keys, service accounts, AI API keys" },
+      { label: "Integration", value: "CPM \u2192 Vault \u2192 Synchronizer \u2192 Conjur Cloud (chain)" },
+      { label: "Verification", value: "Post-rotation heartbeat verify" },
+      { label: "Decommission", value: "Phase 7 Step 3: shut down after PSM/PSMP" },
+    ]
+  },
+  psm: {
+    id: "psm", zone: "onprem", label: "PSM / PSMP", sublabel: "Session Management",
+    color: C.amber, icon: "\u25F7",
+    details: [
+      { label: "PSM", value: "RDP/SSH privileged session proxy" },
+      { label: "PSMP", value: "SSH proxy for Linux targets" },
+      { label: "Recordings", value: "Archived to long-term storage before decommission" },
+      { label: "VM access", value: "Human admins reach the Orchestration VM via PSMP" },
+      { label: "Decommission", value: "Phase 7 Step 1: FIRST to shut down" },
+    ]
+  },
+  conjur_oss: {
+    id: "conjur_oss", zone: "onprem", label: "Conjur OSS", sublabel: "Self-Hosted (v1.19.5)",
+    color: C.purple, icon: "\u2B21",
+    details: [
+      { label: "Port", value: "HTTPS 443 / HTTP 8080" },
+      { label: "Auth method", value: "API key (being migrated to JWT)" },
+      { label: "Consumers", value: "GitLab CI pipelines, K8s workloads" },
+      { label: "Status", value: "Read-only from Conjur Migration Gate" },
+      { label: "Decommission", value: "After 2 weeks zero-traffic confirmation" },
+      { label: "Final backup", value: "pg_dump + CONJUR_DATA_KEY archived + encrypted" },
+    ]
+  },
+  ad: {
+    id: "ad", zone: "onprem", label: "Active Directory", sublabel: "LDAP / Kerberos",
+    color: C.blue, icon: "\u25C8",
+    details: [
+      { label: "Role", value: "Identity source for PVWA authentication" },
+      { label: "Groups", value: "CyberArk Admins, Vault Admins, Auditors" },
+      { label: "VM account", value: "svc-aiorch \u2014 managed in PAM Vault" },
+      { label: "MFA", value: "RADIUS MFA enforced for all PAM logins" },
+    ]
+  },
+  siem: {
+    id: "siem", zone: "onprem", label: "SIEM", sublabel: "Graylog / Splunk",
+    color: C.red, icon: "\u25EC",
+    details: [
+      { label: "Receives", value: "All VM session logs, PAM audit logs, Conjur auth logs" },
+      { label: "Protocol", value: "syslog-ng TLS (port 6514)" },
+      { label: "Alerts", value: "Unusual auth patterns, migration gate failures, after-hours access" },
+      { label: "Retention", value: "7-year archive (HIPAA/PCI-DSS compliance)" },
+      { label: "Migration", value: "Syslog target switches from on-prem PVWA \u2192 Privilege Cloud at Agent 08 cutover" },
+    ]
+  },
+  gitlab: {
+    id: "gitlab", zone: "onprem", label: "GitLab CI/CD", sublabel: "Self-Hosted",
+    color: C.red, icon: "\u25F1",
+    details: [
+      { label: "Runners", value: "Self-hosted, outbound HTTPS to Conjur endpoints" },
+      { label: "Auth (current)", value: "CONJUR_AUTHN_API_KEY (static \u2014 being removed)" },
+      { label: "Auth (target)", value: "id_tokens JWT block \u2192 authn-jwt/gitlab" },
+      { label: "Var change", value: "CONJUR_APPLIANCE_URL + CONJUR_ACCOUNT update" },
+      { label: "Migration", value: "Pipeline-by-pipeline, project owner coordinates with CyberArk team" },
+    ]
+  },
+  priv_cloud: {
+    id: "priv_cloud", zone: "cloud", label: "Privilege Cloud", sublabel: "CyberArk SaaS PAM",
+    color: C.green, icon: "\u2601",
+    details: [
+      { label: "Endpoint", value: "https://<tenant>.cyberark.cloud" },
+      { label: "Port", value: "HTTPS 443 (public CA \u2014 no self-signed)" },
+      { label: "Components", value: "Cloud Vault, CPM, PVWA (SaaS managed)" },
+      { label: "Connector", value: "Windows Connector Server on-prem (MQTT TCP 443/8883)" },
+      { label: "Migration target", value: "All Core PAS accounts land here" },
+      { label: "Live after", value: "Phase 6 cutover \u2014 becomes primary" },
+    ]
+  },
+  conjur_cloud: {
+    id: "conjur_cloud", zone: "cloud", label: "Conjur Cloud", sublabel: "CyberArk Secrets SaaS",
+    color: C.purple, icon: "\u2601",
+    details: [
+      { label: "Endpoint", value: "https://<sub>.secretsmgr.cyberark.cloud/api" },
+      { label: "Account name", value: "conjur (fixed \u2014 not custom)" },
+      { label: "Policy root", value: "data/ (not root)" },
+      { label: "Auth", value: "authn-jwt/gitlab for CI/CD pipelines" },
+      { label: "Sync", value: "Vault Synchronizer pushes PAM secrets (60s interval)" },
+      { label: "Edge", value: "Conjur Cloud Edge for on-prem low-latency access" },
+    ]
+  },
+  vault_sync: {
+    id: "vault_sync", zone: "cloud", label: "Vault Synchronizer", sublabel: "v13.3+ · Windows Service",
+    color: C.green, icon: "\u21C4",
+    details: [
+      { label: "Host", value: "Dedicated Windows Server on-prem (not the PAM servers)" },
+      { label: "LOB", value: "ConjurSync (case-sensitive, singular)" },
+      { label: "General sync", value: "Every 60 seconds (new + updated accounts)" },
+      { label: "Full sync", value: "Every 60 minutes (all accounts incl. deletes)" },
+      { label: "Path", value: "data/vault/ConjurSync/<safe>/<account>/<prop>" },
+      { label: "Limit", value: "15K accounts (username+password only) / 6K (all props)" },
+    ]
+  },
+  ispss: {
+    id: "ispss", zone: "cloud", label: "CyberArk Identity", sublabel: "ISPSS / Azure AD",
+    color: C.blue, icon: "\u25C8",
+    details: [
+      { label: "Function", value: "Cloud identity for Conjur Cloud admin access" },
+      { label: "Integration", value: "Federated with on-prem Active Directory" },
+      { label: "MFA", value: "Enforced \u2014 no bypass" },
+      { label: "Owner refs", value: "Replaces !user admin in Cloud policies" },
+      { label: "Group", value: "Conjur_Cloud_Admins \u2192 maps to CyberArk team" },
+    ]
+  },
+  dx_portal: {
+    id: "dx_portal", zone: "dx", label: "PAM Portal", sublabel: "Spring Boot + Thymeleaf",
+    color: C.teal, icon: "\uD83C\uDF10",
+    details: [
+      { label: "Stack", value: "Java 17 / Spring Boot 3 / Thymeleaf" },
+      { label: "API", value: "REST /api/v1/* with Swagger/OpenAPI" },
+      { label: "Auth", value: "OAuth2/OIDC + RBAC enforcement" },
+      { label: "Port", value: "443 (HTTPS)" },
+    ]
+  },
+  dx_adapter: {
+    id: "dx_adapter", zone: "dx", label: "PamVendorAdapter", sublabel: "Vendor Abstraction Interface",
+    color: C.teal, icon: "\u2B21",
+    details: [
+      { label: "Interface", value: "getSecrets, rotateCredential, checkOut/In, getAuditLog" },
+      { label: "Adapters", value: "CyberArk, Delinea, StrongDM (pluggable)" },
+      { label: "Pattern", value: "Strategy pattern \u2014 swap vendor at runtime" },
+      { label: "Reuse", value: "New vendors implement interface \u2192 zero portal changes" },
+    ]
+  },
+  dx_integration: {
+    id: "dx_integration", zone: "dx", label: "Integration Hub", sublabel: "Adapter Routing + Feature Flags",
+    color: C.rose, icon: "\u2194",
+    details: [
+      { label: "Routing", value: "Feature-flag per integration (source \u2192 target)" },
+      { label: "Code Gen", value: "Replacement clients: Python, Java, C#, PowerShell" },
+      { label: "Rollback", value: "Instant revert via flag flip \u2014 no redeploy" },
+      { label: "Registry", value: "Developer sign-off per application integration" },
+    ]
+  },
+  ai_apis: {
+    id: "ai_apis", zone: "cloud", label: "AI API Endpoints", sublabel: "External LLM Providers",
+    color: C.cyan, icon: "\u25C8",
+    details: [
+      { label: "Anthropic", value: "api.anthropic.com (Claude \u2014 primary)" },
+      { label: "OpenAI", value: "api.openai.com (ChatGPT \u2014 fallback)" },
+      { label: "Google", value: "generativelanguage.googleapis.com (Gemini)" },
+      { label: "xAI", value: "api.x.ai (Grok \u2014 analysis)" },
+      { label: "Firewall rule", value: "VM \u2192 these 4 FQDNs only (no other internet)" },
+      { label: "Keys", value: "Retrieved from Conjur Cloud at runtime \u2014 never static" },
+    ]
+  },
+};
+
+const FLOWS = [
+  { from: "vm", to: "pvwa", label: "PAM REST API \u00B7 443", color: C.amber, type: "bidirectional" },
+  { from: "vm", to: "conjur_oss", label: "Conjur API \u00B7 443", color: C.purple, type: "bidirectional" },
+  { from: "vm", to: "siem", label: "syslog-ng TLS \u00B7 6514", color: C.red, type: "unidirectional" },
+  { from: "vm", to: "priv_cloud", label: "HTTPS \u00B7 443", color: C.green, type: "bidirectional" },
+  { from: "vm", to: "conjur_cloud", label: "HTTPS /api \u00B7 443", color: C.purple, type: "bidirectional" },
+  { from: "vm", to: "ai_apis", label: "HTTPS \u00B7 443 (egress only)", color: C.cyan, type: "unidirectional" },
+  { from: "vault_sync", to: "conjur_cloud", label: "mTLS sync \u00B7 60s", color: C.green, type: "unidirectional" },
+  { from: "pvwa", to: "vault", label: "Internal \u00B7 1858", color: C.amber, type: "bidirectional" },
+  { from: "cpm", to: "vault", label: "Rotation", color: C.amber, type: "bidirectional" },
+  { from: "priv_cloud", to: "conjur_cloud", label: "Native sync", color: C.green, type: "unidirectional" },
+  { from: "gitlab", to: "conjur_oss", label: "API key authn (current)", color: C.purple, type: "unidirectional", style: "dashed" },
+  { from: "gitlab", to: "conjur_cloud", label: "JWT authn (target)", color: C.purple, type: "unidirectional" },
+  { from: "ad", to: "pvwa", label: "LDAP auth", color: C.blue, type: "unidirectional" },
+  { from: "psm", to: "vm", label: "SSH proxy (admin access)", color: C.amber, type: "unidirectional" },
+  { from: "agents", to: "vm", label: "", color: C.cyan, type: "internal" },
+  { from: "runbook", to: "vm", label: "", color: C.green, type: "internal" },
+  { from: "conjur_scripts", to: "vm", label: "", color: C.purple, type: "internal" },
+  { from: "dx_portal", to: "vm", label: "API \u00B7 443 (adapter routing)", color: C.teal, type: "bidirectional" },
+  { from: "dx_portal", to: "pvwa", label: "CyberArk adapter", color: C.teal, type: "bidirectional", style: "dashed" },
+  { from: "dx_portal", to: "priv_cloud", label: "Delinea adapter", color: C.teal, type: "bidirectional", style: "dashed" },
+  { from: "dx_adapter", to: "dx_portal", label: "", color: C.teal, type: "internal" },
+  { from: "dx_integration", to: "dx_portal", label: "", color: C.rose, type: "internal" },
+];
+
+const ZONE_GROUPS = {
+  onprem: { label: "ON-PREMISES SECURITY ZONE", color: C.amber, components: ["pvwa","vault","cpm","psm","conjur_oss","ad","siem","gitlab"] },
+  vm: { label: "SECURE AI ORCHESTRATION VM", color: C.cyan, components: ["vm","agents","runbook","conjur_scripts"] },
+  cloud: { label: "CLOUD ZONE", color: C.green, components: ["priv_cloud","conjur_cloud","vault_sync","ispss","ai_apis"] },
+  dx: { label: "DIGITAL EXPERIENCE LAYER", color: C.teal, components: ["dx_portal","dx_adapter","dx_integration"] },
+};
+
+const SEC_CONTROLS = [
+  { icon: "\uD83D\uDD10", label: "CyberArk PAM stores ALL VM credentials \u2014 no hardcoded secrets" },
+  { icon: "\uD83D\uDD12", label: "LUKS full-disk encryption + Secure Boot enforced" },
+  { icon: "\uD83C\uDF10", label: "Egress firewall: only 6 whitelisted FQDNs allowed outbound" },
+  { icon: "\uD83D\uDEE1", label: "CIS Level 2 OS hardening applied post-provisioning" },
+  { icon: "\uD83D\uDC41", label: "Every session recorded and forwarded to SIEM in real-time" },
+  { icon: "\uD83D\uDD11", label: "AI API keys retrieved from Conjur at runtime \u2014 zero env vars" },
+  { icon: "\uD83D\uDCCB", label: "MFA required for all human access via PSM jump host" },
+  { icon: "\u2699", label: "No direct internet \u2014 AI API egress through dedicated proxy" },
+];
+
+const SPEC_ROWS = [
+  ["VM TYPE", "VMware vSphere 8 / Hyper-V Gen2 / Azure Arc-managed"],
+  ["OS", "Ubuntu 22.04.4 LTS (CIS Benchmark Level 2)"],
+  ["vCPU", "8 cores (dedicated, no sharing)"],
+  ["RAM", "32 GB ECC"],
+  ["STORAGE", "500 GB NVMe \u2014 LUKS2 encrypted, /tmp on tmpfs"],
+  ["NETWORK", "Dedicated VLAN \u00B7 No DHCP \u00B7 Static IP only"],
+  ["BACKUP", "Daily snapshot to encrypted off-site store"],
+  ["PATCH", "Unattended security patches \u00B7 Kernel livepatch enabled"],
+  ["MONITORING", "Wazuh agent + syslog-ng \u2192 SIEM"],
+  ["SECRETS ACCESS", "Conjur CLI + CyberArk REST SDK \u2014 no credential files"],
+];
+
+function Pill({ label, color, small }) {
+  return (
+    <span style={{
+      background: color + "20",
+      border: `1px solid ${color}55`,
+      borderRadius: 3,
+      color: color,
+      fontSize: small ? 9 : 10,
+      fontFamily: "monospace",
+      padding: small ? "1px 6px" : "2px 8px",
+      fontWeight: 700,
+      letterSpacing: 0.8,
+      whiteSpace: "nowrap",
+    }}>{label}</span>
+  );
+}
+
+function CompCard({ id, onSelect, selected }) {
+  const c = COMPONENTS[id];
+  const isSelected = selected === id;
+  return (
+    <div
+      onClick={() => onSelect(isSelected ? null : id)}
+      style={{
+        background: isSelected ? c.color + "18" : C.card,
+        border: `1px solid ${isSelected ? c.color : C.border}`,
+        borderLeft: `3px solid ${c.color}`,
+        borderRadius: 6,
+        padding: "8px 10px",
+        cursor: "pointer",
+        transition: "all 0.18s",
+        boxShadow: isSelected ? `0 0 16px ${c.color}30` : "none",
+        userSelect: "none",
+      }}
+    >
+      <div style={{ display: "flex", align: "center", gap: 6, alignItems: "center" }}>
+        <span style={{ color: c.color, fontSize: 14 }}>{c.icon}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ color: C.textBright, fontSize: 11, fontWeight: 700, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.label}</div>
+          <div style={{ color: C.slate, fontSize: 9.5, fontFamily: "monospace", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.sublabel}</div>
+        </div>
+        {isSelected && <span style={{ color: c.color, fontSize: 10, flexShrink: 0 }}>{"\u25BC"}</span>}
+      </div>
+    </div>
+  );
+}
+
+function DetailPanel({ id, onClose }) {
+  const c = COMPONENTS[id];
+  if (!c) return null;
+  return (
+    <div style={{
+      background: C.card,
+      border: `1px solid ${c.color}55`,
+      borderTop: `3px solid ${c.color}`,
+      borderRadius: 8,
+      padding: "14px 16px",
+      boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 24px ${c.color}20`,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+        <div>
+          <div style={{ color: c.color, fontSize: 10, fontFamily: "monospace", letterSpacing: 2, fontWeight: 700 }}>{c.icon} {c.sublabel}</div>
+          <div style={{ color: C.textBright, fontSize: 14, fontWeight: 800 }}>{c.label}</div>
+          {c.spec && <div style={{ color: C.slate, fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>{c.spec}</div>}
+        </div>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: C.slate, cursor: "pointer", fontSize: 16, padding: 0 }}>{"\u2715"}</button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        {c.details.map((d, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <span style={{ color: c.color, fontSize: 9, fontFamily: "monospace", letterSpacing: 1, fontWeight: 700, minWidth: 90, paddingTop: 2, flexShrink: 0 }}>{d.label}</span>
+            <span style={{ color: C.text, fontSize: 11.5, lineHeight: 1.5 }}>{d.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FlowLine({ label, color, style: flowStyle, type }) {
+  const isDashed = flowStyle === "dashed";
+  const isBi = type === "bidirectional";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 2, minWidth: 60 }}>
+        {isBi ? (
+          <span style={{ color, fontSize: 12 }}>{"\u27F7"}</span>
+        ) : (
+          <span style={{ color, fontSize: 12 }}>{"\u2192"}</span>
+        )}
+      </div>
+      <div style={{ flex: 1, height: 1, background: isDashed ? `repeating-linear-gradient(90deg, ${color} 0, ${color} 4px, transparent 4px, transparent 8px)` : color, opacity: 0.7 }} />
+      <span style={{ color: C.slateLight, fontSize: 10, fontFamily: "monospace", whiteSpace: "nowrap" }}>{label}</span>
+    </div>
+  );
+}
+
+function App() {
+  const [selected, setSelected] = useState(null);
+  const [activeTab, setActiveTab] = useState("architecture");
+
+  const zone = (id) => COMPONENTS[id]?.zone;
+
+  const vmFlows = FLOWS.filter(f => (f.from === "vm" || f.to === "vm") && f.type !== "internal");
+
+  return (
+    <div style={{ background: C.bg, minHeight: "100vh", fontFamily: "'DM Mono', 'Fira Code', 'Courier New', monospace", color: C.text, fontSize: 12 }}>
+
+      {/* Header */}
+      <div style={{
+        background: C.bgMid,
+        borderBottom: `1px solid ${C.border}`,
+        padding: "18px 24px",
+        display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
+      }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <div style={{ width: 2, height: 36, background: `linear-gradient(180deg, ${C.cyan}, ${C.green})`, borderRadius: 2 }} />
+            <div>
+              <div style={{ color: C.cyan, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 3 }}>IOPEX · CYBERARK MIGRATION INFRASTRUCTURE</div>
+              <div style={{ color: C.textBright, fontSize: 20, fontWeight: 800, fontFamily: "'DM Sans', system-ui, sans-serif", letterSpacing: -0.5 }}>Secure AI Orchestration VM — Architecture Canvas</div>
+            </div>
+          </div>
+          <div style={{ color: C.slate, fontSize: 10, marginLeft: 12, paddingLeft: 10 }}>
+            On-prem to Privilege Cloud migration · Dual-track (Core PAS + Conjur) · Click any component for detail
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["architecture", "vm-spec", "flows", "security"].map(t => (
+            <button key={t} onClick={() => setActiveTab(t)} style={{
+              background: activeTab === t ? C.cyan + "18" : "transparent",
+              border: `1px solid ${activeTab === t ? C.cyan : C.border}`,
+              borderRadius: 5,
+              color: activeTab === t ? C.cyan : C.slate,
+              fontSize: 9.5, letterSpacing: 1.5, fontWeight: 700,
+              padding: "5px 12px", cursor: "pointer", fontFamily: "monospace",
+              transition: "all 0.15s", textTransform: "uppercase",
+            }}>{t}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* ARCHITECTURE TAB */}
+      {activeTab === "architecture" && (
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+
+          {/* Hint */}
+          <div style={{ color: C.slate, fontSize: 10, textAlign: "center", letterSpacing: 1 }}>{"\u25B6"} CLICK ANY COMPONENT TO EXPAND DETAILS</div>
+
+          {/* Three-zone layout */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, alignItems: "start" }}>
+
+            {/* ON-PREM ZONE */}
+            <div style={{
+              background: C.amber + "08",
+              border: `1px solid ${C.amber}30`,
+              borderTop: `3px solid ${C.amber}`,
+              borderRadius: 10,
+              padding: "14px",
+            }}>
+              <div style={{ color: C.amber, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>{"\u25C9"}</span> ON-PREMISES SECURITY ZONE
+                <Pill label="CORPORATE NETWORK" color={C.amber} small />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {ZONE_GROUPS.onprem.components.map(id => <CompCard key={id} id={id} onSelect={setSelected} selected={selected} />)}
+              </div>
+            </div>
+
+            {/* CENTER — AI VM */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 220, maxWidth: 260 }}>
+
+              {/* Traffic arrows left */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, color: C.cyan, fontSize: 14 }}>
+                <span>{"\u2190\u2192"}</span>
+                <span style={{ color: C.slate, fontSize: 9, alignSelf: "center", letterSpacing: 1 }}>INTERNAL COMMS</span>
+                <span>{"\u2190\u2192"}</span>
+              </div>
+
+              {/* VM Box */}
+              <div style={{
+                background: C.bgMid,
+                border: `2px solid ${C.cyan}`,
+                borderRadius: 12,
+                padding: "16px 14px",
+                boxShadow: `0 0 40px ${C.cyan}20, inset 0 0 40px rgba(0,200,232,0.04)`,
+                position: "relative",
+              }}>
+                {/* Security badge */}
+                <div style={{
+                  position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)",
+                  background: C.bg, border: `1px solid ${C.cyan}`, borderRadius: 4,
+                  padding: "2px 10px", color: C.cyan, fontSize: 9, letterSpacing: 2, fontWeight: 700, whiteSpace: "nowrap",
+                }}>{"\u2B21"} SECURE VM PERIMETER</div>
+
+                <div style={{ color: C.cyan, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 12, marginTop: 6, textAlign: "center" }}>
+                  AI ORCHESTRATION ENGINE
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {ZONE_GROUPS.vm.components.map(id => <CompCard key={id} id={id} onSelect={setSelected} selected={selected} />)}
+                </div>
+
+                {/* Runtime env note */}
+                <div style={{ marginTop: 12, padding: "8px 10px", background: C.cyan + "10", border: `1px solid ${C.cyan}25`, borderRadius: 5 }}>
+                  <div style={{ color: C.cyan, fontSize: 9, letterSpacing: 1.5, fontWeight: 700, marginBottom: 4 }}>RUNTIME STACK</div>
+                  {["Python 3.12 \u00B7 Conjur CLI", "CyberArk REST SDK", "ServiceNow API client", "PostgreSQL 16 (local state)", "syslog-ng (TLS forward)"].map((s, i) => (
+                    <div key={i} style={{ color: C.slate, fontSize: 9.5, lineHeight: 1.8 }}>{"\u00B7"} {s}</div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Traffic arrows right */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, color: C.green, fontSize: 14 }}>
+                <span>{"\u2190\u2192"}</span>
+                <span style={{ color: C.slate, fontSize: 9, alignSelf: "center", letterSpacing: 1 }}>CLOUD COMMS</span>
+                <span>{"\u2190\u2192"}</span>
+              </div>
+            </div>
+
+            {/* CLOUD ZONE */}
+            <div style={{
+              background: C.green + "08",
+              border: `1px solid ${C.green}30`,
+              borderTop: `3px solid ${C.green}`,
+              borderRadius: 10,
+              padding: "14px",
+            }}>
+              <div style={{ color: C.green, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>{"\u2601"}</span> CLOUD ZONE
+                <Pill label="CYBERARK SAAS + AI APIS" color={C.green} small />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {ZONE_GROUPS.cloud.components.map(id => <CompCard key={id} id={id} onSelect={setSelected} selected={selected} />)}
+              </div>
+            </div>
+          </div>
+
+          {/* DIGITAL EXPERIENCE LAYER — full-width bar below the 3-zone grid */}
+          <div style={{
+            background: C.teal + "08",
+            border: `1px solid ${C.teal}30`,
+            borderTop: `3px solid ${C.teal}`,
+            borderRadius: 10,
+            padding: "14px",
+          }}>
+            <div style={{ color: C.teal, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>{"\uD83C\uDF10"}</span> DIGITAL EXPERIENCE LAYER
+              <Pill label="VENDOR-AGNOSTIC PORTAL + API" color={C.teal} small />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+              {ZONE_GROUPS.dx.components.map(id => <CompCard key={id} id={id} onSelect={setSelected} selected={selected} />)}
+            </div>
+          </div>
+
+          {/* Detail panel */}
+          {selected && (
+            <DetailPanel id={selected} onClose={() => setSelected(null)} />
+          )}
+
+          {/* Network boundary note */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+            {[
+              { label: "ON-PREM FIREWALL", desc: "VM isolated in dedicated VLAN. Inbound: SSH from PSM only (port 22, MFA enforced). Outbound: whitelist of 8 FQDNs.", color: C.amber },
+              { label: "VM EGRESS POLICY", desc: "PAM REST (443) + Conjur (443) + Privilege Cloud (443) + Conjur Cloud (443) + 4 AI API endpoints (443) + SIEM (6514). All else blocked.", color: C.cyan },
+              { label: "CLOUD PERIMETER", desc: "TLS 1.3 minimum. CyberArk SaaS endpoints require Connector Server on-prem. AI APIs require API keys from Conjur \u2014 no static credentials.", color: C.green },
+              { label: "DX LAYER", desc: "Portal + API Gateway (443). PamVendorAdapter abstracts vendor APIs. OAuth2/OIDC + RBAC enforced. Dual-backend during migration, single pane post-cutover.", color: C.teal },
+            ].map((n, i) => (
+              <div key={i} style={{ background: C.card, border: `1px solid ${n.color}30`, borderLeft: `3px solid ${n.color}`, borderRadius: 6, padding: "10px 12px" }}>
+                <div style={{ color: n.color, fontSize: 9, letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>{n.label}</div>
+                <div style={{ color: C.slateLight, fontSize: 10.5, lineHeight: 1.6 }}>{n.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* VM SPEC TAB */}
+      {activeTab === "vm-spec" && (
+        <div style={{ padding: "24px" }}>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.cyan}`, borderRadius: 10, overflow: "hidden", maxWidth: 760 }}>
+            <div style={{ background: C.bgMid, padding: "12px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ color: C.cyan, fontSize: 16 }}>{"\u2B21"}</span>
+              <div>
+                <div style={{ color: C.cyan, fontSize: 9, letterSpacing: 3, fontWeight: 700 }}>HARDWARE / VIRTUAL MACHINE SPECIFICATION</div>
+                <div style={{ color: C.textBright, fontSize: 14, fontWeight: 800 }}>AI Orchestration VM · Secure Baseline</div>
+              </div>
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <tbody>
+                {SPEC_ROWS.map(([k, v], i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)", borderBottom: `1px solid ${C.border}` }}>
+                    <td style={{ padding: "10px 18px", color: C.cyan, fontWeight: 700, fontSize: 10, letterSpacing: 1.5, width: 140, whiteSpace: "nowrap" }}>{k}</td>
+                    <td style={{ padding: "10px 18px", color: C.text, fontSize: 11.5 }}>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ padding: "14px 18px", background: C.cyan + "0A", borderTop: `1px solid ${C.border}` }}>
+              <div style={{ color: C.cyan, fontSize: 9, letterSpacing: 2, fontWeight: 700, marginBottom: 8 }}>PROVISIONING SEQUENCE</div>
+              {[
+                "1. Provision VM from hardened gold image (CIS Level 2 Ubuntu 22.04)",
+                "2. Join to Active Directory as svc-aiorch-vm (service account created in PAM first)",
+                "3. Install Conjur CLI + CyberArk REST SDK + Python 3.12 venv",
+                "4. Configure syslog-ng with TLS cert \u2192 SIEM (port 6514)",
+                "5. Install Wazuh agent \u2192 SIEM",
+                "6. Apply iptables ruleset (whitelist egress only)",
+                "7. Enable LUKS disk encryption + configure Secure Boot",
+                "8. Register VM service account in CyberArk Vault (PAM manages SSH key from day 0)",
+                "9. Clone AI orchestration repo from GitLab (one-time, then air-gapped)",
+                "10. Validate: SSH access via PSM only, Conjur auth test, PAM API health check",
+              ].map((s, i) => (
+                <div key={i} style={{ color: C.slateLight, fontSize: 10.5, lineHeight: 1.9 }}>{s}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FLOWS TAB */}
+      {activeTab === "flows" && (
+        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {[
+              { label: "VM NETWORK FLOWS", color: C.cyan, flows: vmFlows },
+              { label: "CONJUR MIGRATION FLOWS", color: C.purple, flows: FLOWS.filter(f => f.from === "gitlab" || f.to === "conjur_oss" || f.to === "conjur_cloud" || f.from === "vault_sync" || f.to === "vault_sync") },
+              { label: "PAM INTERNAL FLOWS", color: C.amber, flows: FLOWS.filter(f => ["pvwa","vault","cpm","psm"].includes(f.from) && ["pvwa","vault","cpm","psm","vm"].includes(f.to)) },
+              { label: "CLOUD SYNC FLOWS", color: C.green, flows: FLOWS.filter(f => (f.from === "priv_cloud" || f.to === "priv_cloud") || (f.from === "vault_sync")) },
+            ].map((group, gi) => (
+              <div key={gi} style={{ background: C.card, border: `1px solid ${group.color}30`, borderTop: `3px solid ${group.color}`, borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ color: group.color, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 12 }}>{group.label}</div>
+                {group.flows.map((f, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: i < group.flows.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                    <span style={{ color: COMPONENTS[f.from]?.color || group.color, fontSize: 10, fontWeight: 700, minWidth: 90, textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{COMPONENTS[f.from]?.label || f.from}</span>
+                    <div style={{ flex: 1, position: "relative", height: 16, display: "flex", alignItems: "center" }}>
+                      <div style={{ width: "100%", height: 1, background: f.style === "dashed" ? `repeating-linear-gradient(90deg, ${f.color} 0, ${f.color} 4px, transparent 4px, transparent 8px)` : f.color, opacity: 0.7 }} />
+                      <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", background: C.card, padding: "0 4px", color: C.slate, fontSize: 8.5, whiteSpace: "nowrap" }}>{f.label}</span>
+                    </div>
+                    <span style={{ color: COMPONENTS[f.to]?.color || group.color, fontSize: 10, fontWeight: 700, minWidth: 90, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{COMPONENTS[f.to]?.label || f.to}</span>
+                    <Pill label={f.type === "bidirectional" ? "\u27F7" : "\u2192"} color={f.color} small />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Port reference */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ background: C.bgMid, padding: "10px 16px", borderBottom: `1px solid ${C.border}`, color: C.cyan, fontSize: 9, letterSpacing: 3, fontWeight: 700 }}>FIREWALL PORT REFERENCE — AI ORCHESTRATION VM</div>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.03)" }}>
+                  {["DIRECTION", "PORT / PROTOCOL", "DESTINATION", "PURPOSE"].map((h, i) => (
+                    <th key={i} style={{ padding: "8px 14px", color: C.slate, fontSize: 9, letterSpacing: 1, textAlign: "left", borderBottom: `1px solid ${C.border}`, fontWeight: 700 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["INBOUND", "TCP 22", "PSM/PSMP server IP only", "Admin SSH access (MFA enforced)"],
+                  ["OUTBOUND", "TCP 443", "<tenant>.cyberark.cloud", "Privilege Cloud REST API"],
+                  ["OUTBOUND", "TCP 443", "<sub>.secretsmgr.cyberark.cloud", "Conjur Cloud /api"],
+                  ["OUTBOUND", "TCP 443", "PVWA on-prem FQDN", "PAM REST API"],
+                  ["OUTBOUND", "TCP 443 / 8080", "conjur-oss.internal", "Conjur OSS API"],
+                  ["OUTBOUND", "TCP 443", "api.anthropic.com", "Claude AI API"],
+                  ["OUTBOUND", "TCP 443", "api.openai.com", "ChatGPT fallback"],
+                  ["OUTBOUND", "TCP 443", "generativelanguage.googleapis.com", "Gemini API"],
+                  ["OUTBOUND", "TCP 443", "api.x.ai", "Grok API"],
+                  ["OUTBOUND", "TCP 6514", "siem.internal", "syslog-ng TLS"],
+                  ["OUTBOUND", "TCP 443", "servicenow.instance.com", "Change Request API"],
+                  ["ALL OTHER", "DENY", "*", "Default deny \u2014 no exceptions"],
+                ].map(([dir, port, dest, purpose], i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)", borderBottom: `1px solid ${C.border}` }}>
+                    <td style={{ padding: "8px 14px" }}><Pill label={dir} color={dir === "INBOUND" ? C.amber : dir === "OUTBOUND" ? C.cyan : C.red} small /></td>
+                    <td style={{ padding: "8px 14px", color: C.green, fontWeight: 700, fontSize: 11 }}>{port}</td>
+                    <td style={{ padding: "8px 14px", color: C.slateLight, fontSize: 10.5 }}>{dest}</td>
+                    <td style={{ padding: "8px 14px", color: C.text, fontSize: 10.5 }}>{purpose}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* SECURITY TAB */}
+      {activeTab === "security" && (
+        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+            {SEC_CONTROLS.map((s, i) => (
+              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.green}`, borderRadius: 6, padding: "12px 14px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{s.icon}</span>
+                <span style={{ color: C.text, fontSize: 11.5, lineHeight: 1.6 }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Threat model */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.red}`, borderRadius: 10, overflow: "hidden" }}>
+            <div style={{ background: C.bgMid, padding: "10px 16px", borderBottom: `1px solid ${C.border}`, color: C.red, fontSize: 9, letterSpacing: 3, fontWeight: 700 }}>THREAT MODEL — MITIGATIONS IN PLACE</div>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.03)" }}>
+                  {["THREAT", "VECTOR", "MITIGATION"].map((h, i) => (
+                    <th key={i} style={{ padding: "8px 14px", color: C.slate, fontSize: 9, letterSpacing: 1, textAlign: "left", borderBottom: `1px solid ${C.border}`, fontWeight: 700 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Credential theft", "AI agent retrieves secret to env var", "Secrets never written to disk \u2014 piped direct to process stdin via Conjur CLI"],
+                  ["Lateral movement", "Compromised VM reaches other systems", "Dedicated VLAN + iptables whitelist \u2014 VM cannot reach anything not explicitly listed"],
+                  ["AI prompt injection", "Malicious input redirects agent actions", "All destructive actions require human approval gate + ServiceNow CHG number"],
+                  ["Data exfiltration", "AI API sends secrets to external LLM", "Secrets masked in log output \u2014 plain values never included in AI API payloads"],
+                  ["Insider threat", "Admin modifies migration scripts maliciously", "All sessions recorded via PSM + SIEM alerts on off-hours access or unusual commands"],
+                  ["Supply chain", "Compromised Python package", "pip install from internal Artifactory mirror only \u2014 no direct PyPI access from VM"],
+                  ["Key exposure in logs", "Rotation script logs secret value", "export-secrets.txt encrypted AES-256 immediately \u2014 TTL 4 hours then shredded"],
+                  ["Brute force on VM", "Direct SSH from internet", "SSH only from PSM IP \u2014 cloud/internet cannot reach VM directly; no password auth"],
+                ].map(([threat, vector, mit], i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)", borderBottom: `1px solid ${C.border}` }}>
+                    <td style={{ padding: "9px 14px", color: C.red, fontWeight: 700, fontSize: 11 }}>{threat}</td>
+                    <td style={{ padding: "9px 14px", color: C.amber, fontSize: 10.5 }}>{vector}</td>
+                    <td style={{ padding: "9px 14px", color: C.text, fontSize: 10.5, lineHeight: 1.5 }}>{mit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ borderTop: `1px solid ${C.border}`, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        <span style={{ color: C.slate, fontSize: 9, letterSpacing: 2 }}>IOPEX · CYBERARK MIGRATION PROJECT · CONFIDENTIAL</span>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Pill label="DUAL-TRACK ARCHITECTURE" color={C.cyan} small />
+          <Pill label="CIS LEVEL 2 HARDENED" color={C.green} small />
+          <Pill label="ZERO STATIC CREDENTIALS" color={C.amber} small />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

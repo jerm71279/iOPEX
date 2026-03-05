@@ -1,0 +1,48 @@
+# Sample Configuration File with CyberArk References
+# Used for testing ccp_code_scanner.py pattern detection.
+
+application:
+  name: SampleWebApp
+  version: 1.0.0
+
+# Pattern: CONFIG_CYBERARK_URL - URL configurations
+cyberark:
+  cyberark_url: "https://cyberark.company.com"
+  pvwa_url: "https://pvwa.company.com/PasswordVault"
+  aim_url: "https://aim.company.com:18923"
+  vault_address: "vault.company.com"
+
+# Pattern: CCP_APPID - Application IDs
+credentials:
+  AppID: "YamlConfigApp"
+  applicationId: "AlternateApp"
+  app_id: "ThirdApp"
+
+# Pattern: CCP_SAFE_REFERENCE - Safe names
+secrets:
+  Safe: "Config-Secrets"
+  safeName: "Application-Vault"
+
+# Pattern: CCP_OBJECT_REFERENCE - Object names
+accounts:
+  Object: "config-service-account"
+  objectName: "backup-admin"
+  accountName: "monitoring-user"
+
+# Database configuration with CyberArk references
+database:
+  host: "db.company.com"
+  port: 5432
+  # Credentials retrieved from CyberArk
+  credential_safe: "Database-Credentials"
+  credential_object: "postgres-admin"
+
+# Integration settings
+integrations:
+  siem:
+    enabled: true
+    cyberark_audit_forwarding: true
+
+  ticketing:
+    provider: "ServiceNow"
+    cyberark_integration: true

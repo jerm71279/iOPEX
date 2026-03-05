@@ -1,0 +1,41 @@
+server:
+  port: 8443
+
+spring:
+  application:
+    name: pam-dx-portal
+  thymeleaf:
+    cache: false
+
+# PAM Vendor Configuration
+# Switch active vendor by changing this value or setting PAM_ACTIVE_VENDOR env var
+pam:
+  active-vendor: ${PAM_ACTIVE_VENDOR:cyberark}
+  cyberark:
+    base-url: ${CYBERARK_BASE_URL:https://pvwa.company.com/PasswordVault/api}
+    auth-type: ${CYBERARK_AUTH_TYPE:cyberark}
+  delinea:
+    base-url: ${DELINEA_BASE_URL:https://ss.company.com/SecretServer}
+  strongdm:
+    api-url: ${STRONGDM_API_URL:https://app.strongdm.com}
+
+# Credentials are ALWAYS via environment variables — never in this file:
+# CYBERARK_USERNAME, CYBERARK_PASSWORD
+# DELINEA_CLIENT_ID, DELINEA_CLIENT_SECRET
+# STRONGDM_API_KEY, STRONGDM_API_SECRET
+
+# OpenAPI / Swagger
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

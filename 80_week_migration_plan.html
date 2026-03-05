@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>80-Week PAM Migration Plan — Multi-Agent AI Orchestration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #060D16;
+  --bg-card: #0A1628;
+  --bg-card-hover: #0D2137;
+  --bg-surface: #081422;
+  --border: #1E3050;
+  --border-light: #1A2A42;
+  --blue: #3B82F6;
+  --blue-dim: rgba(59, 130, 246, 0.15);
+  --green: #06D6A0;
+  --green-dim: rgba(6, 214, 160, 0.15);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.15);
+  --red: #EF4444;
+  --red-dim: rgba(239, 68, 68, 0.15);
+  --purple: #A855F7;
+  --purple-dim: rgba(168, 85, 247, 0.15);
+  --cyan: #00C8E8;
+  --cyan-dim: rgba(0, 200, 232, 0.15);
+  --text-bright: #F1F5F9;
+  --text-standard: #CBD5E1;
+  --text-muted: #64748B;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  --teal: #14B8A6;
+  --teal-dim: rgba(20, 184, 166, 0.15);
+  --rose: #F472B6;
+  --rose-dim: rgba(244, 114, 182, 0.15);
+  --radius: 8px;
+  --transition: 0.3s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-standard);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── Header ────────────────────────────────────────── */
+.header { text-align: center; padding: 48px 0 32px; }
+.header h1 { font-size: 2.2rem; font-weight: 800; color: var(--text-bright); margin-bottom: 6px; letter-spacing: -0.5px; }
+.header .subtitle { font-size: 1.05rem; color: var(--cyan); font-weight: 500; margin-bottom: 20px; }
+
+.stats-bar { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.stat { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); padding: 5px 14px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg-card); }
+.stat strong { color: var(--text-standard); }
+
+/* ── Option Toggle ────────────────────────────────── */
+.option-toggle { display: flex; justify-content: center; gap: 0; margin: 24px 0 8px; }
+.opt-btn {
+  font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600;
+  padding: 10px 28px; border: 1px solid var(--border); cursor: pointer;
+  background: var(--bg-card); color: var(--text-muted); transition: all var(--transition);
+}
+.opt-btn:first-child { border-radius: 8px 0 0 8px; }
+.opt-btn:last-child { border-radius: 0 8px 8px 0; }
+.opt-btn.active-a { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+.opt-btn.active-b { background: var(--cyan-dim); color: var(--cyan); border-color: var(--cyan); }
+.opt-diff { font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-bottom: 20px; font-family: var(--font-mono); }
+
+/* ── Controls ─────────────────────────────────────── */
+.controls { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
+.controls button {
+  font-family: var(--font-sans); font-size: 0.78rem; font-weight: 500;
+  color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 12px; cursor: pointer; transition: all var(--transition);
+}
+.controls button:hover { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-dim); }
+
+/* ── Gantt Overview ───────────────────────────────── */
+.gantt-container { overflow-x: auto; margin-bottom: 40px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); }
+.gantt-header { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-surface); }
+.gantt-header h3 { font-size: 0.85rem; color: var(--text-bright); font-weight: 700; flex: 1; }
+.gantt-body { padding: 16px; min-width: 900px; }
+
+.gantt-row { display: flex; align-items: center; margin-bottom: 6px; }
+.gantt-label { width: 140px; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-align: right; padding-right: 12px; }
+.gantt-track { flex: 1; display: flex; height: 22px; position: relative; min-width: 2240px; }
+.gantt-bar { height: 100%; border-radius: 3px; position: absolute; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.15s; }
+.gantt-bar:hover { transform: scaleY(1.25); z-index: 10; box-shadow: 0 0 12px currentColor; }
+
+.gantt-weeks { flex: 1; display: flex; min-width: 2240px; }
+.gantt-week-cell { flex: 0 0 28px; text-align: center; font-family: var(--font-mono); font-size: 0.55rem; color: var(--text-muted); border-left: 1px solid rgba(30,48,80,0.4); padding: 2px 0; }
+.gantt-week-cell:nth-child(4n+1) { color: var(--text-standard); font-weight: 600; }
+
+.gantt-milestone { position: absolute; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid var(--amber); top: 50%; transform: translate(-50%, -50%); z-index: 5; }
+.gantt-gate { position: absolute; width: 16px; height: 16px; background: var(--red-dim); border: 2px solid var(--red); border-radius: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; display: flex; align-items: center; justify-content: center; font-size: 7px; color: var(--red); font-weight: 800; cursor: help; }
+
+/* ── Section Headers ──────────────────────────────── */
+.section-header { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+/* ── Phase Cards ──────────────────────────────────── */
+.phase-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--cyan);
+  border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; transition: border-color var(--transition);
+}
+.phase-card.risk-high { border-left-color: var(--red); }
+.phase-card.risk-medium { border-left-color: var(--amber); }
+.phase-card.risk-low { border-left-color: var(--green); }
+
+.card-header {
+  display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+  cursor: pointer; user-select: none; transition: background var(--transition);
+}
+.card-header:hover { background: var(--bg-card-hover); }
+
+.phase-badge { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.phase-badge.risk-low { background: var(--green-dim); color: var(--green); }
+.phase-badge.risk-medium { background: var(--amber-dim); color: var(--amber); }
+.phase-badge.risk-high { background: var(--red-dim); color: var(--red); }
+
+.card-title-group { flex: 1; }
+.card-title { font-size: 1rem; font-weight: 600; color: var(--text-bright); }
+.card-summary { font-size: 0.82rem; color: var(--text-muted); margin-top: 1px; }
+.card-weeks { font-family: var(--font-mono); font-size: 0.72rem; color: var(--purple); font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.expand-icon { font-size: 1.3rem; color: var(--text-muted); transition: transform var(--transition); flex-shrink: 0; width: 20px; text-align: center; }
+.phase-card.open .expand-icon { transform: rotate(45deg); }
+
+.card-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+.phase-card.open .card-body { max-height: 8000px; }
+.card-content { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+
+/* ── Week Blocks ──────────────────────────────────── */
+.week-grid { display: grid; gap: 10px; margin-top: 14px; }
+.week-block { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
+.week-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--cyan); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.week-label .agents-tag { font-size: 0.65rem; color: var(--purple); background: var(--purple-dim); padding: 1px 6px; border-radius: 3px; }
+
+.task-list { list-style: none; padding: 0; }
+.task-list li { position: relative; padding: 3px 0 3px 16px; font-size: 0.85rem; color: var(--text-standard); line-height: 1.5; }
+.task-list li::before { content: '>'; position: absolute; left: 0; color: var(--cyan); font-family: var(--font-mono); font-weight: 600; font-size: 0.75rem; }
+.task-list li code { font-family: var(--font-mono); font-size: 0.75rem; color: var(--cyan); background: var(--cyan-dim); padding: 0 5px; border-radius: 3px; }
+.task-list li strong { color: var(--text-bright); font-weight: 600; }
+
+/* ── Human Gates ──────────────────────────────────── */
+.human-gate {
+  margin: 12px 0; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem;
+  background: var(--red-dim); border: 1px solid rgba(239,68,68,0.3); border-left: 3px solid var(--red);
+}
+.human-gate .gate-title { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--red); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.human-gate .gate-title::before { content: '\u25CF'; }
+.human-gate p { color: var(--text-standard); font-size: 0.8rem; margin: 0; }
+.human-gate .gate-deps { font-family: var(--font-mono); font-size: 0.68rem; color: var(--amber); margin-top: 4px; }
+
+/* ── Deliverables ─────────────────────────────────── */
+.deliverables { margin: 12px 0; padding: 12px 16px; border-radius: 6px; background: rgba(6, 214, 160, 0.06); border: 1px solid rgba(6,214,160,0.2); border-left: 3px solid var(--green); }
+.deliverables .del-title { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--green); margin-bottom: 8px; letter-spacing: 0.5px; }
+.deliverables ul { list-style: none; padding: 0; margin: 0; margin-left: 40px; }
+.deliverables li { font-size: 0.82rem; color: var(--text-bright); padding: 4px 0 4px 20px; position: relative; line-height: 1.5; }
+.deliverables li::before { content: '\u2713'; position: absolute; left: 0; color: var(--green); font-weight: 700; font-size: 0.75rem; top: 6px; }
+
+/* ── Callout ──────────────────────────────────────── */
+.callout { margin: 12px 0; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; border-left: 3px solid; }
+.callout.warning { background: var(--amber-dim); border-color: var(--amber); }
+.callout.warning .callout-title { color: var(--amber); }
+.callout.critical { background: var(--red-dim); border-color: var(--red); }
+.callout.critical .callout-title { color: var(--red); }
+.callout.info { background: var(--blue-dim); border-color: var(--blue); }
+.callout.info .callout-title { color: var(--blue); }
+.callout .callout-title { font-weight: 600; margin-bottom: 3px; font-size: 0.78rem; }
+.callout p { color: var(--text-standard); font-size: 0.78rem; margin: 0; }
+
+/* ── Option-specific content ─────────────────────── */
+.opt-a-only { display: block; }
+.opt-b-only { display: none; }
+body.option-b .opt-a-only { display: none; }
+body.option-b .opt-b-only { display: block; }
+
+/* ── Milestone Summary ────────────────────────────── */
+.milestone-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.milestone-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; border-top: 3px solid var(--amber); }
+.milestone-card .ms-week { font-family: var(--font-mono); font-size: 0.68rem; color: var(--amber); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+.milestone-card .ms-name { font-size: 0.9rem; font-weight: 600; color: var(--text-bright); margin-bottom: 4px; }
+.milestone-card .ms-desc { font-size: 0.78rem; color: var(--text-muted); }
+.milestone-card .ms-gate { font-family: var(--font-mono); font-size: 0.65rem; color: var(--red); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+
+/* ── RACI Legend ───────────────────────────────────── */
+.raci-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 14px; }
+.raci-table th { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.raci-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-standard); vertical-align: top; }
+.raci-table tr:hover { background: var(--bg-card-hover); }
+.raci-r { color: var(--red); font-weight: 700; }
+.raci-a { color: var(--amber); font-weight: 700; }
+.raci-c { color: var(--cyan); font-weight: 700; }
+.raci-i { color: var(--text-muted); }
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .stats-bar { gap: 8px; }
+  .gantt-body { min-width: 600px; }
+  .milestone-grid { grid-template-columns: 1fr; }
+  .card-header { flex-wrap: wrap; }
+}
+
+/* ── Print ────────────────────────────────────────── */
+@media print {
+  :root { --bg-page: #fff; --bg-card: #f8f9fa; --bg-card-hover: #f0f1f3; --bg-surface: #f0f1f3; --border: #dee2e6; --text-bright: #1a1a1a; --text-standard: #333; --text-muted: #666; }
+  .controls { display: none; }
+  .option-toggle { display: none; }
+  .card-body { max-height: none !important; }
+  .phase-card.open .card-body { max-height: none !important; }
+  body { font-size: 9pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header">
+    <h1>80-Week PAM Migration Plan</h1>
+    <div class="subtitle">Multi-Agent AI Orchestration &mdash; Step-by-Step Execution Timeline</div>
+    <div class="stats-bar">
+      <span class="stat"><strong>80</strong> Weeks</span>
+      <span class="stat"><strong>15+2</strong> Agents</span>
+      <span class="stat"><strong>10</strong> Work Streams</span>
+      <span class="stat"><strong>17</strong> Human Gates</span>
+      <span class="stat"><strong>12</strong> Milestones</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════ OPTION TOGGLE ═══════════════ -->
+  <div class="option-toggle">
+    <button class="opt-btn active-a" id="btn-a" onclick="switchOption('a')">Option A &mdash; Delinea Platform + StrongDM</button>
+    <button class="opt-btn" id="btn-b" onclick="switchOption('b')">Option B &mdash; CyberArk Privilege Cloud</button>
+  </div>
+  <div class="opt-diff" id="opt-diff-label">22&rarr;4 permissions (granular role mapping) &bull; Secret Server REST API &bull; RPC + Distributed Engine + StrongDM</div>
+
+  <!-- ═══════════════ DATA MODEL DESCRIPTIONS ═══════════════ -->
+  <div class="callout opt-a-only info" style="margin:1rem auto; max-width:960px;">
+    <div class="callout-title">Option A Data Model &mdash; Semi-Structured (Delinea Platform + StrongDM)</div>
+    <p>Folder-based hierarchy with template-driven secrets (78 built-in + custom). 200+ granular role-level permissions + 4-tier folder permissions (Owner/Edit/Add Secret/View). Requires multiple infrastructure components: Distributed Engine (Windows, RPC/heartbeat), RabbitMQ (TCP 5671/5672), and StrongDM gateways/relays for continuous authorization. More modular and cloud-native, but more integration work.</p>
+  </div>
+  <div class="callout opt-b-only info" style="margin:1rem auto; max-width:960px;">
+    <div class="callout-title">Option B Data Model &mdash; Cohesive Relational (CyberArk Privilege Cloud)</div>
+    <p>Safe &rarr; Account &rarr; Platform model with consistent hierarchy. 22 individual permissions per safe member (1:1 from on-prem). Same PVWA REST API surface, single vendor, single API, single console. Tighter integration with less infrastructure overhead. Less work to migrate (same vendor), but less modular.</p>
+  </div>
+
+  <div class="callout info" style="margin:1rem auto; max-width:960px;">
+    <div class="callout-title">Reusable Migration Framework</div>
+    <p>This plan is a <strong>vendor-agnostic PAM migration framework</strong> &mdash; not tied to any single source or target platform. The <code>PamVendorAdapter</code> interface, multi-agent orchestration, and phased lifecycle can be applied to any PAM migration: CyberArk &rarr; Delinea, BeyondTrust &rarr; CyberArk, HashiCorp Vault &rarr; any target, etc. Options A and B demonstrate two concrete target architectures. New vendor adapters plug in without changing the portal, API, or migration agents.</p>
+  </div>
+
+  <!-- ═══════════════ GANTT OVERVIEW ═══════════════ -->
+  <div class="gantt-container">
+    <div class="gantt-header">
+      <h3>Timeline Overview &mdash; 80 Weeks</h3>
+    </div>
+    <div class="gantt-body" style="overflow-x:auto; min-width:0;">
+      <!-- Week numbers -->
+      <div class="gantt-row">
+        <div class="gantt-label">MONTH</div>
+        <div class="gantt-weeks" id="gantt-months"></div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">WEEK</div>
+        <div class="gantt-weeks" id="gantt-weeks"></div>
+      </div>
+      <!-- Phase bars -->
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--text-muted)">P0 Setup</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:0%;width:7.5%;background:var(--text-muted)">W1-6</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--green)">P1 Discovery</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:7.5%;width:15%;background:var(--green)">W7-18</div>
+          <div class="gantt-gate" style="left:22.5%" title="GATE: Discovery Sign-off">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--blue)">P2 Staging</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:22.5%;width:12.5%;background:var(--blue)">W19-28</div>
+          <div class="gantt-gate" style="left:35%" title="GATE: Staging Approved">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--purple)">P3 Structure</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:35%;width:12.5%;background:var(--purple)">W29-38</div>
+          <div class="gantt-gate" style="left:47.5%" title="GATE: Structure Approved">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--amber)">P4 Test/Pilot</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:47.5%;width:10%;background:var(--amber)">W39-46</div>
+          <div class="gantt-gate" style="left:57.5%" title="GATE: Pilot Results Approved">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--red)">P5 Production</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:57.5%;width:20%;background:var(--red)">W47-62</div>
+          <div class="gantt-gate" style="left:62.5%" title="GATE: Wave 1">G</div>
+          <div class="gantt-gate" style="left:66.25%" title="GATE: Wave 2">G</div>
+          <div class="gantt-gate" style="left:70%" title="GATE: Wave 3">G</div>
+          <div class="gantt-gate" style="left:73.75%" title="GATE: Wave 4">G</div>
+          <div class="gantt-gate" style="left:77.5%" title="GATE: Wave 5">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--cyan)">P6 Cutover</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:77.5%;width:17.5%;background:var(--cyan)">W63-76</div>
+          <div class="gantt-gate" style="left:95%" title="GATE: Cutover Approved">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--text-muted)">P7 Close-Out</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:95%;width:5%;background:var(--text-muted)">W77-80</div>
+        </div>
+      </div>
+      <!-- Cross-cutting work streams -->
+      <div class="gantt-row" style="border-top:1px dashed var(--border)">
+        <div class="gantt-label" style="color:var(--teal)">DX Portal</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:11.25%;width:83.75%;background:var(--teal)">W10-76</div>
+          <div class="gantt-gate" style="left:23.75%" title="GATE: DX Design Review (W20)">G</div>
+          <div class="gantt-gate" style="left:41.25%" title="GATE: DX MVP Walkthrough (W34)">G</div>
+          <div class="gantt-gate" style="left:91.25%" title="GATE: DX Production Cutover (W74)">G</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label" style="color:var(--rose)">Integration</div>
+        <div class="gantt-track" style="position:relative">
+          <div class="gantt-bar" style="left:22.5%;width:67.5%;background:var(--rose)">W19-72</div>
+          <div class="gantt-gate" style="left:33.75%" title="GATE: Integration Inventory Approved (W28)">G</div>
+          <div class="gantt-gate" style="left:71.25%" title="GATE: Integration Tests Green (W58)">G</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MILESTONE SUMMARY ═══════════════ -->
+  <div class="section-header">Key Milestones &amp; Human Gates</div>
+  <div class="milestone-grid">
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 6</div>
+      <div class="ms-name">Environment Ready</div>
+      <div class="ms-desc">AI Orchestration VM provisioned, credentials configured, connectivity verified</div>
+      <div class="ms-gate">GATE: Kick-off approval from project sponsor</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 18</div>
+      <div class="ms-name">Discovery Complete</div>
+      <div class="ms-desc">Full inventory, dependency map, NHI classification, gap analysis, permission audit</div>
+      <div class="ms-gate">GATE: Review discovery manifest + NHI classifications + gap findings + permission loss report</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 28</div>
+      <div class="ms-name">Staging Validated</div>
+      <div class="ms-desc">10-assertion staging pipeline passed, target environment confirmed ready</div>
+      <div class="ms-gate">GATE: Approve staging results, authorize production preparation</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 38</div>
+      <div class="ms-name">Structure Migrated</div>
+      <div class="ms-desc opt-b-only">Safes, platforms, and permissions replicated in Privilege Cloud</div>
+      <div class="ms-desc opt-a-only">Folders, templates, and permissions created in Secret Server</div>
+      <div class="ms-gate">GATE: Approve structure + permission mapping before pilot</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 46</div>
+      <div class="ms-name">Pilot Validated</div>
+      <div class="ms-desc">50 test accounts migrated, heartbeat verified, rollback tested</div>
+      <div class="ms-gate">GATE: Approve pilot results &mdash; BLOCKS all production waves</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 62</div>
+      <div class="ms-name">Production Waves Complete</div>
+      <div class="ms-desc">All 5 waves migrated (Standard, Infrastructure, NHI, NHI+CCP, Final)</div>
+      <div class="ms-gate">GATE: Per-wave approval (5 gates total), compliance review</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 76</div>
+      <div class="ms-name">Cutover Approved</div>
+      <div class="ms-desc">Parallel run complete, integrations repointed, traffic shifted to target</div>
+      <div class="ms-gate">GATE: Final cutover approval from change board</div>
+    </div>
+    <div class="milestone-card">
+      <div class="ms-week">WEEK 80</div>
+      <div class="ms-name">Migration Complete</div>
+      <div class="ms-desc">Source decommissioned, compliance report filed, project closed</div>
+      <div class="ms-gate">GATE: Final sign-off from executive sponsor + compliance officer</div>
+    </div>
+    <!-- DX + Integration Milestones -->
+    <div class="milestone-card" style="border-top-color:var(--teal)">
+      <div class="ms-week" style="color:var(--teal)">WEEK 20</div>
+      <div class="ms-name">DX Design Complete</div>
+      <div class="ms-desc">PamVendorAdapter interface finalized, UI wireframes approved, OpenAPI spec reviewed</div>
+      <div class="ms-gate">GATE: Architecture review board sign-off</div>
+    </div>
+    <div class="milestone-card" style="border-top-color:var(--teal)">
+      <div class="ms-week" style="color:var(--teal)">WEEK 34</div>
+      <div class="ms-name">DX MVP Live</div>
+      <div class="ms-desc">Portal + API operational in staging with source vendor adapter connected and functional</div>
+      <div class="ms-gate">GATE: PAM engineer + UX walkthrough approval</div>
+    </div>
+    <div class="milestone-card" style="border-top-color:var(--rose)">
+      <div class="ms-week" style="color:var(--rose)">WEEK 58</div>
+      <div class="ms-name">Integration Test Suite Green</div>
+      <div class="ms-desc">All vendor adapters passing end-to-end integration tests, replacement code validated</div>
+      <div class="ms-gate">GATE: QA sign-off on adapter coverage</div>
+    </div>
+    <div class="milestone-card" style="border-top-color:var(--teal)">
+      <div class="ms-week" style="color:var(--teal)">WEEK 74</div>
+      <div class="ms-name">DX Production Cutover</div>
+      <div class="ms-desc">Portal serving 100% traffic, all adapters live, legacy direct-access decommissioned</div>
+      <div class="ms-gate">GATE: Operations + security review sign-off</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PHASE CARDS ═══════════════ -->
+  <div class="section-header">Week-by-Week Execution Plan</div>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+  </div>
+
+  <!-- ═══════════ P0: ENVIRONMENT SETUP (Weeks 1-4) ═══════════ -->
+  <article class="phase-card risk-low" id="p0">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P0</span>
+      <div class="card-title-group">
+        <div class="card-title">Environment Setup &amp; Project Kick-off</div>
+        <div class="card-summary">Provision infrastructure, configure credentials, validate connectivity</div>
+      </div>
+      <span class="card-weeks">Weeks 1&ndash;6</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 1&ndash;3</div>
+            <ul class="task-list">
+              <li>Project kick-off meeting with all stakeholders</li>
+              <li>Provision AI Orchestration VM (Ubuntu 22.04, CIS Level 2 hardened)</li>
+              <li>Install Python 3.12, migration toolkit, dependencies</li>
+              <li>Configure <code>config.json</code> from <code>config.example.json</code></li>
+              <li>Set up environment variables for source credentials (<code>CYBERARK_USERNAME</code>, <code>CYBERARK_PASSWORD</code>)</li>
+              <li>Configure ServiceNow integration for change requests</li>
+              <li>Set up SIEM forwarding (syslog-ng TLS)</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 4&ndash;6</div>
+            <ul class="task-list">
+              <li class="opt-b-only">Configure Privilege Cloud tenant credentials (<code>PCLOUD_CLIENT_ID</code>, <code>PCLOUD_CLIENT_SECRET</code>)</li>
+              <li class="opt-b-only">Deploy Connector Server(s) in target network segments</li>
+              <li class="opt-a-only">Configure Secret Server credentials (<code>SS_CLIENT_ID</code>, <code>SS_CLIENT_SECRET</code>)</li>
+              <li class="opt-a-only">Deploy Distributed Engine(s) in target network segments</li>
+              <li class="opt-a-only">Provision StrongDM tenant + configure admin tokens</li>
+              <li class="opt-a-only">Deploy StrongDM gateway(s) in user-near network segments</li>
+              <li>Run <code>python3 cli.py preflight</code> &mdash; verify all agent connectivity</li>
+              <li>Configure <code>agent_config.json</code> (agent-specific tuning)</li>
+              <li>Initialize migration state: <code>python3 cli.py start migration-001</code></li>
+              <li>Validate audit logging (check <code>output/audit/</code> for JSON-L output)</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Project Kick-off Approval</div>
+          <p>Executive sponsor approves project charter, timeline, and resource allocation. RACI matrix signed off by all stakeholders.</p>
+          <div class="gate-deps">DEPENDENCY: Infrastructure team provisions VM + network access before Week 1 start</div>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Provisioned AI Orchestration VM with hardened baseline</li>
+            <li>Verified connectivity to source and target PAM instances</li>
+            <li>Passing preflight checks for all agents</li>
+            <li>Initialized migration state file</li>
+            <li>ServiceNow + SIEM integrations active</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P1: DISCOVERY (Weeks 5-12) ═══════════ -->
+  <article class="phase-card risk-low" id="p1">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P1</span>
+      <div class="card-title-group">
+        <div class="card-title">Discovery, Dependency Mapping &amp; NHI Classification</div>
+        <div class="card-summary">Full inventory of source environment &mdash; accounts, dependencies, NHIs, gaps, permissions</div>
+      </div>
+      <span class="card-weeks">Weeks 7&ndash;18</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 7&ndash;9 <span class="agents-tag">Agent 11</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 11 (Source Adapter)</strong> &mdash; normalize source inventory</li>
+              <li>Connect to CyberArk PVWA, extract raw account data</li>
+              <li>If multi-vendor: connect additional sources (BeyondTrust, HashiCorp, etc.)</li>
+              <li>Produce unified <code>NormalizedAccount</code> canonical inventory</li>
+              <li>Validate account count against source admin console</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 10&ndash;12 <span class="agents-tag">Agent 01</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 01 (Discovery)</strong> &mdash; full CyberArk environment scan</li>
+              <li>Enumerate all safes via <code>GET /Safes</code>, filter system safes</li>
+              <li>Enumerate platforms via <code>GET /Platforms/Targets</code></li>
+              <li>NHI detection: platform-based + name-pattern + safe-pattern signals</li>
+              <li>Scan CCP/AAM integrations via <code>GET /Applications</code></li>
+              <li>Output: discovery manifest (accounts, safes, platforms, NHIs, integrations)</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 13&ndash;15 <span class="agents-tag">Agents 09, 12</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 09 (Dependency Mapper)</strong> &mdash; build dependency graph</li>
+              <li>Scan IIS logs for CCP/AAM connection strings</li>
+              <li>Map application &rarr; account &rarr; safe &rarr; platform dependencies</li>
+              <li>Identify NHI dependency chains that must migrate together</li>
+              <li><strong>Agent 12 (NHI Handler)</strong> &mdash; classify all NHIs</li>
+              <li>Weighted multi-signal scoring (platform 0.35, name 0.20, container 0.10, dependency 0.25, audit 0.10)</li>
+              <li>Generate rotation policies per NHI type</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; NHI Classification Review</div>
+              <p>SME validates high-risk NHI classifications. Confirm NHI owners, dependency chains, and rotation requirements before proceeding.</p>
+              <div class="gate-deps">DEPENDENCY: Application owners must confirm NHI ownership within 5 business days</div>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 16&ndash;18 <span class="agents-tag">Agents 02, 03</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 02 (Gap Analysis)</strong> &mdash; 10-domain maturity assessment</li>
+              <li>Score auth, session, lifecycle, platform, CPM, safe structure, permissions, NHI, integration, audit</li>
+              <li>Map to 4 compliance frameworks (PCI-DSS, NIST, HIPAA, SOX)</li>
+              <li class="opt-b-only">Identify Cloud CPM connectivity requirements per network segment</li>
+              <li class="opt-a-only">Identify Secret Server template coverage gaps against CyberArk platforms</li>
+              <li><strong>Agent 03 (Permissions)</strong> &mdash; permission audit</li>
+              <li class="opt-b-only">Verify 22 CyberArk permissions map 1:1 to Privilege Cloud (same model)</li>
+              <li class="opt-a-only">Map 22 CyberArk safe permissions to 4 SS folder roles (Owner, Edit, Add Secret, View) + 200+ system role permissions; track folder-level changes, flag escalation risks</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Discovery Sign-off (Week 18)</div>
+          <p>Review and approve: discovery manifest, dependency graph, NHI classifications, gap analysis scores, and permission audit report. All must be signed off before Phase 2 begins.</p>
+          <div class="gate-deps opt-b-only">DEPENDENCY: Privilege Cloud tenant must be provisioned before P2. Network team must confirm Connector Server firewall rules.</div>
+          <div class="gate-deps opt-a-only">DEPENDENCY: Secret Server instance must be deployed before P2. Network team must confirm Distributed Engine firewall rules. Custom template creation for unmapped platforms must be scheduled.</div>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Discovery manifest (JSON): accounts, safes, platforms, NHIs, integrations</li>
+            <li>Dependency graph (JSON): application &rarr; account mappings, migration ordering constraints</li>
+            <li>NHI classification report: confidence scores, rotation policies, owner assignments</li>
+            <li>Gap analysis report: 10-domain scores, compliance mapping, remediation priorities</li>
+            <li class="opt-b-only">Permission verification report: 22&rarr;22 parity confirmed</li>
+            <li class="opt-a-only">Permission mapping report: 22&rarr;4 folder roles + 200+ role permissions, escalation risk analysis</li>
+            <li>Wave classification: 5-wave migration order based on risk and dependencies</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P2: INFRASTRUCTURE & STAGING (Weeks 13-18) ═══════════ -->
+  <article class="phase-card risk-medium" id="p2">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P2</span>
+      <div class="card-title-group">
+        <div class="card-title">Infrastructure, Platform Validation &amp; Staging</div>
+        <div class="card-summary">Deploy target infrastructure, validate platforms, run 10-assertion staging pipeline</div>
+      </div>
+      <span class="card-weeks">Weeks 19&ndash;28</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 19&ndash;22</div>
+            <ul class="task-list">
+              <li class="opt-b-only"><strong>Privilege Cloud tenant setup</strong></li>
+              <li class="opt-b-only">Configure ISPSS Identity / OAuth2 authentication</li>
+              <li class="opt-b-only">Verify Connector Server connectivity to all target networks</li>
+              <li class="opt-b-only">Configure Cloud CPM policies</li>
+              <li class="opt-a-only"><strong>Secret Server + StrongDM deployment</strong></li>
+              <li class="opt-a-only">Configure OAuth2 authentication (client_credentials)</li>
+              <li class="opt-a-only">Deploy Distributed Engines in all target network segments</li>
+              <li class="opt-a-only">Deploy StrongDM relays in resource-near segments</li>
+              <li class="opt-a-only">Configure Cedar authorization policies for session access</li>
+              <li class="opt-a-only">Create custom templates for unmapped CyberArk platforms</li>
+              <li>Configure backup and DR strategy for target</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 23&ndash;25 <span class="agents-tag">Agent 13</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 13 (Platform Plugins)</strong> &mdash; validate platforms</li>
+              <li class="opt-b-only">Verify Privilege Cloud platform policies match on-prem CyberArk</li>
+              <li class="opt-b-only">Deploy custom connection components for non-standard platforms</li>
+              <li class="opt-b-only">Verify Connector Server placement per target segment</li>
+              <li class="opt-a-only">Validate Secret Server template coverage against all CyberArk platforms</li>
+              <li class="opt-a-only">Deploy RPC connection components per template type</li>
+              <li class="opt-a-only">Verify Distributed Engine placement per target segment</li>
+              <li class="opt-a-only">Validate StrongDM session recording for target protocols</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 26&ndash;28 <span class="agents-tag">Agent 10</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 10 (Staging Validation)</strong> &mdash; 10-assertion pipeline</li>
+              <li class="opt-b-only">1. Create test safe &rarr; 2. Add safe member &rarr; 3. Import test account</li>
+              <li class="opt-b-only">4. Retrieve password &rarr; 5. Verify heartbeat &rarr; 6. Check permissions</li>
+              <li class="opt-a-only">1. Create test folder &rarr; 2. Set folder permission &rarr; 3. Create test secret</li>
+              <li class="opt-a-only">4. Retrieve password &rarr; 5. Heartbeat (RPC) &rarr; 6. Check permissions</li>
+              <li>7. Validate platform &rarr; 8. Test audit log &rarr; 9. Verify metadata</li>
+              <li>10. Confirm rollback (all staging artifacts cleaned up)</li>
+              <li><strong>Hard-blocks production</strong> &mdash; Agent 04 will not start without passing report</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="callout warning">
+          <div class="callout-title">ARC-08 Enforcement</div>
+          <p>Agent 04 Migration Pipeline enforces ARC-08: production migration cannot begin without both Agent 09 dependency map AND Agent 10 staging pass. These are hard prerequisites checked at runtime.</p>
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Staging Approval (Week 28)</div>
+          <p>Review Agent 10 staging validation report. All 10 assertions must pass. Approve target environment readiness before safe/folder structure migration begins.</p>
+          <div class="gate-deps">DEPENDENCY: Infrastructure team must resolve any staging failures before re-running Agent 10</div>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Target environment deployed and configured</li>
+            <li>Platform/template validation report (Agent 13)</li>
+            <li>Staging validation report: 10/10 assertions passed (Agent 10)</li>
+            <li>Network connectivity confirmed for all target segments</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P3: STRUCTURE MIGRATION (Weeks 19-24) ═══════════ -->
+  <article class="phase-card risk-low" id="p3">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P3</span>
+      <div class="card-title-group">
+        <div class="card-title opt-b-only">Safe &amp; Policy Migration + App Onboarding Setup</div>
+        <div class="card-title opt-a-only">Folder &amp; Template Migration + App Onboarding Setup</div>
+        <div class="card-summary">Replicate organizational structure in target, onboard new applications</div>
+      </div>
+      <span class="card-weeks">Weeks 47&ndash;62</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 29&ndash;32 <span class="agents-tag">Agent 03</span></div>
+            <ul class="task-list">
+              <li class="opt-b-only"><strong>Agent 03 (Permissions)</strong> &mdash; create safes in Privilege Cloud</li>
+              <li class="opt-b-only">Create safes via <code>POST /Safes</code> (same names, same structure)</li>
+              <li class="opt-b-only">Map platform policies via <code>POST /Platforms/Targets</code></li>
+              <li class="opt-b-only">Apply permissions via <code>POST /Safes/{name}/Members</code> (22 permissions, 1:1)</li>
+              <li class="opt-a-only"><strong>Agent 03 (Permissions)</strong> &mdash; create folders in Secret Server</li>
+              <li class="opt-a-only">Create parent <code>/Imported/</code> folder via <code>POST /api/v1/folders</code></li>
+              <li class="opt-a-only">Create per-safe child folders: <code>/Imported/{SafeName}/</code></li>
+              <li class="opt-a-only">Apply translated permissions via <code>POST /api/v1/folder-permissions</code></li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 33&ndash;35 <span class="agents-tag">Agent 14</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 14 (Onboarding)</strong> &mdash; onboard new applications</li>
+              <li>10-step pipeline: validate &rarr; create structure &rarr; permissions &rarr; resolve template</li>
+              <li>Create accounts/secrets &rarr; assign engine &rarr; set rotation &rarr; verify heartbeat</li>
+              <li>Generate retrieval instructions for application teams</li>
+              <li class="opt-b-only">Application identity configured via ISPSS Identity Admin portal</li>
+              <li class="opt-a-only">Auto-change configured via SS Admin UI (no dedicated API)</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 36&ndash;38</div>
+            <ul class="task-list">
+              <li><strong>Verification and remediation</strong></li>
+              <li class="opt-b-only">Verify all safes created with correct permissions</li>
+              <li class="opt-b-only">Confirm platform policy alignment between source and target</li>
+              <li class="opt-a-only">Verify all folders created with correct role assignments</li>
+              <li class="opt-a-only">Confirm template mapping covers all account types</li>
+              <li>Remediate any structure issues identified during verification</li>
+              <li>Prepare pilot wave: select 50 test/dev accounts across 3+ safes</li>
+              <li>Submit ServiceNow change request for pilot migration window</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Structure Approval (Week 38)</div>
+          <p>Review and approve organizational structure in target environment. Verify permission mappings are correct. Submit change request for pilot migration window.</p>
+          <div class="gate-deps">DEPENDENCY: Change Advisory Board must approve pilot change request. Application owners must acknowledge onboarding results.</div>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li class="opt-b-only">All safes created in Privilege Cloud with 1:1 permission parity</li>
+            <li class="opt-a-only">All folders created in Secret Server with translated role assignments</li>
+            <li>Application onboarding results (Agent 14 report)</li>
+            <li>Structure verification report</li>
+            <li>Approved ServiceNow change request for pilot window</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P4: TEST / PILOT MIGRATION (Weeks 25-28) ═══════════ -->
+  <article class="phase-card risk-medium" id="p4">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P4</span>
+      <div class="card-title-group">
+        <div class="card-title">Test Migration &amp; Pilot Validation</div>
+        <div class="card-summary">Migrate 50 test/dev accounts, validate end-to-end pipeline, confirm rollback capability</div>
+      </div>
+      <span class="card-weeks">Weeks 63&ndash;76</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="callout info">
+          <div class="callout-title">Test Phase &rarr; Production Gate</div>
+          <p>This phase is the <strong>mandatory test</strong> before any production data moves. Agent 04 Migration Pipeline runs a full pipeline cycle against 50 low-risk accounts. Results must be approved before production waves (P5) begin. Failed pilot = no production migration.</p>
+        </div>
+
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 39&ndash;42 <span class="agents-tag">Agent 04</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 04 (Migration Pipeline)</strong> &mdash; pilot wave execution</li>
+              <li>Select 50 test/dev accounts across multiple safes</li>
+              <li class="opt-b-only"><strong>5-step pipeline</strong>: Freeze &rarr; Export &rarr; Transform (URL rewrite only) &rarr; Import &rarr; Unfreeze</li>
+              <li class="opt-a-only"><strong>7-step pipeline</strong>: Freeze &rarr; Export &rarr; Transform (field mapping) &rarr; Create Folders &rarr; Import &rarr; Heartbeat &rarr; Unfreeze</li>
+              <li>Watchdog timer active (120 min default)</li>
+              <li>Emergency unfreeze on any exception</li>
+              <li>Verify: zero password retrieval failures (skip, never import empty)</li>
+              <li>Validate pilot accounts accessible in target environment</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 43&ndash;46 <span class="agents-tag">Agent 05</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 05 (Heartbeat)</strong> &mdash; 10-check validation</li>
+              <li>Count comparison: source vs target (within 1% threshold)</li>
+              <li class="opt-b-only">Heartbeat via <code>POST /Accounts/{id}/Verify</code> (Cloud CPM)</li>
+              <li class="opt-a-only">Heartbeat via <code>POST /api/v1/secrets/{id}/heartbeat</code> (RPC)</li>
+              <li>Permission verification: confirm mappings match source</li>
+              <li>Metadata integrity: all fields intact</li>
+              <li>Audit trail: target has entries for migrated accounts</li>
+              <li><strong>Test rollback procedure</strong>: remove pilot accounts from target, verify source unfrozen</li>
+              <li>Document any issues, remediation steps, and timing metrics</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Pilot Results Approval (Week 46)</div>
+          <p><strong>This is the critical production gate.</strong> Review pilot migration results: account counts, heartbeat success rate (&gt;95% required), permission accuracy, and metadata integrity. Failed pilot = production waves blocked.</p>
+          <div class="gate-deps">DEPENDENCY: Application owners for pilot accounts must confirm access works in target. Change board must approve production migration window. Rollback procedure must be documented and tested.</div>
+        </div>
+
+        <div class="callout critical">
+          <div class="callout-title">Production Blocker</div>
+          <p>If pilot heartbeat success rate is below 95%, production waves (P5) cannot proceed. Resolve root cause, re-run pilot, and re-approve before continuing.</p>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Pilot migration pipeline execution report (Agent 04): 50 accounts, timing, error rate</li>
+            <li>Pilot validation report (Agent 05): 10-check results, heartbeat success rate</li>
+            <li>Rollback procedure: documented and tested</li>
+            <li>Timing metrics: per-account migration speed for production capacity planning</li>
+            <li>Approved ServiceNow change request for production waves</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P5: PRODUCTION WAVES (Weeks 29-38) ═══════════ -->
+  <article class="phase-card risk-high" id="p5">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-high">P5</span>
+      <div class="card-title-group">
+        <div class="card-title">Production Migration &mdash; 5 Waves</div>
+        <div class="card-summary">Wave-based production migration with per-wave human approval gates</div>
+      </div>
+      <span class="card-weeks">Weeks 47&ndash;62</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="callout warning">
+          <div class="callout-title">Per-Wave Approval Required</div>
+          <p>Each wave requires human approval before the next wave begins. Wave results include heartbeat success rate, error count, and timing. Failed wave (>10% errors) triggers investigation before proceeding.</p>
+        </div>
+
+        <div class="week-grid" style="grid-template-columns: 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 47&ndash;50 <span class="agents-tag">Agents 04, 05</span></div>
+            <ul class="task-list">
+              <li><strong>WAVE 1: Standard Accounts</strong> (Test/Dev environments, low-risk service accounts)</li>
+              <li>Agent 04 Migration Pipeline: batch migration with freeze/export/transform/import/unfreeze pipeline</li>
+              <li>Agent 05 Heartbeat: validate all Wave 1 accounts post-migration</li>
+              <li>Expected volume: 20-30% of total accounts</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Wave 1 Approval</div>
+              <p>Review Wave 1 results. Heartbeat success rate &gt;95% required. Approve before Wave 2.</p>
+              <div class="gate-deps">DEPENDENCY: Application owners confirm Wave 1 accounts functional in target</div>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 51&ndash;53 <span class="agents-tag">Agents 04, 05</span></div>
+            <ul class="task-list">
+              <li><strong>WAVE 2: Infrastructure Accounts</strong> (Domain admins, database service accounts, network infrastructure)</li>
+              <li>Higher risk &mdash; tighter change window, dedicated rollback team on standby</li>
+              <li>Agent 04 Migration Pipeline + Agent 05 Heartbeat validation</li>
+              <li>Expected volume: 15-20% of total accounts</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Wave 2 Approval</div>
+              <p>Review Wave 2 results. Infrastructure team validates critical service accounts. Approve before Wave 3.</p>
+              <div class="gate-deps">DEPENDENCY: NOC team on standby during Wave 2 migration window</div>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 54&ndash;56 <span class="agents-tag">Agents 04, 05, 12</span></div>
+            <ul class="task-list">
+              <li><strong>WAVE 3: NHIs Without CCP/AAM</strong> (Service accounts, API keys without active integrations)</li>
+              <li>Agent 12 NHI Handler provides rotation policies for migrated NHIs</li>
+              <li>Agent 04 Migration Pipeline respects dependency graph ordering from Agent 09</li>
+              <li>Expected volume: 15-25% of total accounts</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Wave 3 Approval</div>
+              <p>SME validates NHI accounts functional post-migration. Rotation policies confirmed active. Approve before Wave 4.</p>
+              <div class="gate-deps">DEPENDENCY: NHI owners must validate service continuity within 48 hours of migration</div>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 57&ndash;59 <span class="agents-tag">Agents 04, 05, 06</span></div>
+            <ul class="task-list">
+              <li><strong>WAVE 4: NHIs With CCP/AAM Integrations</strong> (Highest risk &mdash; active application dependencies)</li>
+              <li>Agent 06 (Integration) prepares replacement code templates before migration</li>
+              <li>Coordinate with application owners for integration cutover window</li>
+              <li>Migrate accounts &rarr; update integration code &rarr; validate end-to-end</li>
+              <li>Expected volume: 10-15% of total accounts</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Wave 4 Approval</div>
+              <p>Application owners validate CCP/AAM integrations working with new target. This is the highest-risk wave. Approve before Wave 5.</p>
+              <div class="gate-deps">DEPENDENCY: Each application owner must sign off on their integration. Developer testing time must be scheduled in advance.</div>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 60&ndash;62 <span class="agents-tag">Agents 04, 05, 07, 14</span></div>
+            <ul class="task-list">
+              <li><strong>WAVE 5: Final Cleanup + Compliance</strong></li>
+              <li>Migrate remaining accounts (stragglers, exceptions, manual remediation)</li>
+              <li>Agent 14 (Onboarding): onboard any newly discovered applications from P5</li>
+              <li>Agent 07 (Compliance): comprehensive compliance report</li>
+              <li>Map evidence to PCI-DSS v4.0, NIST 800-53 Rev5, HIPAA Security Rule, SOX IT Controls</li>
+              <li>Verify 100% account coverage: source count = target count</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Production Waves Complete</div>
+              <p>Review final compliance report. Verify 100% account coverage. Approve transition to parallel running phase.</p>
+              <div class="gate-deps">DEPENDENCY: Compliance officer reviews Agent 07 report. All application owners confirm functionality.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Per-wave migration pipeline reports (Agent 04): account counts, error rates, timing</li>
+            <li>Per-wave validation reports (Agent 05): 10-check results per wave</li>
+            <li>Compliance report (Agent 07): 4-framework evidence mapping</li>
+            <li>Integration change registry (Agent 06): all CCP/AAM modifications tracked</li>
+            <li>Final account reconciliation: source count = target count</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P6: PARALLEL RUNNING & CUTOVER (Weeks 39-46) ═══════════ -->
+  <article class="phase-card risk-medium" id="p6">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P6</span>
+      <div class="card-title-group">
+        <div class="card-title">Parallel Running, Integration Cutover &amp; Traffic Shift</div>
+        <div class="card-summary">Dual-environment operation, gradual traffic shift, integration repointing, cutover decision</div>
+      </div>
+      <span class="card-weeks">Weeks 63&ndash;76</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 63&ndash;66 <span class="agents-tag">Agent 15</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 15 (Hybrid Fleet)</strong> &mdash; parallel-run setup</li>
+              <li>Configure dual-environment monitoring (source + target)</li>
+              <li>Set initial traffic routing: 10% to target, 90% to source</li>
+              <li>Monitor for discrepancies between environments</li>
+              <li>Cutover threshold configured: 99% success rate required</li>
+              <li>Automatic rollback triggers if failure threshold exceeded</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 67&ndash;69 <span class="agents-tag">Agent 06</span></div>
+            <ul class="task-list">
+              <li><strong>Agent 06 (Integration)</strong> &mdash; repoint remaining integrations</li>
+              <li class="opt-b-only">Repoint CCP/AAM integrations to Privilege Cloud API</li>
+              <li class="opt-b-only">Most integrations: URL change only (same API surface)</li>
+              <li class="opt-b-only">Certificate-based auth &rarr; update to ISPSS OAuth2 tokens</li>
+              <li class="opt-a-only">Repoint all CCP/AAM integrations to Secret Server REST API or StrongDM proxy</li>
+              <li class="opt-a-only"><strong>Full re-architecture</strong>: different auth model (OAuth2), different endpoints, different data format</li>
+              <li class="opt-a-only">Deploy generated replacement code (Python, PowerShell, C#, Java)</li>
+              <li class="opt-a-only">Configure StrongDM JIT access policies for privileged sessions</li>
+              <li>Update change registry for each integration</li>
+              <li>Application teams test each integration end-to-end</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Integration Cutover</div>
+              <p>Each application owner must confirm their integration works with the target environment. Developer sign-off required per application.</p>
+              <div class="gate-deps">DEPENDENCY: Developer testing windows scheduled. Rollback code prepared for each integration.</div>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 70&ndash;72 <span class="agents-tag">Agent 15</span></div>
+            <ul class="task-list">
+              <li><strong>Gradual traffic shift</strong></li>
+              <li>Week 70: Shift to 50% target / 50% source</li>
+              <li>Week 72: Shift to 90% target / 10% source</li>
+              <li>Monitor error rates, latency, and access patterns</li>
+              <li>Agent 15 flags any discrepancies for human review</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 73&ndash;76 <span class="agents-tag">Agents 05, 07, 15</span></div>
+            <ul class="task-list">
+              <li><strong>Cutover decision</strong></li>
+              <li>Agent 05: final validation pass on all migrated accounts</li>
+              <li>Agent 07: final compliance report with parallel-run evidence</li>
+              <li>Agent 15: cutover recommendation based on success metrics</li>
+              <li>Shift to 100% target traffic</li>
+              <li>Set source environment to <strong>read-only</strong></li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Cutover Approval (Week 76)</div>
+          <p>Change Advisory Board reviews: final validation report, compliance evidence, parallel-run metrics, integration sign-offs. Approve transition to decommission phase.</p>
+          <div class="gate-deps">DEPENDENCY: All application owners signed off. Compliance officer approved. Executive sponsor approved. Source environment set to read-only.</div>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Parallel-run metrics report (Agent 15): error rates, traffic distribution, discrepancies</li>
+            <li>Integration cutover registry (Agent 06): all applications repointed, developer sign-offs</li>
+            <li>Final validation report (Agent 05): 100% account coverage, heartbeat pass rate</li>
+            <li>Final compliance report (Agent 07): all 4 frameworks with evidence</li>
+            <li>Cutover approval record (ServiceNow change request closed)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ P7: DECOMMISSION & CLOSE-OUT (Weeks 77-80) ═══════════ -->
+  <article class="phase-card risk-medium" id="p7">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P7</span>
+      <div class="card-title-group">
+        <div class="card-title">Decommission &amp; Project Close-Out</div>
+        <div class="card-summary">Archive source data, decommission infrastructure, final compliance sign-off</div>
+      </div>
+      <span class="card-weeks">Weeks 77&ndash;80</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 77&ndash;78 <span class="agents-tag">Agent 07</span></div>
+            <ul class="task-list">
+              <li><strong>Archive source environment data</strong></li>
+              <li class="opt-b-only">Migrate audit logs to Privilege Cloud (CyberArk provides migration tools)</li>
+              <li class="opt-b-only">Transfer PSM session recordings to Privilege Cloud storage</li>
+              <li class="opt-a-only">Export audit logs via <code>GET /Activities</code> &mdash; archive for retention period</li>
+              <li class="opt-a-only">Archive PSM session recordings (StrongDM replaces session recording going forward)</li>
+              <li>Agent 07: generate final compliance close-out report</li>
+              <li>Document lessons learned and migration metrics</li>
+              <li>Knowledge transfer to operations team</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label">WEEKS 79&ndash;80 <span class="agents-tag">Agent 08</span></div>
+            <ul class="task-list">
+              <li><strong>Decommission sequence</strong> (ordered, with approval at each step):</li>
+              <li class="opt-b-only">&nbsp;&nbsp;1. PSM/PSMP servers (sessions handled by Privilege Cloud)</li>
+              <li class="opt-b-only">&nbsp;&nbsp;2. CPM servers (Cloud CPM manages rotation)</li>
+              <li class="opt-b-only">&nbsp;&nbsp;3. PVWA servers (Privilege Cloud portal replaces)</li>
+              <li class="opt-b-only">&nbsp;&nbsp;4. Vault server (LAST &mdash; only after all data confirmed migrated)</li>
+              <li class="opt-a-only">&nbsp;&nbsp;1. PSM/PSMP servers (StrongDM session recording replaces)</li>
+              <li class="opt-a-only">&nbsp;&nbsp;2. CPM servers (SS RPC + Distributed Engine handles rotation)</li>
+              <li class="opt-a-only">&nbsp;&nbsp;3. PVWA servers (SS web UI + StrongDM portal replaces)</li>
+              <li class="opt-a-only">&nbsp;&nbsp;4. Vault server (LAST &mdash; maintain read-only for audit retention)</li>
+              <li>Agent 08 (Runbook): phase gate management, advance/block decisions</li>
+              <li>Decommission AI Orchestration VM (or repurpose for operations)</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="callout opt-a-only critical">
+          <div class="callout-title">CyberArk Read-Only Retention</div>
+          <p>Keep CyberArk running in read-only mode for the audit retention period (1-7 years depending on compliance framework). Audit logs and PSM recordings do NOT transfer to Secret Server. Do not decommission until all audit obligations are met.</p>
+        </div>
+
+        <div class="callout opt-b-only info">
+          <div class="callout-title">Audit Continuity</div>
+          <p>CyberArk-to-Privilege Cloud migration preserves audit log continuity and PSM session recordings. No data loss and no need to maintain a read-only CyberArk instance for audit compliance.</p>
+        </div>
+
+        <div class="human-gate">
+          <div class="gate-title">HUMAN GATE &mdash; Final Sign-off (Week 80)</div>
+          <p>Executive sponsor + compliance officer + security team sign final project closure. All deliverables archived. Migration state file preserved for audit trail.</p>
+          <div class="gate-deps">DEPENDENCY: Legal/compliance confirms audit retention requirements met. Infrastructure team confirms decommission sequence complete.</div>
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Archived audit logs and PSM recordings</li>
+            <li>Final compliance close-out report (Agent 07)</li>
+            <li>Lessons learned document</li>
+            <li>Operations handoff: runbooks, training materials, escalation procedures</li>
+            <li>Decommission confirmation: all source infrastructure removed</li>
+            <li>Project closure report signed by executive sponsor</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ DX: DIGITAL EXPERIENCE PORTAL & API (Weeks 10–76) ═══════════ -->
+  <article class="phase-card risk-low" id="dx" style="border-left-color:var(--teal)">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge" style="background:var(--teal-dim); color:var(--teal); border-color:var(--teal)">DX</span>
+      <div class="card-title-group">
+        <div class="card-title">Digital Experience &mdash; Unified PAM Portal &amp; API Gateway</div>
+        <div class="card-summary">Vendor-agnostic Java/Spring Boot portal + REST API with PamVendorAdapter abstraction. Cross-cutting work stream running parallel to P1&ndash;P6.</div>
+      </div>
+      <span class="card-weeks">Weeks 10&ndash;76</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--teal)">WEEKS 10&ndash;20 &mdash; DESIGN &amp; SCAFFOLD <span class="agents-tag">DX-01</span></div>
+            <ul class="task-list">
+              <li><strong>Requirements &amp; stakeholder interviews</strong> &mdash; PAM engineer, app owners, NOC</li>
+              <li>Define <code>PamVendorAdapter</code> Java interface (getSecrets, rotateCredential, checkOut, checkIn, getAuditLog, listAccounts)</li>
+              <li>UI wireframes &amp; UX review (self-service portal, session launch, credential checkout)</li>
+              <li>Spring Boot project scaffold with Thymeleaf templates, Spring Security RBAC</li>
+              <li>OpenAPI 3.0 spec for <code>/api/v1/*</code> endpoints (Swagger UI auto-generated)</li>
+              <li>CI/CD pipeline scaffold (build &rarr; test &rarr; container image &rarr; staging deploy)</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Architecture Review (Week 20)</div>
+              <p>Architecture review board approves PamVendorAdapter interface contract, OpenAPI spec, and deployment topology. Must sign off before adapter development begins.</p>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--teal)">WEEKS 21&ndash;34 &mdash; SOURCE ADAPTER &amp; MVP <span class="agents-tag">DX-01, DX-02</span></div>
+            <ul class="task-list">
+              <li><strong>Source vendor adapter</strong> &mdash; implement PamVendorAdapter for the source PAM platform</li>
+              <li class="opt-a-only">CyberArk adapter: PVWA REST API integration, safe/account CRUD, CPM rotation triggers</li>
+              <li class="opt-b-only">CyberArk adapter: PVWA REST API integration, safe/account CRUD, CPM rotation triggers</li>
+              <li>Portal CRUD screens: secrets list, detail view, credential checkout/checkin workflow</li>
+              <li>API endpoints: authentication (OAuth2/OIDC), RBAC enforcement, rate limiting</li>
+              <li>Audit trail integration: every portal/API action logged with correlation ID</li>
+              <li>Deploy to staging environment &mdash; connect to source PAM for read-only validation</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; MVP Walkthrough (Week 34)</div>
+              <p>PAM engineer + UX walkthrough of portal and API. Validate: login flow, secret browsing, credential checkout, audit log viewing. Must pass before target adapter development.</p>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--teal)">WEEKS 35&ndash;50 &mdash; TARGET ADAPTERS &amp; DUAL MODE <span class="agents-tag">DX-01, DX-02</span></div>
+            <ul class="task-list">
+              <li class="opt-a-only"><strong>Delinea adapter</strong> &mdash; Secret Server REST API, folder/template CRUD, RPC launch</li>
+              <li class="opt-a-only"><strong>StrongDM adapter</strong> &mdash; gateway proxy, Cedar policy queries, session recording hooks</li>
+              <li class="opt-b-only"><strong>CyberArk Privilege Cloud adapter</strong> &mdash; ISPSS REST API, OAuth2 tokens, Cloud CPM triggers</li>
+              <li>Dual-backend mode: portal shows source + target side-by-side during parallel running</li>
+              <li>Comparison views: permission mapping visualization, migration status per account</li>
+              <li>Session recording integration: launch sessions through portal with full audit trail</li>
+              <li>Integration test suite: adapter contract tests for all PamVendorAdapter methods</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--teal)">WEEKS 51&ndash;66 &mdash; HARDENING &amp; OBSERVABILITY <span class="agents-tag">DX-01</span></div>
+            <ul class="task-list">
+              <li><strong>Production hardening</strong> &mdash; connection pooling, circuit breakers, retry policies</li>
+              <li>Load testing: 1000+ concurrent users, API response &lt; 200ms p95</li>
+              <li>Observability stack: Prometheus metrics, Grafana dashboards, structured logging</li>
+              <li>Security hardening: OWASP dependency check, SAST scan, penetration test</li>
+              <li>Disaster recovery: multi-region failover, database backup/restore validation</li>
+              <li>Documentation: admin guide, API reference (Swagger), runbook</li>
+            </ul>
+          </div>
+
+          <div class="week-block" style="grid-column: 1 / -1;">
+            <div class="week-label" style="color:var(--teal)">WEEKS 67&ndash;76 &mdash; PRODUCTION CUTOVER <span class="agents-tag">DX-01</span></div>
+            <ul class="task-list">
+              <li><strong>Traffic shift</strong>: migrate users from direct PAM access to portal/API</li>
+              <li>Week 67&ndash;70: 25% users through portal (early adopters), monitor error rates</li>
+              <li>Week 71&ndash;73: 75% users through portal, decommission legacy bookmark/shortcuts</li>
+              <li>Week 74&ndash;76: 100% through portal, disable direct PAM API access for end users</li>
+              <li>Legacy direct-access decommission: revoke end-user API keys, redirect DNS</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; DX Production Cutover (Week 74)</div>
+              <p>Operations + security review: portal uptime SLA met, all adapters green, load test passed, security scan clean. Approve 100% traffic shift.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li><code>PamVendorAdapter</code> interface + vendor adapter JARs (CyberArk, Delinea, StrongDM)</li>
+            <li>PAM Portal WAR/container image (Spring Boot + Thymeleaf)</li>
+            <li>REST API with Swagger/OpenAPI documentation</li>
+            <li>Load test results + Grafana dashboard exports</li>
+            <li>Security assessment report (OWASP + pen test)</li>
+            <li>Admin guide + API reference + operational runbook</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════ INT: INTEGRATION WORK STREAM (Weeks 19–72) ═══════════ -->
+  <article class="phase-card risk-medium" id="int" style="border-left-color:var(--rose)">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge" style="background:var(--rose-dim); color:var(--rose); border-color:var(--rose)">INT</span>
+      <div class="card-title-group">
+        <div class="card-title">Integration &mdash; Application Repointing &amp; Adapter Migration</div>
+        <div class="card-summary">Inventory all PAM integration touchpoints, generate replacement code via PamVendorAdapter, migrate per application with developer sign-off.</div>
+      </div>
+      <span class="card-weeks">Weeks 19&ndash;72</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--rose)">WEEKS 19&ndash;28 &mdash; INTEGRATION INVENTORY <span class="agents-tag">Agent 06, Agent 09</span></div>
+            <ul class="task-list">
+              <li><strong>Full integration scan</strong> &mdash; CCP endpoints, AAM credential providers, SDK calls, CLI scripts</li>
+              <li>Dependency graph: which applications call which PAM APIs, frequency, auth method</li>
+              <li>Adapter mapping: for each integration, identify target PamVendorAdapter method</li>
+              <li>Risk classification: critical-path integrations vs. low-impact batch jobs</li>
+              <li>Developer contact registry: owner + backup for each integration point</li>
+              <li>Testing environment requirements per application team</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Integration Inventory Approved (Week 28)</div>
+              <p>PAM engineer + application owners review complete inventory. Each integration has an assigned owner, risk classification, and target adapter method. Must approve before code generation.</p>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--rose)">WEEKS 29&ndash;42 &mdash; CODE GENERATION &amp; TEST HARNESS <span class="agents-tag">Agent 06, DX-02</span></div>
+            <ul class="task-list">
+              <li><strong>Replacement code generation</strong> &mdash; adapter-based client libraries (Python, Java, C#, PowerShell)</li>
+              <li>Each generated client wraps PamVendorAdapter &rarr; applications call portal API instead of direct PAM</li>
+              <li class="opt-a-only">Generate Delinea REST + StrongDM SDK replacements for CyberArk CCP/AAM calls</li>
+              <li class="opt-b-only">Generate CyberArk Privilege Cloud ISPSS replacements for on-prem CCP/AAM calls</li>
+              <li>Adapter-based routing: feature flag per integration (source &rarr; target switchover)</li>
+              <li>Integration test harness: automated end-to-end tests per application integration</li>
+              <li>Developer documentation: migration guide per integration pattern (CCP, AAM, SDK, CLI)</li>
+            </ul>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--rose)">WEEKS 43&ndash;58 &mdash; PER-APPLICATION MIGRATION <span class="agents-tag">Agent 06</span></div>
+            <ul class="task-list">
+              <li><strong>Wave-aligned integration migration</strong> &mdash; integrations move with their associated account waves</li>
+              <li>Developer testing windows: 2-week window per application team for validation</li>
+              <li>Feature flag flip: switch each integration from source adapter to target adapter</li>
+              <li>Rollback capability: instant revert via feature flag (no code deploy required)</li>
+              <li>Sign-off registry: each application owner confirms integration works with target</li>
+              <li>Escalation path: failed integrations route to PAM engineer for manual resolution</li>
+            </ul>
+            <div class="human-gate">
+              <div class="gate-title">HUMAN GATE &mdash; Integration Test Suite Green (Week 58)</div>
+              <p>All vendor adapters passing end-to-end integration tests. QA sign-off on adapter test coverage. Zero critical integration failures remaining.</p>
+            </div>
+          </div>
+
+          <div class="week-block">
+            <div class="week-label" style="color:var(--rose)">WEEKS 59&ndash;72 &mdash; REGRESSION &amp; DECOMMISSION <span class="agents-tag">Agent 06, Agent 15</span></div>
+            <ul class="task-list">
+              <li><strong>Continuous regression testing</strong> &mdash; nightly integration test runs, alert on failures</li>
+              <li>Monitor adapter performance: API latency, error rates, throughput per integration</li>
+              <li>Legacy integration decommission: remove source-adapter feature flags, clean up old code</li>
+              <li>Final inventory reconciliation: all integrations confirmed migrated and stable</li>
+              <li>Knowledge transfer: application teams trained on portal/API usage</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="deliverables">
+          <div class="del-title">DELIVERABLES</div>
+          <ul>
+            <li>Integration inventory with dependency graph and risk classification</li>
+            <li>Generated replacement client code (Python, Java, C#, PowerShell)</li>
+            <li>Adapter routing configuration (feature flags per integration)</li>
+            <li>Integration test results (per-application pass/fail + coverage)</li>
+            <li>Developer sign-off registry (application owner confirmations)</li>
+            <li>Migration guide per integration pattern (CCP, AAM, SDK, CLI)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ RACI MATRIX ═══════════════ -->
+  <div class="section-header">RACI Matrix</div>
+  <div style="overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-card);">
+    <table class="raci-table">
+      <thead>
+        <tr>
+          <th>Phase / Activity</th>
+          <th>PAM Engineer</th>
+          <th>AI Agents</th>
+          <th>App Owners</th>
+          <th>NOC / Infra</th>
+          <th>Compliance</th>
+          <th>Exec Sponsor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>P0 &mdash; VM Provisioning</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td><td class="raci-a">A</td></tr>
+        <tr><td>P1 &mdash; Discovery Scan</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P1 &mdash; NHI Classification</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-i">I</td></tr>
+        <tr><td>P1 &mdash; NHI Review Gate</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-i">I</td></tr>
+        <tr><td>P2 &mdash; Target Deployment</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P2 &mdash; Staging Validation</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P3 &mdash; Structure Migration</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P4 &mdash; Pilot Execution</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P4 &mdash; Pilot Approval Gate</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-a">A</td></tr>
+        <tr><td>P5 &mdash; Per-Wave Execution</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P5 &mdash; Per-Wave Approval</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td></tr>
+        <tr><td>P5 &mdash; Compliance Report</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
+        <tr><td>P6 &mdash; Parallel Running</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P6 &mdash; Integration Cutover</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P6 &mdash; Cutover Approval</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-a">A</td><td class="raci-a">A</td></tr>
+        <tr style="border-top:2px solid var(--teal)"><td>DX &mdash; Architecture &amp; Design</td><td class="raci-a">A</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>DX &mdash; Adapter Development</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>DX &mdash; Portal &amp; API Build</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>DX &mdash; MVP Gate</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-a">A</td></tr>
+        <tr style="border-top:2px solid var(--rose)"><td>INT &mdash; Integration Inventory</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>INT &mdash; Integration Migration</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>P7 &mdash; Decommission</td><td class="raci-r">R</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-a">A</td><td class="raci-a">A</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:8px; font-family:var(--font-mono); font-size:0.68rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap;">
+    <span><span class="raci-r">R</span> = Responsible (does the work)</span>
+    <span><span class="raci-a">A</span> = Accountable (approves/owns)</span>
+    <span><span class="raci-c">C</span> = Consulted (provides input)</span>
+    <span><span class="raci-i">I</span> = Informed (kept in loop)</span>
+  </div>
+
+  <!-- ═══════════════ AGENT SUMMARY ═══════════════ -->
+  <div class="section-header">Agent Activation by Phase</div>
+  <div style="overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-card);">
+    <table class="raci-table">
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>Name</th>
+          <th>P0</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th><th>P6</th><th>P7</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:var(--cyan)">01</td><td>Discovery</td><td></td><td style="color:var(--green)">W10-12</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">02</td><td>Gap Analysis</td><td></td><td style="color:var(--green)">W16-18</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">03</td><td>Permissions</td><td></td><td style="color:var(--green)">W16-18</td><td></td><td style="color:var(--purple)">W29-32</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">04</td><td>Migration Pipeline</td><td></td><td></td><td></td><td></td><td style="color:var(--amber)">W39-42</td><td style="color:var(--red)">W47-62</td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">05</td><td>Heartbeat</td><td></td><td></td><td></td><td></td><td style="color:var(--amber)">W43-46</td><td style="color:var(--red)">W47-62</td><td style="color:var(--cyan)">W73-76</td><td></td></tr>
+        <tr><td style="color:var(--cyan)">06</td><td>Integration</td><td></td><td></td><td></td><td></td><td></td><td style="color:var(--red)">W57-59</td><td style="color:var(--cyan)">W67-69</td><td></td></tr>
+        <tr><td style="color:var(--cyan)">07</td><td>Compliance</td><td></td><td></td><td></td><td></td><td></td><td style="color:var(--red)">W60-62</td><td style="color:var(--cyan)">W73-76</td><td style="color:var(--text-muted)">W77-78</td></tr>
+        <tr><td style="color:var(--cyan)">08</td><td>Runbook</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td style="color:var(--text-muted)">W79-80</td></tr>
+        <tr><td style="color:var(--cyan)">09</td><td>Dependency Mapper</td><td></td><td style="color:var(--green)">W13-15</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">10</td><td>Staging Validation</td><td></td><td></td><td style="color:var(--blue)">W26-28</td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">11</td><td>Source Adapter</td><td></td><td style="color:var(--green)">W7-9</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">12</td><td>NHI Handler</td><td></td><td style="color:var(--green)">W13-15</td><td></td><td></td><td></td><td style="color:var(--red)">W54-56</td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">13</td><td>Platform Plugins</td><td></td><td></td><td style="color:var(--blue)">W23-25</td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">14</td><td>Onboarding</td><td></td><td></td><td></td><td style="color:var(--purple)">W33-35</td><td></td><td style="color:var(--red)">W60-62</td><td></td><td></td></tr>
+        <tr><td style="color:var(--cyan)">15</td><td>Hybrid Fleet</td><td></td><td></td><td></td><td></td><td></td><td></td><td style="color:var(--cyan)">W63-72</td><td></td></tr>
+        <tr style="border-top:2px solid var(--teal)"><td style="color:var(--teal)">DX-01</td><td>DX Portal</td><td></td><td style="color:var(--teal)">W14-18</td><td style="color:var(--teal)">W19-28</td><td style="color:var(--teal)">W29-38</td><td style="color:var(--teal)">W39-46</td><td style="color:var(--teal)">W47-66</td><td style="color:var(--teal)">W67-76</td><td></td></tr>
+        <tr><td style="color:var(--teal)">DX-02</td><td>Adapter Gen</td><td></td><td></td><td style="color:var(--teal)">W21-28</td><td style="color:var(--teal)">W29-42</td><td></td><td style="color:var(--teal)">W51-58</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+function toggleCard(header) {
+  header.closest('.phase-card').classList.toggle('open');
+}
+function expandAll() {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.add('open'));
+}
+function collapseAll() {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('open'));
+}
+
+function switchOption(opt) {
+  const btnA = document.getElementById('btn-a');
+  const btnB = document.getElementById('btn-b');
+  const label = document.getElementById('opt-diff-label');
+
+  if (opt === 'b') {
+    document.body.classList.add('option-b');
+    btnA.className = 'opt-btn';
+    btnB.className = 'opt-btn active-b';
+    label.innerHTML = '22&rarr;4 permissions (granular role mapping) &bull; Secret Server REST API &bull; RPC + Distributed Engine + StrongDM';
+  } else {
+    document.body.classList.remove('option-b');
+    btnA.className = 'opt-btn active-a';
+    btnB.className = 'opt-btn';
+    label.innerHTML = '22&rarr;4 permissions (granular role mapping) &bull; Secret Server REST API &bull; RPC + Distributed Engine + StrongDM';
+  }
+}
+
+// Build Gantt week/month headers
+(function() {
+  const weeksEl = document.getElementById('gantt-weeks');
+  const monthsEl = document.getElementById('gantt-months');
+  for (let w = 1; w <= 80; w++) {
+    const cell = document.createElement('div');
+    cell.className = 'gantt-week-cell';
+    cell.textContent = w;
+    weeksEl.appendChild(cell);
+  }
+  for (let m = 1; m <= 20; m++) {
+    const cell = document.createElement('div');
+    cell.className = 'gantt-week-cell';
+    cell.style.flex = '4';
+    cell.style.borderLeft = '1px solid var(--border)';
+    cell.style.color = 'var(--text-standard)';
+    cell.style.fontWeight = '600';
+    cell.textContent = 'M' + m;
+    monthsEl.appendChild(cell);
+  }
+})();
+
+// Keyboard accessibility
+document.querySelectorAll('.card-header').forEach(header => {
+  header.setAttribute('tabindex', '0');
+  header.setAttribute('role', 'button');
+  header.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCard(header); }
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'a' || e.key === 'A') switchOption('a');
+  if (e.key === 'b' || e.key === 'B') switchOption('b');
+});
+</script>
+
+</body>
+</html>

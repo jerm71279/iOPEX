@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  control-center:
+    build: .
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/dashboard/stats"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

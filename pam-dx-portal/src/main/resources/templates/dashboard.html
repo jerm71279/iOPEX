@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — PAM DX Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-logo">PAM DX</div>
+    <div class="sidebar-vendor" th:text="'VENDOR: ' + ${vendor}">VENDOR: CyberArk</div>
+    <a th:href="@{/}" class="active"><span>&#x25A3;</span> Dashboard</a>
+    <a th:href="@{/secrets}"><span>&#x1F511;</span> Secrets</a>
+    <a th:href="@{/sessions}"><span>&#x25B6;</span> Sessions</a>
+    <a th:href="@{/swagger-ui.html}" target="_blank" style="margin-top:auto;"><span>&#x2194;</span> API Docs</a>
+    <a th:href="@{/logout}"><span>&#x23FB;</span> Logout</a>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle">PAM Digital Experience Portal &mdash; Vendor-Agnostic Overview</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">ACTIVE VENDOR</div>
+        <div class="stat-value teal" th:text="${vendor}">CyberArk</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">CONNECTION</div>
+        <div th:class="${connected} ? 'stat-value green' : 'stat-value red'"
+             th:text="${connected} ? 'CONNECTED' : 'DISCONNECTED'">DISCONNECTED</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">HEALTH CHECKS</div>
+        <div class="stat-value" th:text="${healthPassed} + '/' + ${healthTotal}">0/0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">SERVER VERSION</div>
+        <div class="stat-value cyan" th:text="${serverVersion}">—</div>
+      </div>
+    </div>
+
+    <!-- Health Check Details -->
+    <div class="data-table-wrapper" style="margin-bottom:24px;">
+      <div class="table-header">
+        <div class="table-title">Preflight Health Checks</div>
+      </div>
+      <div class="health-grid" style="padding:16px;">
+        <div class="health-check" th:each="check : ${healthChecks}">
+          <div th:class="${check.passed()} ? 'health-dot pass' : 'health-dot fail'"></div>
+          <div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text-bright);" th:text="${check.name()}">Check</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);" th:text="${check.message()}">Status</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Framework Info -->
+    <div style="background:var(--teal-dim); border:1px solid rgba(20,184,166,0.3); border-left:3px solid var(--teal); border-radius:var(--radius); padding:16px 20px; margin-top:16px;">
+      <div style="font-weight:700; font-size:0.82rem; color:var(--teal); margin-bottom:6px;">Reusable Migration Framework</div>
+      <div style="font-size:0.78rem; color:var(--text-muted);">
+        This portal is vendor-agnostic. Switch the active PAM vendor by setting
+        <code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">PAM_ACTIVE_VENDOR</code>
+        to <code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">cyberark</code>,
+        <code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">delinea</code>, or
+        <code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">strongdm</code>.
+        New vendors plug in by implementing the PamVendorAdapter interface.
+      </div>
+    </div>
+  </main>
+</body>
+</html>

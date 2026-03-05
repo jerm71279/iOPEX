@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  portal:
+    build: .
+    ports:
+      - "8443:8443"
+    environment:
+      # Switch vendor: cyberark | delinea | strongdm
+      - PAM_ACTIVE_VENDOR=cyberark
+      # CyberArk credentials
+      - CYBERARK_BASE_URL=https://pvwa.company.com/PasswordVault/api
+      - CYBERARK_AUTH_TYPE=cyberark
+      - CYBERARK_USERNAME=${CYBERARK_USERNAME:-}
+      - CYBERARK_PASSWORD=${CYBERARK_PASSWORD:-}
+      # Delinea credentials
+      - DELINEA_BASE_URL=https://ss.company.com/SecretServer
+      - DELINEA_CLIENT_ID=${DELINEA_CLIENT_ID:-}
+      - DELINEA_CLIENT_SECRET=${DELINEA_CLIENT_SECRET:-}
+      # StrongDM credentials
+      - STRONGDM_API_URL=https://app.strongdm.com
+      - STRONGDM_API_KEY=${STRONGDM_API_KEY:-}
+      - STRONGDM_API_SECRET=${STRONGDM_API_SECRET:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8443/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

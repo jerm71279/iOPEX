@@ -1,0 +1,66 @@
+package com.iopex.pamdx.adapter;
+
+import com.iopex.pamdx.adapter.cyberark.CyberArkAdapter;
+import com.iopex.pamdx.adapter.delinea.DelineaAdapter;
+import com.iopex.pamdx.adapter.strongdm.StrongDmAdapter;
+import com.iopex.pamdx.adapter.model.PamHealthStatus;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Contract tests verifying all PamVendorAdapter implementations
+ * provide the expected vendor identity and health check structure.
+ */
+class PamVendorAdapterContractTest {
+
+    @Test
+    void cyberArkAdapterReturnsCorrectVendorName() {
+        PamVendorAdapter adapter = new CyberArkAdapter("https://pvwa.test.com/PasswordVault/api", "cyberark");
+        assertEquals("CyberArk", adapter.getVendorName());
+        assertFalse(adapter.isConnected());
+    }
+
+    @Test
+    void delineaAdapterReturnsCorrectVendorName() {
+        PamVendorAdapter adapter = new DelineaAdapter("https://ss.test.com/SecretServer");
+        assertEquals("Delinea", adapter.getVendorName());
+        assertFalse(adapter.isConnected());
+    }
+
+    @Test
+    void strongDmAdapterReturnsCorrectVendorName() {
+        PamVendorAdapter adapter = new StrongDmAdapter("https://app.strongdm.com");
+        assertEquals("StrongDM", adapter.getVendorName());
+        assertFalse(adapter.isConnected());
+    }
+
+    @Test
+    void preflightCheckReturnsStructuredResult() {
+        PamVendorAdapter adapter = new CyberArkAdapter("https://pvwa.test.com/PasswordVault/api", "cyberark");
+        PamHealthStatus health = adapter.preflightCheck();
+
+        assertNotNull(health);
+        assertEquals("CyberArk", health.vendor());
+        assertFalse(health.connected());
+        assertNotNull(health.checkedAt());
+        assertFalse(health.checks().isEmpty());
+    }
+
+    @Test
+    void allAdaptersImplementSameInterface() {
+        PamVendorAdapter[] adapters = {
+                new CyberArkAdapter("https://pvwa.test.com/PasswordVault/api", "cyberark"),
+                new DelineaAdapter("https://ss.test.com/SecretServer"),
+                new StrongDmAdapter("https://app.strongdm.com")
+        };
+
+        for (PamVendorAdapter adapter : adapters) {
+            assertNotNull(adapter.getVendorName(), "Vendor name should not be null for " + adapter.getClass().getSimpleName());
+            assertFalse(adapter.isConnected(), "Should not be connected without calling connect()");
+
+            PamHealthStatus health = adapter.preflightCheck();
+            assertNotNull(health, "Preflight check should return a result for " + adapter.getVendorName());
+        }
+    }
+}

@@ -1,0 +1,10 @@
+config.json
+*.pem
+*.key
+.env
+output/
+__pycache__/
+*.pyc
+venv/
+.claude/
+imported_data/

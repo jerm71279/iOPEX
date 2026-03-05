@@ -1,0 +1,101 @@
+{
+  "agent_01_discovery": {
+    "audit_log_days": 90,
+    "include_audit_logs": true
+  },
+  "agent_02_gap_analysis": {
+    "compliance_frameworks": ["pci_dss", "nist_800_53", "hipaa", "sox"],
+    "maturity_threshold": 3
+  },
+  "agent_03_permissions": {
+    "skip_members": ["Master", "Batch", "Backup Users", "DR Users", "Auditors", "Operators"],
+    "require_review_for_lost_permissions": true,
+    "escalation_alert_threshold": 10
+  },
+  "agent_04_etl": {
+    "batch_size": 500,
+    "freeze_window_minutes": 120,
+    "rate_limit_per_minute": 100,
+    "max_retries": 5,
+    "watchdog_timeout_minutes": 120,
+    "wave_order": [1, 2, 3, 4, 5],
+    "default_parent_folder": "Imported",
+    "platform_template_map": {
+      "WinServerLocal": "Windows Account",
+      "WinDomain": "Active Directory Account",
+      "WinServiceAccount": "Windows Service Account",
+      "UnixSSH": "Unix Account (SSH)",
+      "UnixSSHKeys": "Unix Account (SSH Key Rotation)",
+      "Oracle": "Oracle Account",
+      "MSSql": "SQL Server Account",
+      "MySQL": "MySQL Account",
+      "AzureServicePrincipal": "Azure Service Principal",
+      "AWSAccessKeys": "Amazon IAM Key"
+    }
+  },
+  "agent_05_heartbeat": {
+    "count_variance_threshold": 0.01,
+    "success_threshold": 0.95,
+    "heartbeat_check_interval_seconds": 30,
+    "max_heartbeat_wait_minutes": 10
+  },
+  "agent_06_integration": {
+    "supported_languages": ["python", "powershell", "csharp", "java"],
+    "generate_dual_backend_wrapper": true,
+    "scan_directories": []
+  },
+  "agent_07_compliance": {
+    "frameworks": ["pci_dss", "nist_800_53", "hipaa", "sox"],
+    "audit_retention_days": 365
+  },
+  "agent_08_runbook": {
+    "require_approval_for_phases": ["P4", "P5", "P6", "P7"],
+    "auto_advance": false
+  },
+  "agent_09_dependency_mapper": {
+    "scan_hosts": [],
+    "winrm_port": 5986,
+    "winrm_transport": "kerberos",
+    "jenkins_urls": [],
+    "scan_directories": [],
+    "config_scan_paths": [],
+    "enabled_scanners": ["iis", "windows_service", "scheduled_task", "jenkins", "script", "config"],
+    "confidence_threshold": 0.5
+  },
+  "agent_10_staging": {
+    "sample_per_wave": 20,
+    "pass_threshold": 0.8,
+    "staging_parent_folder": "StagingValidation",
+    "rate_limit_per_minute": 60
+  },
+  "agent_11_source_adapter": {
+    "audit_log_days": 90,
+    "cloud_discovery": []
+  },
+  "agent_12_nhi_handler": {
+    "confidence_threshold": 0.3
+  },
+  "agent_13_platform_plugins": {
+    "auto_create_templates": true,
+    "platform_template_map": {}
+  },
+  "agent_14_onboarding": {
+    "pending_requests": [],
+    "parent_folder": "Applications"
+  },
+  "agent_15_hybrid_fleet": {
+    "verify_sample_size": 50,
+    "stuck_threshold_hours": 24
+  },
+  "source": {
+    "type": "cyberark",
+    "beyondtrust": { "base_url": "", "api_key_env": "BT_API_KEY" },
+    "hashicorp": { "vault_addr_env": "VAULT_ADDR", "mount": "secret" }
+  },
+  "staging": {
+    "base_url": "",
+    "auth_method": "oauth2",
+    "client_id": "",
+    "verify_ssl": true
+  }
+}

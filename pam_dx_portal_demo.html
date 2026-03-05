@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAM DX Portal — Interactive Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #060D16;
+  --bg-card: #0A1628;
+  --bg-card-hover: #0D2137;
+  --bg-surface: #081422;
+  --border: #1E3050;
+  --border-light: #1A2A42;
+  --blue: #3B82F6;
+  --blue-dim: rgba(59, 130, 246, 0.15);
+  --green: #06D6A0;
+  --green-dim: rgba(6, 214, 160, 0.15);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.15);
+  --red: #EF4444;
+  --red-dim: rgba(239, 68, 68, 0.15);
+  --purple: #A855F7;
+  --purple-dim: rgba(168, 85, 247, 0.15);
+  --cyan: #00C8E8;
+  --cyan-dim: rgba(0, 200, 232, 0.15);
+  --teal: #14B8A6;
+  --teal-dim: rgba(20, 184, 166, 0.15);
+  --rose: #F472B6;
+  --rose-dim: rgba(244, 114, 182, 0.15);
+  --text-bright: #F1F5F9;
+  --text-standard: #CBD5E1;
+  --text-muted: #64748B;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  --radius: 8px;
+  --transition: 0.25s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-standard);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── Sidebar ─────────────────────────────── */
+.sidebar {
+  width: 220px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--teal);
+  letter-spacing: 3px;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+}
+
+.sidebar-sub {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  padding: 0 12px 12px;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.vendor-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  padding: 6px 12px;
+  margin: 0 0 8px;
+  border-radius: var(--radius);
+  letter-spacing: 1px;
+  transition: var(--transition);
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-link:hover { background: var(--bg-card-hover); color: var(--text-standard); }
+.nav-link.active { background: var(--teal-dim); color: var(--teal); font-weight: 600; }
+
+.nav-link .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+/* ── Main Content ────────────────────────── */
+.main { margin-left: 220px; flex: 1; padding: 28px 32px; min-height: 100vh; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 1.3rem; font-weight: 700; color: var(--text-bright); margin-bottom: 4px; }
+.page-subtitle { font-size: 0.82rem; color: var(--text-muted); }
+
+/* ── Stats Grid ──────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: var(--transition);
+}
+.stat-card:hover { border-color: var(--border-light); background: var(--bg-card-hover); }
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-value { font-size: 1.6rem; font-weight: 800; color: var(--text-bright); }
+
+/* ── Table ────────────────────────────────── */
+.table-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.table-title { font-size: 0.88rem; font-weight: 600; color: var(--text-bright); }
+
+.search-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-standard);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  padding: 7px 12px;
+  width: 260px;
+  outline: none;
+  transition: var(--transition);
+}
+.search-box:focus { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-dim); }
+
+table { width: 100%; border-collapse: collapse; }
+
+th {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+td {
+  font-size: 0.8rem;
+  padding: 11px 18px;
+  border-bottom: 1px solid rgba(30, 48, 80, 0.35);
+}
+
+tr:hover td { background: var(--bg-card-hover); }
+
+/* ── Badges ───────────────────────────────── */
+.badge {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+.badge-teal { background: var(--teal-dim); color: var(--teal); }
+.badge-purple { background: var(--purple-dim); color: var(--purple); }
+.badge-cyan { background: var(--cyan-dim); color: var(--cyan); }
+
+/* ── Health Checks ────────────────────────── */
+.health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; padding: 14px; }
+
+.health-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.health-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.health-dot.pass { background: var(--green); box-shadow: 0 0 8px var(--green-dim); }
+.health-dot.fail { background: var(--red); box-shadow: 0 0 8px var(--red-dim); }
+.health-dot.warn { background: var(--amber); box-shadow: 0 0 8px var(--amber-dim); }
+
+.health-name { font-size: 0.8rem; font-weight: 600; color: var(--text-bright); }
+.health-msg { font-size: 0.68rem; color: var(--text-muted); }
+
+/* ── Callout ──────────────────────────────── */
+.callout {
+  border-left: 3px solid;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-top: 20px;
+}
+.callout.teal { background: var(--teal-dim); border-color: var(--teal); }
+.callout-title { font-weight: 700; font-size: 0.8rem; margin-bottom: 4px; }
+.callout.teal .callout-title { color: var(--teal); }
+.callout p { font-size: 0.75rem; color: var(--text-muted); line-height: 1.6; }
+
+/* ── Architecture Diagram ─────────────────── */
+.arch-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.arch-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--teal);
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.arch-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.arch-box {
+  border: 1px solid;
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+}
+
+.arch-box-title {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.arch-box-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.arch-item {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+/* ── Form Controls ────────────────────────── */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  margin-bottom: 5px;
+}
+.form-input {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-standard);
+  font-size: 0.8rem;
+  outline: none;
+}
+.form-input:focus { border-color: var(--teal); }
+
+.btn {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-teal { background: var(--teal); color: #fff; }
+.btn-teal:hover { background: #0D9488; }
+
+/* ── Vendor Selector ──────────────────────── */
+.vendor-switch {
+  display: flex;
+  gap: 0;
+  margin: 8px 0;
+}
+
+.vendor-btn {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 7px 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.vendor-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.vendor-btn:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.vendor-btn:not(:first-child) { border-left: none; }
+.vendor-btn.active { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+}
+
+/* ── API Spec ─────────────────────────────── */
+.api-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.api-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 2fr;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  align-items: center;
+}
+.api-method {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+.api-method.get { background: var(--green-dim); color: var(--green); }
+
+/* ── Disclaimer Overlay ── */
+.disclaimer-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.6rem;
+  color: var(--amber);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  letter-spacing: 0.3px;
+  transition: color var(--transition);
+}
+.disclaimer-link:hover { color: var(--text-bright); }
+
+.disclaimer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(6, 13, 22, 0.88);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+  padding: 60px 24px;
+}
+.disclaimer-overlay.visible { display: flex; justify-content: center; align-items: flex-start; }
+.disclaimer-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 780px;
+  width: 100%;
+  padding: 32px 36px;
+  position: relative;
+}
+.disclaimer-panel h2 {
+  font-size: 1.1rem;
+  color: var(--amber);
+  margin-bottom: 6px;
+}
+.disclaimer-panel h3 {
+  font-size: 0.82rem;
+  color: var(--teal);
+  margin: 18px 0 8px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.disclaimer-panel p, .disclaimer-panel li {
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--text-standard);
+}
+.disclaimer-panel ul { padding-left: 18px; margin: 4px 0 12px; }
+.disclaimer-panel li { margin-bottom: 4px; }
+.disclaimer-panel .status-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+}
+.status-done { background: var(--green-dim); color: var(--green); }
+.status-todo { background: var(--amber-dim); color: var(--amber); }
+.status-blocked { background: var(--red-dim); color: var(--red); }
+.disclaimer-close {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none; border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+.disclaimer-close:hover { color: var(--text-bright); }
+.api-method.post { background: var(--amber-dim); color: var(--amber); }
+.api-path { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-bright); }
+.api-desc { font-size: 0.72rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">PAM DX</div>
+  <div class="sidebar-sub">DIGITAL EXPERIENCE PORTAL</div>
+
+  <div class="vendor-switch">
+    <button class="vendor-btn active" onclick="switchVendor('cyberark')">CyberArk</button>
+    <button class="vendor-btn" onclick="switchVendor('delinea')">Delinea</button>
+    <button class="vendor-btn" onclick="switchVendor('strongdm')">StrongDM</button>
+  </div>
+
+  <div class="vendor-indicator" id="vendorIndicator"
+       style="background:var(--blue-dim); color:var(--blue);">
+    ACTIVE: CYBERARK
+  </div>
+
+  <button class="nav-link active" onclick="showPage('dashboard', this)">
+    <span class="nav-icon">&#x25A3;</span> Dashboard
+  </button>
+  <button class="nav-link" onclick="showPage('secrets', this)">
+    <span class="nav-icon">&#x1F511;</span> Secrets
+  </button>
+  <button class="nav-link" onclick="showPage('sessions', this)">
+    <span class="nav-icon">&#x25B6;</span> Sessions
+  </button>
+  <button class="nav-link" onclick="showPage('api', this)">
+    <span class="nav-icon">&#x2194;</span> API Docs
+  </button>
+  <button class="nav-link" onclick="showPage('architecture', this)">
+    <span class="nav-icon">&#x2B21;</span> Architecture
+  </button>
+
+  <div style="margin-top:auto; padding:12px; border-top:1px solid var(--border);">
+    <div style="font-family:var(--font-mono); font-size:0.55rem; color:var(--text-muted); letter-spacing:1px;">
+      PAM DX PORTAL v1.0<br>
+      Spring Boot 3.2 / Java 17<br>
+      Vendor-Agnostic Framework
+    </div>
+    <span class="disclaimer-link" onclick="toggleDisclaimer()">&#x26A0; Disclaimer &amp; Status</span>
+  </div>
+</nav>
+
+<!-- ════════════ DISCLAIMER OVERLAY ════════════ -->
+<div class="disclaimer-overlay" id="disclaimerOverlay" onclick="if(event.target===this)toggleDisclaimer()">
+  <div class="disclaimer-panel">
+    <button class="disclaimer-close" onclick="toggleDisclaimer()">&times;</button>
+    <h2>&#x26A0; Disclaimer &amp; Production Readiness</h2>
+    <p style="margin-bottom:14px; color:var(--text-muted);">This is an <strong style="color:var(--amber);">interactive demonstration mockup</strong> of the planned PAM Digital Experience Portal. It uses simulated data to preview the user experience, architecture, and API design. It is <em>not</em> connected to any live PAM system.</p>
+
+    <h3>What This Demo Shows</h3>
+    <ul>
+      <li><span class="status-tag status-done">BUILT</span> Vendor-agnostic <strong>PamVendorAdapter</strong> interface (12 methods) with CyberArk, Delinea, and StrongDM stubs</li>
+      <li><span class="status-tag status-done">BUILT</span> Full Java/Spring Boot 3.2 scaffold &mdash; REST controllers, Thymeleaf templates, Docker config, OpenAPI spec</li>
+      <li><span class="status-tag status-done">BUILT</span> Normalized data models: PamAccount, PamContainer, PamPlatform, PamAuditEntry, PamHealthStatus</li>
+      <li><span class="status-tag status-done">BUILT</span> Dynamic vendor switching &mdash; swap adapters via config, zero portal code changes</li>
+      <li><span class="status-tag status-done">BUILT</span> Dark-theme portal UI matching project design system</li>
+      <li><span class="status-tag status-done">BUILT</span> Contract tests and endpoint tests</li>
+    </ul>
+
+    <h3>What Is Still Needed for Production</h3>
+    <ul>
+      <li><span class="status-tag status-todo">TODO</span> <strong>CyberArk adapter implementation</strong> &mdash; Wire PVWA REST API calls (Auth/Logon, /Accounts, /Safes, /Platforms, /Activities)</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Delinea adapter implementation</strong> &mdash; Wire Secret Server REST API calls (/oauth2/token, /secrets, /folders, /secret-templates)</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>StrongDM adapter implementation</strong> &mdash; Integrate StrongDM Java SDK for gateway proxy, Cedar policies, session recording</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>OAuth2 / OIDC provider integration</strong> &mdash; Replace in-memory dev users with enterprise IdP (Okta, Azure AD, Ping)</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>TLS / certificate management</strong> &mdash; Production HTTPS with trusted certs, mTLS for vendor API calls</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Database persistence</strong> &mdash; PostgreSQL for session state, audit cache, user preferences</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Dual-backend parallel mode</strong> &mdash; Run source + target adapters simultaneously during migration cutover</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Role-based access control</strong> &mdash; Map enterprise roles to portal permissions (viewer, operator, admin, auditor)</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Audit trail integration</strong> &mdash; Forward portal actions to SIEM (Splunk, Sentinel) with correlation IDs</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Load &amp; stress testing</strong> &mdash; Benchmark with 20K+ accounts, concurrent session checkout, failover</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>CI/CD pipeline</strong> &mdash; Automated build, test, scan, and deploy (GitHub Actions or Jenkins)</li>
+      <li><span class="status-tag status-todo">TODO</span> <strong>Secret zero bootstrap</strong> &mdash; Secure injection of adapter credentials at runtime (Vault, K8s secrets)</li>
+    </ul>
+
+    <h3>Production Milestone Timeline</h3>
+    <ul>
+      <li><span class="status-tag status-done">W10-20</span> Scaffold &amp; adapter stubs (current state)</li>
+      <li><span class="status-tag status-todo">W20-34</span> First vendor adapter live &mdash; read-only account listing against test vault</li>
+      <li><span class="status-tag status-todo">W34-58</span> Full CRUD, session proxy, audit forwarding &mdash; staging environment</li>
+      <li><span class="status-tag status-todo">W58-74</span> Dual-backend parallel running, performance tuning, penetration testing</li>
+      <li><span class="status-tag status-todo">W74-76</span> Production cutover with rollback plan</li>
+    </ul>
+
+    <div style="margin-top:20px; padding:14px; background:var(--amber-dim); border:1px solid rgba(245,158,11,0.3); border-radius:var(--radius);">
+      <p style="margin:0; font-size:0.75rem; color:var(--amber);"><strong>Bottom line:</strong> The architecture and interfaces are production-grade. The adapter stubs need to be wired to real vendor APIs, enterprise authentication integrated, and security hardened before this portal can process live PAM data.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<main class="main">
+
+<!-- ──────── DASHBOARD PAGE ──────── -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">PAM Digital Experience Portal &mdash; Unified Vendor-Agnostic Overview</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">ACTIVE VENDOR</div>
+      <div class="stat-value" id="stat-vendor" style="color:var(--teal);">CyberArk</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">CONNECTION</div>
+      <div class="stat-value" style="color:var(--green);">CONNECTED</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ACCOUNTS</div>
+      <div class="stat-value" id="stat-accounts" style="color:var(--cyan);">2,847</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">CONTAINERS</div>
+      <div class="stat-value" id="stat-containers" style="color:var(--purple);">142</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">HEALTH CHECKS</div>
+      <div class="stat-value" style="color:var(--green);">6/6</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">SERVER VERSION</div>
+      <div class="stat-value" id="stat-version" style="color:var(--amber); font-size:1rem;">13.2.6</div>
+    </div>
+  </div>
+
+  <!-- Health Checks -->
+  <div class="table-wrapper" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">Preflight Health Checks</div>
+      <span class="badge badge-green">ALL PASSED</span>
+    </div>
+    <div class="health-grid">
+      <div class="health-item">
+        <div class="health-dot pass"></div>
+        <div><div class="health-name">Connectivity</div><div class="health-msg">HTTPS 443 — TLS 1.3 verified</div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-dot pass"></div>
+        <div><div class="health-name">Authentication</div><div class="health-msg" id="hc-auth">OAuth2 token acquired (expires in 3540s)</div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-dot pass"></div>
+        <div><div class="health-name">Account Listing</div><div class="health-msg" id="hc-accounts">2,847 accounts enumerable</div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-dot pass"></div>
+        <div><div class="health-name">Container Listing</div><div class="health-msg" id="hc-containers">142 safes accessible (system safes filtered)</div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-dot pass"></div>
+        <div><div class="health-name">Platform Listing</div><div class="health-msg" id="hc-platforms">23 platforms loaded</div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-dot pass"></div>
+        <div><div class="health-name">Audit Access</div><div class="health-msg">Activity logs retrievable (90-day lookback)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <div class="callout-title">Reusable Migration Framework</div>
+    <p>This portal is <strong>vendor-agnostic</strong>. The <code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">PamVendorAdapter</code> interface abstracts all vendor-specific APIs. Switch between CyberArk, Delinea, and StrongDM using the vendor selector above. New PAM vendors plug in by implementing the adapter interface &mdash; zero portal changes required.</p>
+  </div>
+</div>
+
+<!-- ──────── SECRETS PAGE ──────── -->
+<div class="page" id="page-secrets">
+  <div class="page-header">
+    <div class="page-title">Privileged Accounts</div>
+    <div class="page-subtitle" id="secrets-subtitle">Browse and manage accounts via CyberArk adapter</div>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="table-header">
+      <div class="table-title" id="secrets-count">2,847 accounts</div>
+      <input type="text" class="search-box" placeholder="Search accounts..." oninput="filterAccounts(this.value)">
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>NAME</th>
+            <th>USERNAME</th>
+            <th>ADDRESS</th>
+            <th>CONTAINER</th>
+            <th>PLATFORM</th>
+            <th>TYPE</th>
+            <th>MANAGED</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="accounts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── SESSIONS PAGE ──────── -->
+<div class="page" id="page-sessions">
+  <div class="page-header">
+    <div class="page-title">Session Launch</div>
+    <div class="page-subtitle">Start a privileged session through the PAM proxy</div>
+  </div>
+
+  <div class="table-wrapper" style="max-width:560px;">
+    <div class="table-header">
+      <div class="table-title">Connect to Target</div>
+    </div>
+    <div style="padding:20px;">
+      <div class="form-group">
+        <label class="form-label">TARGET HOST</label>
+        <input type="text" class="form-input" placeholder="e.g., db-prod-01.corp.com" value="db-prod-01.corp.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">PROTOCOL</label>
+        <select class="form-input">
+          <option>SSH</option>
+          <option>RDP</option>
+          <option selected>Database (SQL)</option>
+          <option>Kubernetes</option>
+          <option>HTTP/S</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PRIVILEGED ACCOUNT</label>
+        <input type="text" class="form-input" value="svc-db-admin@db-prod-01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">BUSINESS JUSTIFICATION</label>
+        <input type="text" class="form-input" placeholder="Reason for access..." value="Monthly patching — CHG-2026-0412">
+      </div>
+      <button class="btn btn-teal" style="width:100%;" onclick="launchSession()">Launch Session</button>
+
+      <div id="session-status" style="display:none; margin-top:14px; padding:12px; background:var(--green-dim); border:1px solid rgba(6,214,160,0.3); border-radius:var(--radius);">
+        <div style="font-family:var(--font-mono); font-size:0.6rem; color:var(--green); letter-spacing:1px; margin-bottom:4px;">SESSION ACTIVE</div>
+        <div style="font-size:0.75rem; color:var(--text-standard);" id="session-msg">Connected via CyberArk PSM proxy. Session recording active.</div>
+      </div>
+
+      <div style="margin-top:14px; padding:12px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius);">
+        <div style="font-family:var(--font-mono); font-size:0.6rem; color:var(--text-muted); letter-spacing:1px; margin-bottom:4px;">SESSION ROUTING</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);" id="session-routing">
+          Via CyberArk PSM / Privilege Cloud session proxy. Session recorded and audited.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── API DOCS PAGE ──────── -->
+<div class="page" id="page-api">
+  <div class="page-header">
+    <div class="page-title">REST API — /api/v1/*</div>
+    <div class="page-subtitle">OpenAPI 3.0 endpoints (auto-generated Swagger UI at /swagger-ui.html)</div>
+  </div>
+
+  <div class="table-wrapper" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">Endpoints</div>
+      <span class="badge badge-teal">9 ENDPOINTS</span>
+    </div>
+    <div style="padding:14px;">
+      <div class="api-grid">
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/accounts</div><div class="api-desc">List accounts (paginated, filterable)</div></div>
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/accounts/{id}</div><div class="api-desc">Get account details</div></div>
+        <div class="api-row"><div class="api-method post">POST</div><div class="api-path">/api/v1/accounts/{id}/retrieve</div><div class="api-desc">Retrieve password (audit logged)</div></div>
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/containers</div><div class="api-desc">List containers (safes/folders)</div></div>
+        <div class="api-row"><div class="api-method post">POST</div><div class="api-path">/api/v1/containers</div><div class="api-desc">Create container</div></div>
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/platforms</div><div class="api-desc">List platforms/templates</div></div>
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/audit</div><div class="api-desc">Get audit logs (N-day lookback)</div></div>
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/health</div><div class="api-desc">Preflight check (public)</div></div>
+        <div class="api-row"><div class="api-method get">GET</div><div class="api-path">/api/v1/health/vendor</div><div class="api-desc">Active vendor info (public)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <div class="callout-title">Vendor-Agnostic API</div>
+    <p>All endpoints return the same JSON schema regardless of which vendor adapter is active. Application teams integrate with <code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">/api/v1/*</code> once &mdash; switching vendors requires zero code changes on the client side.</p>
+  </div>
+</div>
+
+<!-- ──────── ARCHITECTURE PAGE ──────── -->
+<div class="page" id="page-architecture">
+  <div class="page-header">
+    <div class="page-title">Architecture — PamVendorAdapter</div>
+    <div class="page-subtitle">Vendor-agnostic abstraction layer for any PAM platform</div>
+  </div>
+
+  <div class="arch-container">
+    <div class="arch-title">UNIFIED PAM PORTAL (JAVA / SPRING BOOT 3.2)</div>
+
+    <!-- Top row: Portal + API -->
+    <div class="arch-grid" style="grid-template-columns:1fr 1fr; margin-bottom:16px;">
+      <div class="arch-box" style="border-color:var(--teal); background:var(--teal-dim);">
+        <div class="arch-box-title" style="color:var(--teal);">WEB PORTAL</div>
+        <div class="arch-box-items">
+          <span class="arch-item" style="border-color:var(--teal); color:var(--teal);">Thymeleaf</span>
+          <span class="arch-item" style="border-color:var(--teal); color:var(--teal);">Dashboard</span>
+          <span class="arch-item" style="border-color:var(--teal); color:var(--teal);">Secrets</span>
+          <span class="arch-item" style="border-color:var(--teal); color:var(--teal);">Sessions</span>
+        </div>
+      </div>
+      <div class="arch-box" style="border-color:var(--cyan); background:var(--cyan-dim);">
+        <div class="arch-box-title" style="color:var(--cyan);">REST API GATEWAY</div>
+        <div class="arch-box-items">
+          <span class="arch-item" style="border-color:var(--cyan); color:var(--cyan);">/api/v1/*</span>
+          <span class="arch-item" style="border-color:var(--cyan); color:var(--cyan);">OpenAPI</span>
+          <span class="arch-item" style="border-color:var(--cyan); color:var(--cyan);">OAuth2</span>
+          <span class="arch-item" style="border-color:var(--cyan); color:var(--cyan);">RBAC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="text-align:center; color:var(--text-muted); font-size:1.2rem; margin:8px 0;">&#x25BC;</div>
+
+    <!-- PamVendorAdapter -->
+    <div class="arch-box" style="border-color:var(--amber); background:var(--amber-dim); margin-bottom:16px;">
+      <div class="arch-box-title" style="color:var(--amber);">PamVendorAdapter INTERFACE (12 METHODS)</div>
+      <div class="arch-box-items">
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">connect()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">getAccounts()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">retrievePassword()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">getContainers()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">createContainer()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">getPlatforms()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">getAuditLogs()</span>
+        <span class="arch-item" style="border-color:var(--amber); color:var(--amber);">preflightCheck()</span>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="text-align:center; color:var(--text-muted); font-size:1.2rem; margin:8px 0;">&#x25BC;</div>
+
+    <!-- Vendor Adapters -->
+    <div class="arch-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="arch-box" style="border-color:var(--blue); background:var(--blue-dim);">
+        <div class="arch-box-title" style="color:var(--blue);">CYBERARK ADAPTER</div>
+        <div class="arch-box-items">
+          <span class="arch-item" style="border-color:var(--blue); color:var(--blue);">PVWA REST</span>
+          <span class="arch-item" style="border-color:var(--blue); color:var(--blue);">Safe &rarr; Container</span>
+          <span class="arch-item" style="border-color:var(--blue); color:var(--blue);">Account &rarr; Secret</span>
+        </div>
+      </div>
+      <div class="arch-box" style="border-color:var(--green); background:var(--green-dim);">
+        <div class="arch-box-title" style="color:var(--green);">DELINEA ADAPTER</div>
+        <div class="arch-box-items">
+          <span class="arch-item" style="border-color:var(--green); color:var(--green);">SS REST v1</span>
+          <span class="arch-item" style="border-color:var(--green); color:var(--green);">Folder &rarr; Container</span>
+          <span class="arch-item" style="border-color:var(--green); color:var(--green);">Secret &rarr; Account</span>
+        </div>
+      </div>
+      <div class="arch-box" style="border-color:var(--purple); background:var(--purple-dim);">
+        <div class="arch-box-title" style="color:var(--purple);">STRONGDM ADAPTER</div>
+        <div class="arch-box-items">
+          <span class="arch-item" style="border-color:var(--purple); color:var(--purple);">Cedar Policies</span>
+          <span class="arch-item" style="border-color:var(--purple); color:var(--purple);">Gateway Proxy</span>
+          <span class="arch-item" style="border-color:var(--purple); color:var(--purple);">JIT Access</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="text-align:center; color:var(--text-muted); font-size:1.2rem; margin:12px 0;">&#x25BC;</div>
+
+    <!-- Extensibility -->
+    <div class="arch-box" style="border-color:var(--rose); background:var(--rose-dim); border-style:dashed;">
+      <div class="arch-box-title" style="color:var(--rose);">PLUG IN NEW VENDORS</div>
+      <div class="arch-box-items">
+        <span class="arch-item" style="border-color:var(--rose); color:var(--rose);">BeyondTrust</span>
+        <span class="arch-item" style="border-color:var(--rose); color:var(--rose);">HashiCorp Vault</span>
+        <span class="arch-item" style="border-color:var(--rose); color:var(--rose);">AWS Secrets Mgr</span>
+        <span class="arch-item" style="border-color:var(--rose); color:var(--rose);">Azure Key Vault</span>
+        <span class="arch-item" style="border-color:var(--rose); color:var(--rose);">GCP Secret Mgr</span>
+        <span class="arch-item" style="border-color:var(--rose); color:var(--rose);">Any PAM vendor...</span>
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-muted); margin-top:8px;">Implement PamVendorAdapter &rarr; register bean &rarr; zero portal changes</div>
+    </div>
+  </div>
+
+  <div class="callout teal" style="margin-top:20px;">
+    <div class="callout-title">Reusable for Any PAM Migration</div>
+    <p>The DX Portal is built as a <strong>reusable framework</strong>. For any PAM migration engagement (CyberArk &rarr; Delinea, BeyondTrust &rarr; CyberArk, HashiCorp &rarr; any target), implement the PamVendorAdapter interface for each vendor. The portal, API gateway, integration test harness, and deployment pipeline remain unchanged.</p>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── Mock Data ──────────────────────────────────
+const VENDORS = {
+  cyberark: {
+    name: 'CyberArk', color: '--blue', accounts: 2847, containers: 142, version: '13.2.6',
+    containerLabel: 'safes', auth: 'CyberArk/LDAP session token',
+    routing: 'Via CyberArk PSM / Privilege Cloud session proxy. Session recorded and audited.',
+    sessionMsg: 'Connected via CyberArk PSM proxy. Session recording active.'
+  },
+  delinea: {
+    name: 'Delinea', color: '--green', accounts: 2847, containers: 89, version: '11.7.4',
+    containerLabel: 'folders', auth: 'OAuth2 client_credentials (expires in 3540s)',
+    routing: 'Via Delinea RPC launcher + Distributed Engine. Session connector recording enabled.',
+    sessionMsg: 'Connected via Delinea Secret Server RPC. Session audit active.'
+  },
+  strongdm: {
+    name: 'StrongDM', color: '--purple', accounts: 2847, containers: 34, version: 'SaaS',
+    containerLabel: 'resource groups', auth: 'API key + HMAC signature',
+    routing: 'Via StrongDM gateway → relay → target. Cedar policy enforced, session recorded (100+ protocols).',
+    sessionMsg: 'Connected via StrongDM gateway. Cedar policy: ALLOW. Full session recording active.'
+  }
+};
+
+const MOCK_ACCOUNTS = [
+  { name: 'admin-web-prod', username: 'admin', address: 'web-prod-01.corp.com', container: 'WebServers-Prod', platform: 'WinServerLocal', type: 'human', managed: true },
+  { name: 'svc-db-backup', username: 'svc_backup', address: 'db-prod-01.corp.com', container: 'Database-Prod', platform: 'MSSql', type: 'service', managed: true },
+  { name: 'root-linux-ci', username: 'root', address: 'ci-runner-03.corp.com', container: 'CI-CD-Pipeline', platform: 'UnixSSH', type: 'human', managed: true },
+  { name: 'svc-api-gateway', username: 'svc_apigw', address: 'apigw.corp.com', container: 'API-Services', platform: 'WinDomain', type: 'service', managed: true },
+  { name: 'aws-iam-deploy', username: 'AKIA***EXAMPLE', address: 'us-east-1', container: 'Cloud-Keys', platform: 'AWSAccessKeys', type: 'service', managed: false },
+  { name: 'azure-sp-prod', username: 'sp-prod-app', address: 'tenant.onmicrosoft.com', container: 'Cloud-Keys', platform: 'AzureServicePrincipal', type: 'service', managed: true },
+  { name: 'dba-oracle-fin', username: 'dba_fin', address: 'oracle-fin-01.corp.com', container: 'Database-Prod', platform: 'Oracle', type: 'human', managed: true },
+  { name: 'svc-jenkins-ci', username: 'jenkins_svc', address: 'jenkins.corp.com', container: 'CI-CD-Pipeline', platform: 'WinServiceAccount', type: 'service', managed: true },
+  { name: 'admin-firewall', username: 'fwadmin', address: 'fw-core-01.corp.com', container: 'Network-Infra', platform: 'UnixSSH', type: 'human', managed: true },
+  { name: 'svc-k8s-deploy', username: 'k8s-deployer', address: 'k8s.prod.corp.com', container: 'Cloud-Keys', platform: 'UnixSSHKeys', type: 'service', managed: false },
+  { name: 'sa-exchange-svc', username: 'exch_svc', address: 'exchange.corp.com', container: 'Mail-Systems', platform: 'WinDomain', type: 'service', managed: true },
+  { name: 'root-db-replica', username: 'root', address: 'db-replica-02.corp.com', container: 'Database-Prod', platform: 'MySQL', type: 'human', managed: true },
+];
+
+let currentVendor = 'cyberark';
+
+function showPage(pageId, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function switchVendor(vendor) {
+  currentVendor = vendor;
+  const v = VENDORS[vendor];
+
+  // Update sidebar buttons
+  document.querySelectorAll('.vendor-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  // Update indicator
+  const ind = document.getElementById('vendorIndicator');
+  ind.textContent = 'ACTIVE: ' + v.name.toUpperCase();
+  ind.style.background = `var(${v.color}-dim)`;
+  ind.style.color = `var(${v.color})`;
+
+  // Update dashboard stats
+  document.getElementById('stat-vendor').textContent = v.name;
+  document.getElementById('stat-vendor').style.color = `var(${v.color})`;
+  document.getElementById('stat-accounts').textContent = v.accounts.toLocaleString();
+  document.getElementById('stat-containers').textContent = v.containers;
+  document.getElementById('stat-version').textContent = v.version;
+
+  // Update health checks
+  document.getElementById('hc-auth').textContent = v.auth;
+  document.getElementById('hc-accounts').textContent = v.accounts.toLocaleString() + ' accounts enumerable';
+  document.getElementById('hc-containers').textContent = v.containers + ' ' + v.containerLabel + ' accessible';
+  document.getElementById('hc-platforms').textContent = vendor === 'delinea' ? '78 templates loaded' : vendor === 'strongdm' ? '12 Cedar policies loaded' : '23 platforms loaded';
+
+  // Update secrets page
+  document.getElementById('secrets-subtitle').textContent = 'Browse and manage accounts via ' + v.name + ' adapter';
+
+  // Update session routing
+  document.getElementById('session-routing').textContent = v.routing;
+
+  // Hide session status when switching
+  document.getElementById('session-status').style.display = 'none';
+
+  // Rebuild accounts table
+  buildAccountsTable();
+}
+
+function buildAccountsTable() {
+  const tbody = document.getElementById('accounts-tbody');
+  const v = VENDORS[currentVendor];
+  const containers = currentVendor === 'delinea'
+    ? ['Imported/WebServers', 'Imported/Database', 'Imported/CI-CD', 'Imported/API', 'Imported/Cloud', 'Imported/Network', 'Imported/Mail']
+    : currentVendor === 'strongdm'
+    ? ['prod-servers', 'prod-databases', 'ci-cd', 'cloud-resources', 'network-infra']
+    : null;
+
+  tbody.innerHTML = MOCK_ACCOUNTS.map((a, i) => {
+    const container = containers ? containers[i % containers.length] : a.container;
+    return `<tr class="account-row">
+      <td style="font-weight:600; color:var(--text-bright);">${a.name}</td>
+      <td style="font-family:var(--font-mono); font-size:0.72rem;">${a.username}</td>
+      <td style="font-family:var(--font-mono); font-size:0.72rem;">${a.address}</td>
+      <td><span class="badge badge-blue">${container}</span></td>
+      <td style="font-family:var(--font-mono); font-size:0.68rem;">${a.platform}</td>
+      <td><span class="badge ${a.type === 'service' ? 'badge-amber' : 'badge-green'}">${a.type}</span></td>
+      <td><span class="badge ${a.managed ? 'badge-green' : 'badge-red'}">${a.managed ? 'YES' : 'NO'}</span></td>
+      <td><button class="btn btn-teal" style="padding:4px 10px; font-size:0.65rem;" onclick="alert('Password retrieved via ${v.name} adapter.\\nAudit logged with correlation ID.')">Retrieve</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterAccounts(query) {
+  const rows = document.querySelectorAll('.account-row');
+  const q = query.toLowerCase();
+  rows.forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function launchSession() {
+  const v = VENDORS[currentVendor];
+  const status = document.getElementById('session-status');
+  const msg = document.getElementById('session-msg');
+  msg.textContent = v.sessionMsg;
+  status.style.display = 'block';
+}
+
+// ── Disclaimer Toggle ─────────────────────────
+function toggleDisclaimer() {
+  document.getElementById('disclaimerOverlay').classList.toggle('visible');
+}
+
+// Initial render
+buildAccountsTable();
+</script>
+
+</body>
+</html>

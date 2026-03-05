@@ -1,0 +1,9 @@
+requests>=2.31.0
+python-docx>=0.8.11
+
+# Optional: Multi-vendor source adapters (Agent 11)
+# Uncomment the adapters you need:
+# boto3>=1.34.0                       # AWS Secrets Manager
+# azure-identity>=1.15.0              # Azure Key Vault
+# azure-keyvault-secrets>=4.8.0       # Azure Key Vault
+# google-cloud-secret-manager>=2.18.0 # GCP Secret Manager

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — PAM DX Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div style="font-family:var(--font-mono); font-size:1.2rem; font-weight:700; color:var(--teal); letter-spacing:3px; margin-bottom:8px;">PAM DX</div>
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:24px;">Digital Experience Portal</div>
+
+      <div th:if="${param.error}" style="background:var(--red-dim); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius); padding:10px; margin-bottom:16px; font-size:0.78rem; color:var(--red);">
+        Invalid username or password.
+      </div>
+      <div th:if="${param.logout}" style="background:var(--green-dim); border:1px solid rgba(6,214,160,0.3); border-radius:var(--radius); padding:10px; margin-bottom:16px; font-size:0.78rem; color:var(--green);">
+        You have been logged out.
+      </div>
+
+      <form th:action="@{/login}" method="post">
+        <input type="text" name="username" placeholder="Username" required autofocus>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">Sign In</button>
+      </form>
+
+      <div style="margin-top:20px; font-size:0.68rem; color:var(--text-muted);">
+        Dev credentials: admin/admin or viewer/viewer
+      </div>
+    </div>
+  </div>
+</body>
+</html>
