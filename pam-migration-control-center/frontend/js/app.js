@@ -18,6 +18,7 @@ function showPage(pageId, btn) {
     case 'agents': renderAgentGrid(); break;
     case 'waves': renderWaves(); break;
     case 'gates': renderGateTracker(); break;
+    case 'yellow': renderYellowCheckpoints(); break;
     case 'compare': renderComparison(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }

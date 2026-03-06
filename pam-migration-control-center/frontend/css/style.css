@@ -699,10 +699,195 @@ body {
   border-color: var(--teal); background: var(--bg-card-hover); transform: translateX(2px);
 }
 
+/* ── Yellow Checkpoint Cards ──────────────────────────────────── */
+.yellow-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.yellow-card:hover { border-color: var(--border-light); }
+.yellow-card.open { box-shadow: 0 0 20px rgba(245, 158, 11, 0.08); }
+.yellow-card.status-escalated { border-left-color: var(--red); }
+.yellow-card.status-fired { animation: yellowPulse 3s ease-in-out infinite; }
+.yellow-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+.yellow-card-header:hover { background: var(--bg-card-hover); }
+.yellow-card-body {
+  padding: 0 16px 16px;
+  animation: slideDown 0.3s ease;
+}
+.ai-rationale-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.ai-rationale-field {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(30, 48, 80, 0.3);
+}
+.ai-rationale-field:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.ai-rationale-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+.ai-rationale-value {
+  font-size: 0.72rem;
+  color: var(--text-standard);
+  line-height: 1.7;
+}
+
+/* ── State Machine ────────────────────────────────────────────── */
+.sm-node {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-muted);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  width: 100%;
+  max-width: 700px;
+  transition: all 0.5s ease;
+  opacity: 0.6;
+}
+.sm-node.sm-active {
+  opacity: 1;
+  box-shadow: 0 0 24px currentColor;
+  transform: scale(1.02);
+  border-color: currentColor;
+}
+.sm-node.sm-done {
+  opacity: 1;
+  border-left-width: 4px;
+}
+.sm-arrow {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  padding: 2px 0;
+  transition: color 0.5s ease;
+}
+.sm-arrow.sm-done { color: var(--green); }
+
+/* ── SLA Timer ────────────────────────────────────────────────── */
+.sla-timer {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: timerBlink 2s ease-in-out infinite;
+}
+.sla-timer.sla-ok { background: var(--green-dim); color: var(--green); animation: none; }
+.sla-timer.sla-warn { background: var(--amber-dim); color: var(--amber); }
+.sla-timer.sla-critical { background: var(--red-dim); color: var(--red); }
+
+/* ── Source Badge ──────────────────────────────────────────────── */
+.source-badge {
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.8px;
+}
+.source-procedural { background: rgba(100,116,139,0.2); color: var(--text-muted); border: 1px solid var(--text-muted); }
+.source-ai { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple); }
+
+/* ── Accumulation Segment ─────────────────────────────────────── */
+.accum-segment {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  text-align: center;
+  min-width: 80px;
+  flex: 1;
+  max-width: 110px;
+  transition: all 0.6s ease;
+  position: relative;
+  overflow: hidden;
+}
+.accum-segment::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, currentColor 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.accum-segment.accum-glow::after { opacity: 0.06; }
+
+/* ── Live Demo Button ─────────────────────────────────────────── */
+.demo-btn {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border: 1px solid var(--amber);
+  background: var(--amber-dim);
+  color: var(--amber);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+.demo-btn:hover { background: var(--amber); color: #000; }
+.demo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.demo-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+.demo-btn:active::before { width: 200px; height: 200px; }
+
 /* ── Animation ─────────────────────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+@keyframes yellowPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.15); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes timerBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scanLine {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */

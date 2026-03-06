@@ -3,12 +3,13 @@
  */
 
 async function renderMissionControl() {
-  const [stats, risks, timeline, agents, gates] = await Promise.all([
+  const [stats, risks, timeline, agents, gates, yellowStats] = await Promise.all([
     API.get('/dashboard/stats'),
     API.get('/dashboard/risks'),
     API.get('/dashboard/timeline'),
     API.get('/agents'),
     API.get('/gates'),
+    API.get('/checkpoints/stats'),
   ]);
 
   // Stats row
@@ -87,4 +88,37 @@ async function renderMissionControl() {
       <span class="badge ${g.status === 'passed' ? 'badge-green' : g.status === 'active' ? 'badge-amber' : 'badge-muted'}">${g.status.toUpperCase()}</span>
     </div>
   `).join('');
+
+  // Yellow Checkpoints summary
+  const ycPanel = document.getElementById('yellowStatusPanel');
+  if (ycPanel) {
+    const hasSecurity = yellowStats.by_type && yellowStats.by_type.SECURITY && yellowStats.open > 0;
+    const hasCompliance = yellowStats.by_type && yellowStats.by_type.COMPLIANCE && yellowStats.open > 0;
+    document.getElementById('yellowOpenCount').textContent = `${yellowStats.open} OPEN`;
+    ycPanel.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;padding:10px">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);flex:1;min-width:100px;cursor:pointer" onclick="showPage('yellow',document.querySelectorAll('.nav-link')[5])">
+          <div style="font-size:1.3rem">&#x1F7E1;</div>
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;color:var(--amber)">${yellowStats.total} Total</div>
+            <div style="font-size:0.6rem;color:var(--text-muted)">${yellowStats.resolved} resolved</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-surface);border:1px solid ${yellowStats.open > 0 ? 'var(--amber)' : 'var(--border)'};border-radius:var(--radius);flex:1;min-width:100px">
+          <div class="health-dot ${yellowStats.open > 0 ? 'dot-amber' : 'dot-green'}"></div>
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;color:${yellowStats.open > 0 ? 'var(--amber)' : 'var(--green)'}">${yellowStats.open} Open</div>
+            <div style="font-size:0.6rem;color:var(--text-muted)">${yellowStats.open > 0 ? 'Requires attention' : 'All clear'}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-surface);border:1px solid ${yellowStats.escalated > 0 ? 'var(--red)' : 'var(--border)'};border-radius:var(--radius);flex:1;min-width:100px">
+          <div class="health-dot ${yellowStats.escalated > 0 ? 'dot-red' : 'dot-green'}"></div>
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;color:${yellowStats.escalated > 0 ? 'var(--red)' : 'var(--green)'}">${yellowStats.escalated} Escalated</div>
+            <div style="font-size:0.6rem;color:var(--text-muted)">${yellowStats.escalated > 0 ? 'RED — pipeline halted' : 'No escalations'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
