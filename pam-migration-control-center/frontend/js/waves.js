@@ -70,14 +70,13 @@ async function runWaveSimulation() {
 
   // Fetch simulation result
   const result = await API.post(`/waves/${waveId}/simulate`);
+  const rate = result.total_accounts > 0 ? ((result.migrated / result.total_accounts) * 100).toFixed(1) : '0';
   document.getElementById('etlResult').style.display = 'block';
   document.getElementById('etlResult').innerHTML = `
     <div class="callout teal">
       <div class="callout-title">Wave ${result.wave} Simulation Complete</div>
-      <p>Migrated: <strong>${result.migrated}</strong> / ${result.total_accounts} accounts. Failed: <strong style="color:var(--red)">${result.failed}</strong></p>
-      <p style="margin-top:6px;cursor:pointer;text-decoration:underline" onclick="openDrill('Wave ${result.wave} — Simulation Detail', '<div class=json-viewer>'+JSON.stringify(${JSON.stringify(null)}, null, 2)+'</div>')">
-        <span style="cursor:pointer" onclick="viewWaveDetail('${waveId}')">View detailed step results</span>
-      </p>
+      <p>Migrated: <strong>${result.migrated}</strong> / ${result.total_accounts} accounts. Failed: <strong style="color:var(--red)">${result.failed}</strong>. Success rate: <strong>${rate}%</strong></p>
+      <p style="margin-top:6px"><span style="cursor:pointer;text-decoration:underline;color:var(--cyan)" onclick="viewWaveDetail('${waveId}')">View detailed step results</span></p>
     </div>
   `;
 
@@ -91,7 +90,42 @@ async function runWaveSimulation() {
 
 async function viewWaveDetail(waveId) {
   const result = await API.post(`/waves/${waveId}/simulate`);
-  openDrill(`Wave ${result.wave} — ETL Pipeline Detail`, `<div class="json-viewer">${JSON.stringify(result, null, 2)}</div>`);
+  const total = result.total_accounts || 0;
+  const migrated = result.migrated || 0;
+  const failed = result.failed || 0;
+  const rate = total > 0 ? ((migrated / total) * 100).toFixed(1) : '0';
+
+  let html = `
+    <div style="margin-bottom:14px;display:flex;gap:6px">
+      <span class="badge badge-muted">WAVE ${result.wave}</span>
+      <span class="badge ${result.status === 'simulated' ? 'badge-teal' : 'badge-amber'}">${(result.status || 'complete').toUpperCase()}</span>
+    </div>
+    <div class="rpt-metrics">
+      ${metricCard('Total Accounts', total.toLocaleString())}
+      ${metricCard('Migrated', migrated.toLocaleString(), 'var(--green)')}
+      ${metricCard('Failed', failed.toLocaleString(), failed > 0 ? 'var(--red)' : 'var(--text-muted)')}
+      ${metricCard('Success Rate', rate + '%', parseFloat(rate) >= 95 ? 'var(--green)' : 'var(--amber)')}
+    </div>
+    <div class="rpt-section-label">ETL Pipeline Steps</div>
+  `;
+
+  (result.steps || []).forEach(step => {
+    const durSec = (step.duration_ms / 1000).toFixed(1);
+    const pct = step.status === 'done' ? 100 : (step.status === 'active' ? 50 : 0);
+    html += `
+      <div class="rpt-step">
+        <div class="rpt-step-header">
+          <span class="rpt-step-name">${step.step}</span>
+          <span class="rpt-step-dur">${durSec}s</span>
+        </div>
+        <div class="rpt-progress"><div class="rpt-progress-fill" style="width:${pct}%"></div></div>
+        <div class="rpt-step-detail">${step.detail}</div>
+      </div>
+    `;
+  });
+
+  html += renderCollapsibleJSON(result);
+  openDrill(`Wave ${result.wave} — ETL Pipeline Detail`, html);
 }
 
 function renderHeartbeatChecks() {
