@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.mock_data.data import PHASES, AGENTS, WAVES, GATES, OPTIONS
+from backend.mock_data.data import PHASES, AGENTS, WAVES, GATES, OPTIONS, PREDICTIONS_A, PREDICTIONS_B
 
 router = APIRouter()
 
@@ -84,3 +84,9 @@ def _phase_status(phase):
     if any(s in ("active", "complete") for s in statuses):
         return "active"
     return "pending"
+
+
+@router.get("/predictions")
+async def get_predictions(option: str = "a"):
+    """AI Predictive Insights — cross-phase bottleneck and risk forecasting."""
+    return PREDICTIONS_A if option == "a" else PREDICTIONS_B

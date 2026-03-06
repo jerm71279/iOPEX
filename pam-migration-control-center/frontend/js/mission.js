@@ -3,13 +3,14 @@
  */
 
 async function renderMissionControl() {
-  const [stats, risks, timeline, agents, gates, yellowStats] = await Promise.all([
+  const [stats, risks, timeline, agents, gates, yellowStats, predictions] = await Promise.all([
     API.get('/dashboard/stats'),
     API.get('/dashboard/risks'),
     API.get('/dashboard/timeline'),
     API.get('/agents'),
     API.get('/gates'),
     API.get('/checkpoints/stats'),
+    API.get('/dashboard/predictions'),
   ]);
 
   // Stats row
@@ -121,4 +122,104 @@ async function renderMissionControl() {
       </div>
     `;
   }
+
+  // Predictive Insights
+  renderPredictions(predictions);
+}
+
+function renderPredictions(predictions) {
+  const panel = document.getElementById('predictionsPanel');
+  const badge = document.getElementById('predictionCount');
+  if (!panel || !badge) return;
+
+  badge.textContent = `${predictions.length} FORECASTS`;
+
+  const severityColors = {
+    critical: { border: 'var(--red)', dot: 'dot-red' },
+    high: { border: 'var(--amber)', dot: 'dot-amber' },
+    medium: { border: 'var(--blue)', dot: 'dot-blue' },
+    low: { border: 'var(--green)', dot: 'dot-green' },
+  };
+
+  const categoryColors = {
+    bottleneck: { bg: 'var(--amber-dim)', color: 'var(--amber)' },
+    compliance: { bg: 'var(--purple-dim)', color: 'var(--purple)' },
+    capacity: { bg: 'var(--cyan-dim)', color: 'var(--cyan)' },
+    security: { bg: 'var(--red-dim)', color: 'var(--red)' },
+  };
+
+  panel.innerHTML = `
+    <div style="padding:14px;display:flex;flex-direction:column;gap:10px;">
+      ${predictions.map((p, idx) => {
+        const sev = severityColors[p.severity] || severityColors.medium;
+        const cat = categoryColors[p.category] || categoryColors.bottleneck;
+        const catLabel = p.category.toUpperCase();
+        const agentList = p.affected_agents.map(a => String(a).padStart(2, '0')).join(', ');
+        const phaseList = p.affected_phases.map(ph => ph.toUpperCase()).join(', ');
+        const sourceList = p.source_checkpoints.join(', ');
+
+        return `
+          <div class="prediction-card" style="
+            background:var(--bg-card);
+            border:1px solid var(--border);
+            border-left:4px solid ${sev.border};
+            border-radius:var(--radius);
+            overflow:hidden;
+            animation: fadeIn 0.3s ease ${idx * 0.08}s both;
+            position:relative;
+          ">
+            <div class="prediction-scanline"></div>
+            <div style="padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                <div class="health-dot ${sev.dot}" style="width:8px;height:8px;"></div>
+                <span class="badge" style="background:${cat.bg};color:${cat.color};font-size:0.48rem;padding:2px 6px;letter-spacing:1px;">${catLabel}</span>
+                <span style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:0.5px;margin-left:auto;">${p.severity.toUpperCase()}</span>
+              </div>
+              <div style="font-weight:700;font-size:0.82rem;color:var(--text-bright);margin-bottom:6px;line-height:1.4;">${p.title}</div>
+              <div style="font-size:0.72rem;color:var(--text-standard);line-height:1.6;margin-bottom:10px;">${p.description}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+                <div style="font-size:0.6rem;color:var(--text-muted);">
+                  <span style="font-family:var(--font-mono);letter-spacing:0.5px;">BASED ON:</span>
+                  <span style="color:var(--amber);font-family:var(--font-mono);margin-left:4px;">${sourceList}</span>
+                </div>
+                <div style="font-size:0.6rem;color:var(--text-muted);">
+                  <span style="font-family:var(--font-mono);letter-spacing:0.5px;">AGENTS:</span>
+                  <span style="color:var(--cyan);font-family:var(--font-mono);margin-left:4px;">${agentList}</span>
+                </div>
+                <div style="font-size:0.6rem;color:var(--text-muted);">
+                  <span style="font-family:var(--font-mono);letter-spacing:0.5px;">PHASES:</span>
+                  <span style="color:var(--purple);font-family:var(--font-mono);margin-left:4px;">${phaseList}</span>
+                </div>
+              </div>
+              <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:6px;">
+                <span style="font-family:var(--font-mono);font-size:0.55rem;letter-spacing:0.5px;">PREDICTED IMPACT:</span>
+                <span style="color:${sev.border};margin-left:4px;">${p.predicted_impact}</span>
+              </div>
+              <details class="prediction-rec">
+                <summary style="
+                  font-family:var(--font-mono);
+                  font-size:0.58rem;
+                  font-weight:600;
+                  color:var(--teal);
+                  cursor:pointer;
+                  letter-spacing:0.5px;
+                  padding:6px 0;
+                  user-select:none;
+                ">&#x25B6; RECOMMENDATION</summary>
+                <div style="
+                  font-size:0.72rem;
+                  color:var(--text-standard);
+                  line-height:1.7;
+                  padding:10px 14px;
+                  margin-top:6px;
+                  background:var(--bg-surface);
+                  border:1px solid var(--border);
+                  border-radius:var(--radius);
+                ">${p.recommendation}</div>
+              </details>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `;
 }
