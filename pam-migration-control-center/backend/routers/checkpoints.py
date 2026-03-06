@@ -20,9 +20,9 @@ THRESHOLDS = {"proceed": 2, "notify_lead": 4}  # 5+ = auto-promote armed
 
 
 @router.get("")
-async def list_checkpoints(phase: str = None, type: str = None, status: str = None):
+async def list_checkpoints(option: str = "a", phase: str = None, type: str = None, status: str = None):
     """List all yellow checkpoints, optionally filtered."""
-    results = YELLOW_CHECKPOINTS
+    results = [c for c in YELLOW_CHECKPOINTS if c.get("option", "both") in ("both", option)]
     if phase:
         results = [c for c in results if c["phase"] == phase]
     if type:
@@ -33,13 +33,14 @@ async def list_checkpoints(phase: str = None, type: str = None, status: str = No
 
 
 @router.get("/stats")
-async def checkpoint_stats():
+async def checkpoint_stats(option: str = "a"):
     """Summary counts for dashboard panels."""
-    total = len(YELLOW_CHECKPOINTS)
+    cps = [c for c in YELLOW_CHECKPOINTS if c.get("option", "both") in ("both", option)]
+    total = len(cps)
     by_status = {}
     by_type = {}
     by_phase = {}
-    for c in YELLOW_CHECKPOINTS:
+    for c in cps:
         by_status[c["status"]] = by_status.get(c["status"], 0) + 1
         by_type[c["type"]] = by_type.get(c["type"], 0) + 1
         by_phase[c["phase"]] = by_phase.get(c["phase"], 0) + 1
@@ -162,12 +163,15 @@ async def fire_checkpoint(request: Request):
             "recommended_action": "Awaiting agent reasoning",
         }
 
+    opt = body.get("option", "a")
+
     checkpoint = {
         "id": new_id,
         "phase": phase,
         "agent": agent,
         "type": cp_type,
         "source": "ai_detected",
+        "option": opt,
         "status": "fired",
         "fired_at": datetime.now(timezone.utc).isoformat(),
         "resolved_at": None,

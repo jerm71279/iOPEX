@@ -79,6 +79,43 @@ const DEMO_SCENARIOS = [
   },
 ];
 
+// ── Option B (CyberArk Privilege Cloud) demo scenarios ──────────────
+const DEMO_SCENARIOS_B = [
+  {
+    phase: 'p2', agent: '10', type: 'OPERATIONAL',
+    condition: 'OAuth2 Identity platform access token expired mid-operation — Agent 10 staging validation interrupted at assertion 4 of 10',
+    ai_rationale: {
+      what_fired: 'Agent 10 Staging Validation received HTTP 401 Unauthorized from Privilege Cloud API during assertion 4 (credential retrieval verification). The OAuth2 bearer token issued by CyberArk Identity expired after 30 minutes. Assertions 1-3 completed successfully but took 31 minutes due to safe count.',
+      root_cause: 'CyberArk Identity platform enforces a fixed 30-minute OAuth2 access token lifetime (client_credentials grant). Unlike on-prem PVWA session tokens which have an idle timeout and can be refreshed, Identity tokens simply expire with no refresh mechanism. The validation sequence takes 32-38 minutes for the current safe count, consistently exceeding the token lifetime.',
+      cross_system_context: 'Agents 04, 05, 06, and 15 all authenticate through the same OAuth2 client (pam-migration-svc). Any operation exceeding 30 minutes will hit this wall. Agent 04 wave ETL runs 45-90 minutes per wave. Agent 15 parallel-run watchdog has a 120-minute timer. This is a systemic platform constraint affecting all long-running agent operations.',
+      risk_assessment: 'OPERATIONAL — High risk to timeline if unaddressed. Every agent operation longer than 30 minutes will fail unpredictably. A token expiry during Agent 04 wave migration could leave accounts partially migrated, requiring manual intervention or Agent 06 rollback.',
+      recommended_action: 'Implement a shared TokenLifecycleManager that proactively refreshes tokens at the 25-minute mark. Add assertion-level checkpointing to Agent 10 so validation can resume after token refresh. Distribute the lifecycle manager to all agents using the shared OAuth2 client. File a feature request with CyberArk for configurable token lifetime.',
+    },
+  },
+  {
+    phase: 'p1', agent: '11', type: 'SECURITY',
+    condition: 'Privilege Cloud API version deprecation notice — REST API v1 endpoints scheduled for removal in 60 days, 3 agents using deprecated endpoints',
+    ai_rationale: {
+      what_fired: 'Agent 11 Source Adapter received deprecation warning headers (Sunset: 2025-08-15) on GET /api/v1/Safes responses from Privilege Cloud. CyberArk has announced REST API v1 endpoints will return HTTP 410 Gone after the sunset date. Agents 04, 10, and 11 are using v1 endpoints for safe enumeration, account listing, and credential retrieval.',
+      root_cause: 'The migration agents were developed against Privilege Cloud REST API v1 documentation. CyberArk published v2 API specification 4 months ago with changes to pagination, response schemas, and authentication headers. The v1-to-v2 migration was not included in the original migration timeline because v1 deprecation was announced after project kickoff.',
+      cross_system_context: 'Agent 04 ETL uses v1 for credential export (POST /api/v1/Accounts/{id}/Password/Retrieve), which moves to /api/v2/Credentials/{id}/retrieve with a different response format. Agent 10 uses v1 for safe membership validation. Agent 15 Hybrid Fleet Manager already uses v2 endpoints because it was developed later. The mixed v1/v2 usage means Agent 15 will continue working after sunset while Agents 04, 10, and 11 will break.',
+      risk_assessment: 'SECURITY — Deprecated API endpoints receive no security patches. Running production migration workloads against unpatched endpoints creates a supply-chain risk. The 60-day window is tight given that Agent 04 ETL is the most complex consumer and requires response schema changes.',
+      recommended_action: 'Create a v1-to-v2 migration task for Agents 04, 10, and 11. Start with Agent 11 (simplest consumer) as a pilot. Update response parsing for new pagination format and credential retrieval schema. Add API version header validation to agent preflight checks. Target completion 30 days before sunset to allow testing buffer.',
+    },
+  },
+  {
+    phase: 'p6', agent: '15', type: 'EDGE_CASE',
+    condition: 'Privilege Cloud Connector server certificate expires in 14 days — parallel-run traffic will fail if not renewed',
+    ai_rationale: {
+      what_fired: 'Agent 15 Hybrid Fleet Manager health check detected that the Privilege Cloud Connector server\'s TLS certificate (CN=connector-prod.internal) expires on 2025-07-17. The Connector handles all credential retrieval traffic between the internal network and Privilege Cloud tenant. At current 90% traffic shift, 2,560 concurrent sessions route through this Connector.',
+      root_cause: 'The Connector was deployed during Phase 2 (CHG0008891) with a 90-day self-signed certificate generated during installation. The certificate renewal was not added to the infrastructure team\'s certificate management system because the Connector is a new component not yet integrated into the automated renewal pipeline. The Connector does not support hot certificate replacement — it requires a service restart.',
+      cross_system_context: 'Agent 04 ETL wave migrations, Agent 05 heartbeat checks, Agent 10 staging validation, and Agent 15 parallel-run traffic ALL route through this Connector. A certificate expiry would cause a total outage of all Privilege Cloud operations. Agent 06 rollback procedures also depend on the Connector — even reverting traffic to source requires Connector availability to re-sync credentials.',
+      risk_assessment: 'EDGE_CASE — 14-day window is adequate for certificate renewal, but the service restart requirement means a maintenance window is needed. At 90% traffic shift, a Connector restart will cause a brief outage (estimated 2-3 minutes) affecting all concurrent credential retrievals. This must be coordinated with application teams to minimize impact.',
+      recommended_action: 'Generate a new certificate with a 365-day validity period. Schedule the Connector restart during the 0200-0600 UTC maintenance window. Add the Connector certificate to the organization\'s certificate management system for automated renewal alerts. Consider deploying a second Connector for high availability — this eliminates the single-point-of-failure risk identified in yc-b03.',
+    },
+  },
+];
+
 async function renderYellowCheckpoints() {
   const [checkpoints, stats] = await Promise.all([
     API.get('/checkpoints'),
@@ -323,8 +360,9 @@ async function runLiveDemo() {
   const btn = document.getElementById('demoBtn');
   if (btn) { btn.disabled = true; btn.innerHTML = 'DEMO RUNNING...'; }
 
-  // Pick a random demo scenario
-  const scenario = DEMO_SCENARIOS[Math.floor(Math.random() * DEMO_SCENARIOS.length)];
+  // Pick a random demo scenario based on selected option
+  const scenarios = API.option === 'b' ? DEMO_SCENARIOS_B : DEMO_SCENARIOS;
+  const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
 
   // Animate through state machine states
   for (let i = 0; i < SM_STATES.length; i++) {
@@ -360,6 +398,7 @@ async function runLiveDemo() {
     type: scenario.type,
     condition: scenario.condition,
     ai_rationale: scenario.ai_rationale,
+    option: API.option || 'a',
   });
 
   // Brief pause then refresh
