@@ -62,7 +62,7 @@ async function _renderExplorer() {
   _renderGroupTabs();
   await _renderGroupCards();
   _renderSearchBar();
-  _renderAccountTable(accounts);
+  await _renderAccountTable(accounts);
 }
 
 function _renderStats(accounts) {
@@ -110,7 +110,7 @@ async function acctSetGroupBy(key) {
   await _renderGroupCards();
   // Re-fetch and re-render table (clear group filter)
   const accounts = await _fetchFilteredAccounts();
-  _renderAccountTable(accounts);
+  await _renderAccountTable(accounts);
 }
 
 async function _renderGroupCards() {
@@ -142,7 +142,7 @@ async function acctFilterByGroup(key) {
   acctFilterGroup = acctFilterGroup === key ? null : key;
   await _renderGroupCards();
   const accounts = await _fetchFilteredAccounts();
-  _renderAccountTable(accounts);
+  await _renderAccountTable(accounts);
 }
 
 function _renderSearchBar() {
@@ -178,7 +178,7 @@ function acctOnSearch(val) {
   _acctSearchTimer = setTimeout(async () => {
     acctSearch = val;
     const accounts = await _fetchFilteredAccounts();
-    _renderAccountTable(accounts);
+    await _renderAccountTable(accounts);
   }, 250);
 }
 
@@ -208,7 +208,7 @@ async function _fetchFilteredAccounts() {
   return API.get(`/accounts?${qs}`);
 }
 
-function _renderAccountTable(accounts) {
+async function _renderAccountTable(accounts) {
   if (!accounts.length) {
     document.getElementById('acctTable').innerHTML = '<div class="panel" style="padding:20px;text-align:center;color:var(--text-muted);">No accounts match the current filters.</div>';
     return;
@@ -524,5 +524,5 @@ async function acctBatchDrill(batchId) {
   const filtered = accounts.filter(a => a.batch === batchId);
   renderAccountExplorer();
   // After render, override table with filtered results
-  setTimeout(() => _renderAccountTable(filtered), 50);
+  setTimeout(async () => await _renderAccountTable(filtered), 50);
 }
