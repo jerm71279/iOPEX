@@ -80,6 +80,9 @@ async function runWaveSimulation() {
     </div>
   `;
 
+  // ML anomaly overlay
+  await renderETLAnomalyOverlay(waveId);
+
   btn.textContent = 'Run Wave';
   btn.disabled = false;
   waveAnimating = false;

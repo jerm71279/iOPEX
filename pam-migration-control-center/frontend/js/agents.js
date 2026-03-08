@@ -78,11 +78,25 @@ async function selectAgent(agentId) {
         <div class="detail-label">Gates</div>
         <div class="detail-value">${a.gates.map(g => `<span class="badge badge-amber">${g.toUpperCase()}</span>`).join(' ')}</div>
       </div>` : ''}
+      <div id="agentMLSection"></div>
       <div style="margin-top:14px">
         <button class="btn btn-sm btn-teal" onclick="viewAgentOutput('${agentId}')">View Output</button>
       </div>
     </div>
   `;
+
+  // Inject ML sections for agents 04 and 12
+  if (a.num === '04') {
+    renderAgent04MLDetail().then(html => {
+      const mlEl = document.getElementById('agentMLSection');
+      if (mlEl) mlEl.innerHTML = html;
+    });
+  } else if (a.num === '12') {
+    renderAgent12MLDetail().then(html => {
+      const mlEl = document.getElementById('agentMLSection');
+      if (mlEl) mlEl.innerHTML = html;
+    });
+  }
 
   // Re-render grid to update selection
   renderAgentGrid();

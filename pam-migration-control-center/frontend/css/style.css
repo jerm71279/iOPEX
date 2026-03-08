@@ -1050,6 +1050,29 @@ body {
 @keyframes pfDecisionPulse { 0%,100%{box-shadow:0 0 8px var(--amber-dim)} 50%{box-shadow:0 0 24px var(--amber-dim)} }
 @keyframes pfBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
+/* ── ML Module ─────────────────────────────────────────────────── */
+.ml-anomaly { border-color: var(--amber) !important; animation: anomalyPulse 2s infinite; }
+.ml-score-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; }
+.ml-score-rules { background:var(--blue); }
+.ml-score-ml { background:var(--purple); }
+.ml-badge-rule { background:var(--blue-dim); color:var(--blue); }
+.ml-badge-blend { background:var(--purple-dim); color:var(--purple); }
+.ml-badge-human { background:var(--green-dim); color:var(--green); }
+@keyframes anomalyPulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 12px var(--amber-dim)} }
+
+/* ── SHIFT Architecture Diagram ───────────────────────────────── */
+.shift-arch-layer {
+  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius);
+  text-align: center; transition: all 0.3s ease;
+}
+.shift-arch-layer:hover { border-color: var(--border-light); background: var(--bg-card-hover); }
+.shift-arch-label {
+  font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 1.5px; margin-bottom: 6px;
+}
+.shift-arch-desc { font-size: 0.62rem; color: var(--text-muted); line-height: 1.5; }
+.shift-arch-arrow { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 4px 0; }
+
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { width: 180px; }

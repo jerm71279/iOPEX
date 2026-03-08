@@ -12,6 +12,62 @@ function renderGuide() {
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
   `) +
 
+  _guideSection('SHIFT Architecture — Framework-Agnostic Design', `
+    <p style="margin-bottom:14px;">SHIFT is a <strong>methodology, tooling, and agent design pattern</strong> — not an SDK. The underlying orchestration engine is swappable. This makes SHIFT portable and platform-independent.</p>
+
+    <div style="display:flex;flex-direction:column;gap:0;margin:14px 0;">
+      <div class="shift-arch-layer" style="background:var(--teal-dim);border-color:var(--teal);">
+        <div class="shift-arch-label" style="color:var(--teal);">SHIFT METHODOLOGY LAYER</div>
+        <div class="shift-arch-desc">Agent patterns, phase gates, ETL pipeline design, NHI classification rules, ML feedback loops</div>
+        <div style="font-size:0.52rem;color:var(--teal);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">PORTABLE ACROSS ANY ORCHESTRATION ENGINE</div>
+      </div>
+      <div class="shift-arch-arrow">&#x25BC;</div>
+      <div class="shift-arch-layer" style="background:var(--purple-dim);border-color:var(--purple);">
+        <div class="shift-arch-label" style="color:var(--purple);">ORCHESTRATION ENGINE LAYER (SWAPPABLE)</div>
+        <div class="shift-arch-desc">
+          <span class="badge badge-purple" style="margin:2px;">LangGraph</span>
+          <span class="badge badge-purple" style="margin:2px;">CrewAI</span>
+          <span class="badge badge-purple" style="margin:2px;">AutoGen</span>
+          <span class="badge badge-purple" style="margin:2px;">Custom Python</span>
+          <span class="badge badge-purple" style="margin:2px;">n8n</span>
+        </div>
+        <div style="font-size:0.52rem;color:var(--purple);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">CLIENT CHOOSES BASED ON EXISTING STACK</div>
+      </div>
+      <div class="shift-arch-arrow">&#x25BC;</div>
+      <div class="shift-arch-layer" style="background:var(--cyan-dim);border-color:var(--cyan);">
+        <div class="shift-arch-label" style="color:var(--cyan);">INFRASTRUCTURE LAYER</div>
+        <div class="shift-arch-desc">PAM APIs (CyberArk, Delinea, StrongDM) &middot; MCP Servers &middot; State Store &middot; Audit Logger</div>
+        <div style="font-size:0.52rem;color:var(--cyan);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">VENDOR-AGNOSTIC ADAPTERS</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:8px;font-size:0.72rem;">What SHIFT Defines</div>
+      <ul style="margin:0;padding-left:18px;line-height:2;font-size:0.68rem;">
+        <li><strong>15 agent contracts</strong> — inputs, outputs, gates, dependencies</li>
+        <li><strong>8-phase lifecycle</strong> — P0 through P7 with duration estimates</li>
+        <li><strong>ETL pipeline spec</strong> — 7-step FREEZE&rarr;UNFREEZE with crash recovery</li>
+        <li><strong>ML feedback loop</strong> — EWMA + Isolation Forest anomaly detection, LightGBM + rule blending for NHI classification</li>
+        <li><strong>Yellow checkpoint state machine</strong> — 6-state lifecycle with SLA windows</li>
+        <li><strong>Human gate protocol</strong> — 17 approval gates with evidence requirements</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:14px;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:8px;font-size:0.72rem;">What SHIFT Does NOT Define</div>
+      <ul style="margin:0;padding-left:18px;line-height:2;font-size:0.68rem;">
+        <li>Which LLM framework runs the agents</li>
+        <li>Which cloud hosts the infrastructure</li>
+        <li>Which CI/CD deploys it</li>
+      </ul>
+    </div>
+
+    <div class="callout teal" style="margin-top:14px;font-size:0.68rem;line-height:1.6;">
+      <div class="callout-title" style="font-size:0.72rem;">Why This Matters</div>
+      <p>The client is not locked into a vendor SDK. If CrewAI sunsets or LangGraph changes pricing, swap the engine layer — agent logic, phase gates, and ML models carry over unchanged. The same agent specs run on LangGraph (graph-based), CrewAI (role-based), AutoGen (multi-agent chat), or plain Python coordinator (current implementation).</p>
+    </div>
+  `) +
+
   _guideSection('The 8 Migration Phases (P0-P7)', `
     <table style="width:100%;border-collapse:collapse;font-size:0.68rem;">
       <thead>

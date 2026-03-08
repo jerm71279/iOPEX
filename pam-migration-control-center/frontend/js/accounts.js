@@ -214,11 +214,19 @@ function _renderAccountTable(accounts) {
     return;
   }
 
+  // Fetch ML classification data for score column
+  let mlData = null;
+  try {
+    const mlResp = await fetchMLClassifications();
+    mlData = mlResp.classifications || null;
+  } catch(e) { /* ML unavailable */ }
+
   const rows = accounts.map(a => {
     const statusCls = {migrated:'badge-green',in_progress:'badge-amber',pending:'badge-muted',blocked:'badge-red'}[a.status] || 'badge-muted';
     const riskCls = riskBadgeClass(a.risk);
     const pipeLabel = a.pipeline_step === 'COMPLETE' ? '7/7' : `${a.pipeline_progress}/7`;
     const pipeColor = a.pipeline_step === 'COMPLETE' ? 'var(--green)' : 'var(--amber)';
+    const mlBadge = mlScoreBadge(a.id, mlData);
     return `<tr class="acct-row" onclick="acctOpenProfile('${a.id}')">
       <td class="acct-name-cell">${a.name}</td>
       <td>${a.userName}</td>
@@ -230,6 +238,7 @@ function _renderAccountTable(accounts) {
       <td><span class="badge ${statusCls}">${a.status.replace('_',' ')}</span></td>
       <td><span style="color:${pipeColor}">${pipeLabel} ${a.pipeline_step === 'COMPLETE' ? '' : a.pipeline_step}</span></td>
       <td>${a.is_nhi ? `<span class="badge badge-amber">${(a.nhi_type||'').replace(/_/g,' ')}</span>` : '<span style="color:var(--text-muted)">-</span>'}</td>
+      <td>${mlBadge}</td>
     </tr>`;
   }).join('');
 
@@ -240,7 +249,7 @@ function _renderAccountTable(accounts) {
           <tr>
             <th>Name</th><th>User</th><th>Department</th><th>Platform</th>
             <th>Wave</th><th>Batch</th><th>Risk</th><th>Status</th>
-            <th>Pipeline</th><th>NHI Type</th>
+            <th>Pipeline</th><th>NHI Type</th><th>ML Score</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -251,8 +260,12 @@ function _renderAccountTable(accounts) {
 
 // ── Profile Drilldown ───────────────────────────────────────────────
 async function acctOpenProfile(id) {
-  const a = await API.get(`/accounts/${id}`);
+  const [a, mlResp] = await Promise.all([
+    API.get(`/accounts/${id}`),
+    fetchMLClassifications().catch(() => null),
+  ]);
   if (a.error) return;
+  const mlData = mlResp ? mlResp.classifications : null;
 
   const opt = API.option;
   const pipeSteps = ['FREEZE','EXPORT','TRANSFORM','CREATE','IMPORT','HEARTBEAT','UNFREEZE'];
@@ -325,6 +338,7 @@ async function acctOpenProfile(id) {
     </div>
 
     ${nhiHtml}
+    ${mlProfileSection(a.id, mlData)}
 
     <div class="profile-section">
       <div class="section-label">WAVE ASSIGNMENT</div>

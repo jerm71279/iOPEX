@@ -123,6 +123,9 @@ async function renderMissionControl() {
     `;
   }
 
+  // ML Model Status
+  renderMLStatus();
+
   // Predictive Insights
   renderPredictions(predictions);
 
