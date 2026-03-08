@@ -7,3 +7,8 @@ python-docx>=0.8.11
 # azure-identity>=1.15.0              # Azure Key Vault
 # azure-keyvault-secrets>=4.8.0       # Azure Key Vault
 # google-cloud-secret-manager>=2.18.0 # GCP Secret Manager
+
+# Optional: ML modules (kill switch: ml.enabled in agent_config.json)
+# scikit-learn>=1.3.0                  # ETL anomaly detection (Isolation Forest)
+# lightgbm>=4.0.0                     # NHI classification blending
+# numpy>=1.24.0                       # ML foundation

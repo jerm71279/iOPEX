@@ -18,6 +18,8 @@ from core.base import AgentResult
 from core.state import MigrationState, PHASES, PHASE_NAMES
 from core.logging import AuditLogger
 from agents import AGENT_REGISTRY
+from core.ml import is_ml_enabled
+from core.ml.wave_learning_coordinator import WaveLearningCoordinator
 
 # Phase → ordered list of agent keys to execute
 PHASE_SEQUENCE = {
@@ -201,6 +203,13 @@ class Coordinator:
 
         self.logger.log("phase_start", {"phase": phase, "agents": agents_to_run, "dry_run": self.dry_run})
 
+        # ML model lifecycle for ETL/NHI phases
+        wlc = None
+        if phase in ("P4", "P5") and is_ml_enabled(self.config):
+            wlc = WaveLearningCoordinator(self.state, self.logger, self.config)
+            ml_status = wlc.pre_wave(int(phase[1]))
+            print(f"  [ML] Models loaded: ETL={ml_status['etl_detector']}, NHI={ml_status['nhi_classifier']}")
+
         previous_result = {}
         all_passed = True
 
@@ -211,6 +220,14 @@ class Coordinator:
                 continue
 
             agent = agent_class(self.config, self.state, self.logger)
+
+            # Inject ML models if available
+            if wlc is not None:
+                if hasattr(agent, 'set_anomaly_detector') and wlc.etl_detector:
+                    agent.set_anomaly_detector(wlc.etl_detector)
+                if hasattr(agent, 'set_ml_classifier') and wlc.nhi_classifier:
+                    agent.set_ml_classifier(wlc.nhi_classifier)
+
             print(f"  [{agent.AGENT_ID}] Running preflight...")
 
             if self.dry_run:
@@ -249,6 +266,11 @@ class Coordinator:
             if result.metrics:
                 for k, v in result.metrics.items():
                     print(f"    {k}: {v}")
+
+        # ML post-phase — retrain and save models
+        if wlc is not None and all_passed:
+            post_status = wlc.post_wave(int(phase[1]))
+            self.logger.log("ml_post_phase", post_status)
 
         # Phase summary
         print(f"\n{'='*60}")

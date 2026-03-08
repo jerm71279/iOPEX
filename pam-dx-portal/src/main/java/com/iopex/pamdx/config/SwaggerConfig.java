@@ -20,7 +20,7 @@ public class SwaggerConfig {
     public OpenAPI pamDxOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("PAM DX Portal API")
+                        .title("SHIFT Portal API")
                         .version("1.0.0")
                         .description("""
                                 Vendor-agnostic PAM Digital Experience API Gateway.

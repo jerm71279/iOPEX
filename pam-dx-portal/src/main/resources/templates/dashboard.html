@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — PAM DX Portal</title>
+  <title>Dashboard — SHIFT Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
   <nav class="sidebar">
-    <div class="sidebar-logo">PAM DX</div>
+    <div class="sidebar-logo">SHIFT</div>
     <div class="sidebar-vendor" th:text="'VENDOR: ' + ${vendor}">VENDOR: CyberArk</div>
     <a th:href="@{/}" class="active"><span>&#x25A3;</span> Dashboard</a>
     <a th:href="@{/secrets}"><span>&#x1F511;</span> Secrets</a>

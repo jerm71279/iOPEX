@@ -97,5 +97,22 @@
     "auth_method": "oauth2",
     "client_id": "",
     "verify_ssl": true
+  },
+  "ml": {
+    "enabled": false,
+    "etl_anomaly": {
+      "ewma_alpha": 0.3,
+      "ewma_threshold_sigma": 2.0,
+      "isolation_forest_contamination": 0.1,
+      "min_samples_for_if": 30,
+      "blend_weight_ewma": 0.4,
+      "blend_weight_if": 0.6
+    },
+    "nhi_classifier": {
+      "min_samples_for_ml": 50,
+      "blend_weight_rules": 0.6,
+      "blend_weight_ml": 0.4,
+      "retrain_after_corrections": 10
+    }
   }
 }

@@ -126,6 +126,8 @@ class NHIClassification:
     migration_wave: int = 4        # Default NHI wave
     pre_migration_checks: List[str] = field(default_factory=list)
     post_migration_checks: List[str] = field(default_factory=list)
+    ml_confidence: Optional[float] = None
+    blended_score: Optional[float] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -281,6 +283,14 @@ class NHIHandlerAgent(AgentBase):
 
     AGENT_ID = "agent_12_nhi_handler"
     AGENT_NAME = "NHI Handler"
+
+    def set_ml_classifier(self, classifier):
+        """Inject ML classifier for blended NHI scoring."""
+        self._ml_classifier = classifier
+
+    def __init__(self, config, state, audit_logger):
+        super().__init__(config, state, audit_logger)
+        self._ml_classifier = None
 
     def preflight(self) -> AgentResult:
         """Validate that discovery data exists for classification."""
@@ -510,11 +520,38 @@ class NHIHandlerAgent(AgentBase):
 
         # Determine winning type by weighted vote
         type_scores: Dict[NHIType, float] = {}
+        signals_dict: Dict[str, float] = {}
         for signal_name, nhi_type, weight, evidence in signals:
             type_scores[nhi_type] = type_scores.get(nhi_type, 0) + weight
+            signals_dict[signal_name] = signals_dict.get(signal_name, 0) + weight
 
         winning_type = max(type_scores, key=type_scores.get)
         confidence = min(type_scores[winning_type], 1.0)
+        weighted_score = confidence
+        is_nhi = True
+
+        # ML blending (advisory)
+        ml_confidence = None
+        blended_score = None
+        if self._ml_classifier is not None:
+            features = {
+                "platform_signal": signals_dict.get("platform", 0.0),
+                "name_signal": signals_dict.get("name_pattern", 0.0),
+                "container_signal": signals_dict.get("container_pattern", 0.0),
+                "dependency_signal": signals_dict.get("dependency_evidence", 0.0),
+                "audit_signal": signals_dict.get("audit_pattern", 0.0),
+                "account_name_length": len(acct.get("name", "")),
+                "safe_depth": acct.get("safeName", "").count("/") + 1,
+                "has_linked_accounts": 1.0 if acct.get("linkedAccounts") else 0.0,
+            }
+            ml_result = self._ml_classifier.predict(features, rule_score=weighted_score)
+            if ml_result is not None:
+                ml_confidence = ml_result.ml_confidence
+                blended_score = ml_result.blended_score
+                is_nhi = ml_result.blended_is_nhi
+
+        if not is_nhi:
+            return None
 
         # Get migration strategy
         strategy = MIGRATION_STRATEGIES.get(winning_type, {})
@@ -537,4 +574,6 @@ class NHIHandlerAgent(AgentBase):
             migration_wave=strategy.get("wave", 4),
             pre_migration_checks=strategy.get("pre_checks", []),
             post_migration_checks=strategy.get("post_checks", []),
+            ml_confidence=ml_confidence,
+            blended_score=blended_score,
         )

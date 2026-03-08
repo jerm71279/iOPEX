@@ -44,12 +44,17 @@ class ETLOrchestrationAgent(AgentBase):
     AGENT_ID = "agent_04_etl"
     AGENT_NAME = "ETL Orchestration"
 
+    def set_anomaly_detector(self, detector):
+        """Inject ML anomaly detector (advisory only)."""
+        self._anomaly_detector = detector
+
     def __init__(self, config, state, audit_logger):
         super().__init__(config, state, audit_logger)
         self._source_client: Optional[CyberArkClient] = None
         self._target_client: Optional[CloudClient] = None
         self._frozen_accounts: List[str] = []  # Track frozen account IDs for emergency unfreeze
         self._watchdog_timer: Optional[threading.Timer] = None
+        self._anomaly_detector = None
 
     def preflight(self) -> AgentResult:
         self.logger.log("preflight_start", {"agent": self.AGENT_ID})
@@ -629,6 +634,21 @@ class ETLOrchestrationAgent(AgentBase):
         except Exception:
             logger.error("Emergency unfreeze FAILED — manual intervention required!")
         self._frozen_accounts.clear()
+
+    def _check_anomaly(self, step_name, duration, batch_meta):
+        """Log ML anomaly advisory if detector is active."""
+        if self._anomaly_detector is None:
+            return
+        result = self._anomaly_detector.record_step(step_name, duration, batch_meta)
+        if result is not None:
+            self.logger.log("ml_anomaly_detected", {
+                "step": step_name,
+                "duration": result.duration,
+                "confidence": result.confidence,
+                "explanation": result.explanation,
+                "ewma_score": result.ewma_score,
+                "if_score": result.if_score,
+            })
 
     # ── wave classification ──────────────────────────────────────
 
