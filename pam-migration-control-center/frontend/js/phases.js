@@ -27,7 +27,7 @@ async function renderPhaseExplorer() {
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
             ${p.agents.map(a => `
               <span class="badge ${a.status === 'complete' ? 'badge-green' : a.status === 'active' ? 'badge-amber' : 'badge-muted'}"
-                    style="cursor:pointer" onclick="jumpToAgent('${a.num.replace('0','').replace('DX-0','dx')}')">${a.num} ${a.name}</span>
+                    style="cursor:pointer" onclick="jumpToAgent('${a.num.startsWith('SH-') ? 'sh' + parseInt(a.num.split('-')[1]) : parseInt(a.num)}')">${a.num} ${a.name}</span>
             `).join('')}
           </div>` : ''}
 

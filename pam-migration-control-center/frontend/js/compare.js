@@ -114,7 +114,7 @@ function renderDisclaimer() {
             'ETL pipeline simulation with animation',
             'Gate approval simulation',
             'Agent output viewer (JSON drill-down)',
-            'Full Java/Spring Boot DX Portal scaffold (separate)',
+            'Full Java/Spring Boot Portal Builder scaffold (separate)',
             'PamVendorAdapter interface + 3 adapter stubs',
           ].map(item => `
             <div class="health-item">

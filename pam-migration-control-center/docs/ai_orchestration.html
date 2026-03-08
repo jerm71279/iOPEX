@@ -304,7 +304,7 @@ const ZONE_GROUPS = {
   onprem: { label: "ON-PREMISES SECURITY ZONE", color: C.amber, components: ["pvwa","vault","cpm","psm","conjur_oss","ad","siem","gitlab"] },
   vm: { label: "SECURE AI ORCHESTRATION VM", color: C.cyan, components: ["vm","agents","runbook","conjur_scripts"] },
   cloud: { label: "CLOUD ZONE", color: C.green, components: ["priv_cloud","conjur_cloud","vault_sync","ispss","ai_apis"] },
-  dx: { label: "DIGITAL EXPERIENCE LAYER", color: C.teal, components: ["dx_portal","dx_adapter","dx_integration"] },
+  dx: { label: "SHIFT LAYER", color: C.teal, components: ["dx_portal","dx_adapter","dx_integration"] },
 };
 
 const SEC_CONTROLS = [
@@ -569,7 +569,7 @@ function App() {
             </div>
           </div>
 
-          {/* DIGITAL EXPERIENCE LAYER — full-width bar below the 3-zone grid */}
+          {/* SHIFT LAYER — full-width bar below the 3-zone grid */}
           <div style={{
             background: C.teal + "08",
             border: `1px solid ${C.teal}30`,
@@ -578,7 +578,7 @@ function App() {
             padding: "14px",
           }}>
             <div style={{ color: C.teal, fontSize: 9, letterSpacing: 3, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>{"\uD83C\uDF10"}</span> DIGITAL EXPERIENCE LAYER
+              <span>{"\uD83C\uDF10"}</span> SHIFT LAYER
               <Pill label="VENDOR-AGNOSTIC PORTAL + API" color={C.teal} small />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
@@ -597,7 +597,7 @@ function App() {
               { label: "ON-PREM FIREWALL", desc: "VM isolated in dedicated VLAN. Inbound: SSH from PSM only (port 22, MFA enforced). Outbound: whitelist of 8 FQDNs.", color: C.amber },
               { label: "VM EGRESS POLICY", desc: "PAM REST (443) + Conjur (443) + Privilege Cloud (443) + Conjur Cloud (443) + 4 AI API endpoints (443) + SIEM (6514). All else blocked.", color: C.cyan },
               { label: "CLOUD PERIMETER", desc: "TLS 1.3 minimum. CyberArk SaaS endpoints require Connector Server on-prem. AI APIs require API keys from Conjur \u2014 no static credentials.", color: C.green },
-              { label: "DX LAYER", desc: "Portal + API Gateway (443). PamVendorAdapter abstracts vendor APIs. OAuth2/OIDC + RBAC enforced. Dual-backend during migration, single pane post-cutover.", color: C.teal },
+              { label: "SHIFT LAYER", desc: "Portal + API Gateway (443). PamVendorAdapter abstracts vendor APIs. OAuth2/OIDC + RBAC enforced. Dual-backend during migration, single pane post-cutover.", color: C.teal },
             ].map((n, i) => (
               <div key={i} style={{ background: C.card, border: `1px solid ${n.color}30`, borderLeft: `3px solid ${n.color}`, borderRadius: 6, padding: "10px 12px" }}>
                 <div style={{ color: n.color, fontSize: 9, letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>{n.label}</div>

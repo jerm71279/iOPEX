@@ -333,12 +333,12 @@ body.option-b .opt-b-only { display: block; }
       </div>
       <!-- Cross-cutting work streams -->
       <div class="gantt-row" style="border-top:1px dashed var(--border)">
-        <div class="gantt-label" style="color:var(--teal)">DX Portal</div>
+        <div class="gantt-label" style="color:var(--teal)">Portal Builder</div>
         <div class="gantt-track" style="position:relative">
           <div class="gantt-bar" style="left:11.25%;width:83.75%;background:var(--teal)">W10-76</div>
-          <div class="gantt-gate" style="left:23.75%" title="GATE: DX Design Review (W20)">G</div>
-          <div class="gantt-gate" style="left:41.25%" title="GATE: DX MVP Walkthrough (W34)">G</div>
-          <div class="gantt-gate" style="left:91.25%" title="GATE: DX Production Cutover (W74)">G</div>
+          <div class="gantt-gate" style="left:23.75%" title="GATE: SHIFT Design Review (W20)">G</div>
+          <div class="gantt-gate" style="left:41.25%" title="GATE: SHIFT MVP Walkthrough (W34)">G</div>
+          <div class="gantt-gate" style="left:91.25%" title="GATE: SHIFT Production Cutover (W74)">G</div>
         </div>
       </div>
       <div class="gantt-row">
@@ -404,16 +404,16 @@ body.option-b .opt-b-only { display: block; }
       <div class="ms-desc">Source decommissioned, compliance report filed, project closed</div>
       <div class="ms-gate">GATE: Final sign-off from executive sponsor + compliance officer</div>
     </div>
-    <!-- DX + Integration Milestones -->
+    <!-- SHIFT + Integration Milestones -->
     <div class="milestone-card" style="border-top-color:var(--teal)">
       <div class="ms-week" style="color:var(--teal)">WEEK 20</div>
-      <div class="ms-name">DX Design Complete</div>
+      <div class="ms-name">SHIFT Design Complete</div>
       <div class="ms-desc">PamVendorAdapter interface finalized, UI wireframes approved, OpenAPI spec reviewed</div>
       <div class="ms-gate">GATE: Architecture review board sign-off</div>
     </div>
     <div class="milestone-card" style="border-top-color:var(--teal)">
       <div class="ms-week" style="color:var(--teal)">WEEK 34</div>
-      <div class="ms-name">DX MVP Live</div>
+      <div class="ms-name">SHIFT MVP Live</div>
       <div class="ms-desc">Portal + API operational in staging with source vendor adapter connected and functional</div>
       <div class="ms-gate">GATE: PAM engineer + UX walkthrough approval</div>
     </div>
@@ -425,7 +425,7 @@ body.option-b .opt-b-only { display: block; }
     </div>
     <div class="milestone-card" style="border-top-color:var(--teal)">
       <div class="ms-week" style="color:var(--teal)">WEEK 74</div>
-      <div class="ms-name">DX Production Cutover</div>
+      <div class="ms-name">SHIFT Production Cutover</div>
       <div class="ms-desc">Portal serving 100% traffic, all adapters live, legacy direct-access decommissioned</div>
       <div class="ms-gate">GATE: Operations + security review sign-off</div>
     </div>
@@ -1125,10 +1125,10 @@ body.option-b .opt-b-only { display: block; }
     </div>
   </article>
 
-  <!-- ═══════════ DX: DIGITAL EXPERIENCE PORTAL & API (Weeks 10–76) ═══════════ -->
-  <article class="phase-card risk-low" id="dx" style="border-left-color:var(--teal)">
+  <!-- ═══════════ SHIFT: DIGITAL EXPERIENCE PORTAL & API (Weeks 10–76) ═══════════ -->
+  <article class="phase-card risk-low" id="shift" style="border-left-color:var(--teal)">
     <div class="card-header" onclick="toggleCard(this)">
-      <span class="phase-badge" style="background:var(--teal-dim); color:var(--teal); border-color:var(--teal)">DX</span>
+      <span class="phase-badge" style="background:var(--teal-dim); color:var(--teal); border-color:var(--teal)">SHIFT</span>
       <div class="card-title-group">
         <div class="card-title">Digital Experience &mdash; Unified PAM Portal &amp; API Gateway</div>
         <div class="card-summary">Vendor-agnostic Java/Spring Boot portal + REST API with PamVendorAdapter abstraction. Cross-cutting work stream running parallel to P1&ndash;P6.</div>
@@ -1141,7 +1141,7 @@ body.option-b .opt-b-only { display: block; }
         <div class="week-grid" style="grid-template-columns: 1fr 1fr;">
 
           <div class="week-block">
-            <div class="week-label" style="color:var(--teal)">WEEKS 10&ndash;20 &mdash; DESIGN &amp; SCAFFOLD <span class="agents-tag">DX-01</span></div>
+            <div class="week-label" style="color:var(--teal)">WEEKS 10&ndash;20 &mdash; DESIGN &amp; SCAFFOLD <span class="agents-tag">SH-01</span></div>
             <ul class="task-list">
               <li><strong>Requirements &amp; stakeholder interviews</strong> &mdash; PAM engineer, app owners, NOC</li>
               <li>Define <code>PamVendorAdapter</code> Java interface (getSecrets, rotateCredential, checkOut, checkIn, getAuditLog, listAccounts)</li>
@@ -1157,7 +1157,7 @@ body.option-b .opt-b-only { display: block; }
           </div>
 
           <div class="week-block">
-            <div class="week-label" style="color:var(--teal)">WEEKS 21&ndash;34 &mdash; SOURCE ADAPTER &amp; MVP <span class="agents-tag">DX-01, DX-02</span></div>
+            <div class="week-label" style="color:var(--teal)">WEEKS 21&ndash;34 &mdash; SOURCE ADAPTER &amp; MVP <span class="agents-tag">SH-01, SH-02</span></div>
             <ul class="task-list">
               <li><strong>Source vendor adapter</strong> &mdash; implement PamVendorAdapter for the source PAM platform</li>
               <li class="opt-a-only">CyberArk adapter: PVWA REST API integration, safe/account CRUD, CPM rotation triggers</li>
@@ -1174,7 +1174,7 @@ body.option-b .opt-b-only { display: block; }
           </div>
 
           <div class="week-block">
-            <div class="week-label" style="color:var(--teal)">WEEKS 35&ndash;50 &mdash; TARGET ADAPTERS &amp; DUAL MODE <span class="agents-tag">DX-01, DX-02</span></div>
+            <div class="week-label" style="color:var(--teal)">WEEKS 35&ndash;50 &mdash; TARGET ADAPTERS &amp; DUAL MODE <span class="agents-tag">SH-01, SH-02</span></div>
             <ul class="task-list">
               <li class="opt-a-only"><strong>Delinea adapter</strong> &mdash; Secret Server REST API, folder/template CRUD, RPC launch</li>
               <li class="opt-a-only"><strong>StrongDM adapter</strong> &mdash; gateway proxy, Cedar policy queries, session recording hooks</li>
@@ -1187,7 +1187,7 @@ body.option-b .opt-b-only { display: block; }
           </div>
 
           <div class="week-block">
-            <div class="week-label" style="color:var(--teal)">WEEKS 51&ndash;66 &mdash; HARDENING &amp; OBSERVABILITY <span class="agents-tag">DX-01</span></div>
+            <div class="week-label" style="color:var(--teal)">WEEKS 51&ndash;66 &mdash; HARDENING &amp; OBSERVABILITY <span class="agents-tag">SH-01</span></div>
             <ul class="task-list">
               <li><strong>Production hardening</strong> &mdash; connection pooling, circuit breakers, retry policies</li>
               <li>Load testing: 1000+ concurrent users, API response &lt; 200ms p95</li>
@@ -1199,7 +1199,7 @@ body.option-b .opt-b-only { display: block; }
           </div>
 
           <div class="week-block" style="grid-column: 1 / -1;">
-            <div class="week-label" style="color:var(--teal)">WEEKS 67&ndash;76 &mdash; PRODUCTION CUTOVER <span class="agents-tag">DX-01</span></div>
+            <div class="week-label" style="color:var(--teal)">WEEKS 67&ndash;76 &mdash; PRODUCTION CUTOVER <span class="agents-tag">SH-01</span></div>
             <ul class="task-list">
               <li><strong>Traffic shift</strong>: migrate users from direct PAM access to portal/API</li>
               <li>Week 67&ndash;70: 25% users through portal (early adopters), monitor error rates</li>
@@ -1208,7 +1208,7 @@ body.option-b .opt-b-only { display: block; }
               <li>Legacy direct-access decommission: revoke end-user API keys, redirect DNS</li>
             </ul>
             <div class="human-gate">
-              <div class="gate-title">HUMAN GATE &mdash; DX Production Cutover (Week 74)</div>
+              <div class="gate-title">HUMAN GATE &mdash; SHIFT Production Cutover (Week 74)</div>
               <p>Operations + security review: portal uptime SLA met, all adapters green, load test passed, security scan clean. Approve 100% traffic shift.</p>
             </div>
           </div>
@@ -1262,7 +1262,7 @@ body.option-b .opt-b-only { display: block; }
           </div>
 
           <div class="week-block">
-            <div class="week-label" style="color:var(--rose)">WEEKS 29&ndash;42 &mdash; CODE GENERATION &amp; TEST HARNESS <span class="agents-tag">Agent 06, DX-02</span></div>
+            <div class="week-label" style="color:var(--rose)">WEEKS 29&ndash;42 &mdash; CODE GENERATION &amp; TEST HARNESS <span class="agents-tag">Agent 06, SH-02</span></div>
             <ul class="task-list">
               <li><strong>Replacement code generation</strong> &mdash; adapter-based client libraries (Python, Java, C#, PowerShell)</li>
               <li>Each generated client wraps PamVendorAdapter &rarr; applications call portal API instead of direct PAM</li>
@@ -1349,10 +1349,10 @@ body.option-b .opt-b-only { display: block; }
         <tr><td>P6 &mdash; Parallel Running</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
         <tr><td>P6 &mdash; Integration Cutover</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
         <tr><td>P6 &mdash; Cutover Approval</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-a">A</td><td class="raci-a">A</td></tr>
-        <tr style="border-top:2px solid var(--teal)"><td>DX &mdash; Architecture &amp; Design</td><td class="raci-a">A</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
-        <tr><td>DX &mdash; Adapter Development</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
-        <tr><td>DX &mdash; Portal &amp; API Build</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
-        <tr><td>DX &mdash; MVP Gate</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-a">A</td></tr>
+        <tr style="border-top:2px solid var(--teal)"><td>SHIFT &mdash; Architecture &amp; Design</td><td class="raci-a">A</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>SHIFT &mdash; Adapter Development</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>SHIFT &mdash; Portal &amp; API Build</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
+        <tr><td>SHIFT &mdash; MVP Gate</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-a">A</td></tr>
         <tr style="border-top:2px solid var(--rose)"><td>INT &mdash; Integration Inventory</td><td class="raci-a">A</td><td class="raci-r">R</td><td class="raci-c">C</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
         <tr><td>INT &mdash; Integration Migration</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td><td class="raci-i">I</td><td class="raci-i">I</td></tr>
         <tr><td>P7 &mdash; Decommission</td><td class="raci-r">R</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-a">A</td><td class="raci-a">A</td></tr>
@@ -1393,8 +1393,8 @@ body.option-b .opt-b-only { display: block; }
         <tr><td style="color:var(--cyan)">13</td><td>Platform Plugins</td><td></td><td></td><td style="color:var(--blue)">W23-25</td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr><td style="color:var(--cyan)">14</td><td>Onboarding</td><td></td><td></td><td></td><td style="color:var(--purple)">W33-35</td><td></td><td style="color:var(--red)">W60-62</td><td></td><td></td></tr>
         <tr><td style="color:var(--cyan)">15</td><td>Hybrid Fleet</td><td></td><td></td><td></td><td></td><td></td><td></td><td style="color:var(--cyan)">W63-72</td><td></td></tr>
-        <tr style="border-top:2px solid var(--teal)"><td style="color:var(--teal)">DX-01</td><td>DX Portal</td><td></td><td style="color:var(--teal)">W14-18</td><td style="color:var(--teal)">W19-28</td><td style="color:var(--teal)">W29-38</td><td style="color:var(--teal)">W39-46</td><td style="color:var(--teal)">W47-66</td><td style="color:var(--teal)">W67-76</td><td></td></tr>
-        <tr><td style="color:var(--teal)">DX-02</td><td>Adapter Gen</td><td></td><td></td><td style="color:var(--teal)">W21-28</td><td style="color:var(--teal)">W29-42</td><td></td><td style="color:var(--teal)">W51-58</td><td></td><td></td></tr>
+        <tr style="border-top:2px solid var(--teal)"><td style="color:var(--teal)">SH-01</td><td>Portal Builder</td><td></td><td style="color:var(--teal)">W14-18</td><td style="color:var(--teal)">W19-28</td><td style="color:var(--teal)">W29-38</td><td style="color:var(--teal)">W39-46</td><td style="color:var(--teal)">W47-66</td><td style="color:var(--teal)">W67-76</td><td></td></tr>
+        <tr><td style="color:var(--teal)">SH-02</td><td>ICG</td><td></td><td></td><td style="color:var(--teal)">W21-28</td><td style="color:var(--teal)">W29-42</td><td></td><td style="color:var(--teal)">W51-58</td><td></td><td></td></tr>
       </tbody>
     </table>
   </div>

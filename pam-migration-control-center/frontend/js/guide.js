@@ -87,7 +87,7 @@ function renderGuide() {
         `).join('')}
       </tbody>
     </table>
-    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Two additional DX (developer experience) agents handle documentation generation and portal operations but are not part of the core migration orchestrator.</p>
+    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Two additional SHIFT agents handle documentation generation and portal operations but are not part of the core migration orchestrator.</p>
   `) +
 
   _guideSection('AI Predictions — 3-Tier Feedback Loop', `
