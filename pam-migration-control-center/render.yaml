@@ -1,0 +1,22 @@
+# render.yaml — Render Blueprint for PAM Migration Control Center
+#
+# OPTION A (Recommended): Place this file at the root of a SEPARATE repo
+#   that contains ONLY the control center code. No rootDir needed.
+#
+# OPTION B: Place this file at the root of the iOPEX monorepo and
+#   uncomment the rootDir line below.
+#
+services:
+  - type: web
+    name: pam-control-center
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    # rootDir: pam-migration-control-center  # Uncomment for Option B (monorepo)
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "10000"
+    healthCheckPath: /api/dashboard/stats

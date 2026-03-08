@@ -1900,13 +1900,6 @@ PLATFORM_TEMPLATE_MAP = [
     {"cyberark": "CiscoDevice", "option_a": "Custom template required", "option_b": "CiscoDevice (same)", "risk_a": "high", "risk_b": "low"},
 ]
 
-# ── Yellow Checkpoints ──────────────────────────────────────────────
-# Cross-phase AI contextual awareness layer.
-# Each checkpoint carries a 5-field AI rationale "decision brief" so
-# humans can act without digging into raw systems.
-# ServiceNow INC tickets are created for each yellow; escalation to
-# RED upgrades INC → CHG.
-
 YELLOW_CHECKPOINTS = [
     {
         "id": "yc-001",

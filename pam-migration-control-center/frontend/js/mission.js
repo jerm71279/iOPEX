@@ -125,7 +125,549 @@ async function renderMissionControl() {
 
   // Predictive Insights
   renderPredictions(predictions);
+
+  // Mission Control blurb (appended after all panels)
+  const blurbTarget = document.getElementById('page-mission');
+  if (blurbTarget && !document.getElementById('missionBlurb')) {
+    const blurb = document.createElement('div');
+    blurb.id = 'missionBlurb';
+    blurb.innerHTML = _renderMissionBlurb();
+    blurbTarget.appendChild(blurb);
+  }
 }
+
+// ── Predictive Intelligence Flow ────────────────────────────────────
+let _pfAnimating = false;
+let _pfAutoPlay = false;
+let _pfDecisionResolve = null;
+let _pfSpeed = 1; // 0.25 = slow, 1 = normal, 3 = fast
+
+const PF_AGENTS = [
+  { num: '11', name: 'Src', phase: 'p1', purpose: 'Extracts raw data from source PAM' },
+  { num: '01', name: 'Disc', phase: 'p1', purpose: 'Scans full CyberArk environment' },
+  { num: '09', name: 'Dep', phase: 'p1', purpose: 'Maps application→account dependencies' },
+  { num: '12', name: 'NHI', phase: 'p1', purpose: 'Classifies non-human identities' },
+  { num: '02', name: 'Gap', phase: 'p1', purpose: 'Assesses 10-domain maturity gaps' },
+  { num: '13', name: 'Plat', phase: 'p2', purpose: 'Validates target platform coverage' },
+  { num: '10', name: 'Stag', phase: 'p2', purpose: '10-assertion staging validation' },
+  { num: '03', name: 'Perm', phase: 'p3', purpose: 'Maps 22 CyberArk permissions to target' },
+  { num: '14', name: 'Onbd', phase: 'p3', purpose: '10-step app onboarding pipeline' },
+  { num: '04', name: 'ETL', phase: 'p45', purpose: '7-step ETL with crash recovery' },
+  { num: '05', name: 'Hrtb', phase: 'p45', purpose: '10-check post-migration validation' },
+  { num: '06', name: 'Intg', phase: 'p67', purpose: 'CCP/AAM integration repointing' },
+  { num: '07', name: 'Comp', phase: 'p67', purpose: 'PCI-DSS, NIST, HIPAA, SOX evidence' },
+  { num: '15', name: 'Hybr', phase: 'p67', purpose: 'Parallel-run traffic shift manager' },
+  { num: '08', name: 'Rnbk', phase: 'p67', purpose: 'Phase gate management + decommission' },
+];
+
+const PF_PHASE_GROUPS = [
+  { key: 'p1', label: 'P1 DISCOVERY' },
+  { key: 'p2', label: 'P2 STAGING' },
+  { key: 'p3', label: 'P3 STRUCTURE' },
+  { key: 'p45', label: 'P4-P5 ETL' },
+  { key: 'p67', label: 'P6-P7 OPS' },
+];
+
+function _getPredictiveExamples() {
+  return [
+    {
+      id: 1, label: 'Permission Escalation', severity: 'high', category: 'security',
+      condition: '47 accounts with ManageSafe-only permissions are being mapped to Owner role — a privilege escalation from read-only safe admin to full data access',
+      sourceAgents: ['03'],
+      checkpoints: [{ id: 'yc-a02', label: '47 ManageSafe→Owner escalations', phase: 'P1' }],
+      crossRefs: [{ from: 'yc-a02', to: '14', reason: 'Onboarding Factory uses same mapping table' }],
+      prediction: { id: 'pred-a01', severity: 'HIGH', title: 'Permission escalation compounding via Onboarding Factory' },
+      impactPhases: ['P3', 'P4', 'P5'],
+      impactAgents: ['03', '14'],
+      impactText: '60+ accounts over-provisioned by P5 end',
+      recommendation: 'Update Agent 14 mapping table + apply compensating control',
+      feedbackAgent: '14',
+      decisions: {
+        d1: { q: 'Threshold exceeded?',
+          yesText: '47 escalations found — exceeds 10-escalation threshold, so a yellow checkpoint fires',
+          noText: 'Escalation count is below threshold — logged as informational, no checkpoint fires' },
+        d2: { q: 'Cross-system impact?',
+          yesText: 'Agent 14 (Onboarding Factory) uses the same permission mapping table — new accounts will inherit the escalation',
+          noText: 'Escalation is isolated to Agent 03 — no other agents reference this mapping, logged as advisory' },
+        d3: { q: 'Compounding risk?',
+          yesText: 'Every new account onboarded in P4-P5 will inherit Owner instead of View — escalation grows with each wave',
+          noText: 'Existing escalation does not propagate — checkpoint resolves with a one-time fix' },
+        d4: { q: 'Remediate or accept risk?',
+          yesText: 'Fix the mapping table now — Agent 14 re-runs onboarding pipeline with corrected permissions',
+          noText: 'Accept the risk — escalated accounts are documented but not corrected; prediction stays active' },
+      },
+    },
+    {
+      id: 2, label: 'Wave 3 NHI Overrun', severity: 'critical', category: 'bottleneck',
+      condition: 'Source extraction latency measured at 182 seconds per account — 52% above the 120-second benchmark, with 554 NHI accounts queued for Wave 3',
+      sourceAgents: ['11', '01'],
+      checkpoints: [{ id: 'yc-a01', label: 'Extraction latency 182s vs 120s benchmark', phase: 'P1' }],
+      crossRefs: [
+        { from: 'yc-a01', to: '09', reason: '3 accounts used by IIS app pools' },
+        { from: 'yc-a01', to: '12', reason: 'NHI Handler confirms human accounts w/ app bindings' },
+        { from: 'yc-a01', to: '10', reason: 'Staging env uses same PVWA — extraction at risk' },
+      ],
+      prediction: { id: 'pred-a02', severity: 'CRITICAL', title: 'Wave 3 NHI volume exceeds maintenance window' },
+      impactPhases: ['P5'],
+      impactAgents: ['04', '11', '12'],
+      impactText: 'Wave 3 overruns 12-hour maintenance window by 2+ hours',
+      recommendation: 'Pre-split Wave 3 into sub-waves (3a: 280, 3b: 274 NHIs)',
+      feedbackAgent: '04',
+      decisions: {
+        d1: { q: 'Threshold exceeded?',
+          yesText: '182s per account exceeds the 120s benchmark — checkpoint fires flagging extraction bottleneck',
+          noText: 'Latency is within acceptable benchmark — no performance concern, no checkpoint fires' },
+        d2: { q: 'Cross-system impact?',
+          yesText: '3 downstream agents depend on this data — Agent 09 (dependency maps), Agent 12 (NHI classification), Agent 10 (staging) are all affected',
+          noText: 'No other agents depend on extraction timing — latency is a local concern only' },
+        d3: { q: 'Compounding risk?',
+          yesText: '554 NHIs at 182s each = 28 hours extraction — Wave 3 will overrun the 12-hour maintenance window by 2+ hours',
+          noText: 'Volume is small enough that the latency does not breach the maintenance window — checkpoint resolved' },
+        d4: { q: 'Remediate or accept risk?',
+          yesText: 'Split Wave 3 into two sub-waves (3a: 280, 3b: 274) — Agent 04 re-plans ETL scheduling to fit within window',
+          noText: 'Accept the overrun risk — maintain single Wave 3 and request an extended maintenance window' },
+      },
+    },
+    {
+      id: 3, label: 'Rate Limit Escalation', severity: 'critical', category: 'capacity',
+      condition: 'API call failure rate of 18% at 100 req/min during P1 discovery, and 16% failure at 500 req/min during P6 parallel-run — two independent signals from different phases',
+      sourceAgents: ['11', '15'],
+      checkpoints: [
+        { id: 'yc-b01', label: '18% failure at 100 req/min', phase: 'P1' },
+        { id: 'yc-b04', label: '16% failure at 500 req/min', phase: 'P6' },
+      ],
+      crossRefs: [
+        { from: 'yc-b01', to: '04', reason: 'Rate limiter set to 100/min — inadequate for parallel load' },
+        { from: 'yc-b04', to: '05', reason: 'Heartbeat checks unaffected (04:00 UTC) but daytime at risk' },
+      ],
+      prediction: { id: 'pred-b01', severity: 'CRITICAL', title: 'API rate limit escalation curve threatens cutover' },
+      impactPhases: ['P6', 'P7'],
+      impactAgents: ['04', '05', '11', '15'],
+      impactText: '10% headroom at 500 req/min — any burst triggers cascading 429 errors',
+      recommendation: 'Request 1,000 req/min tier + implement request coalescing',
+      feedbackAgent: '15',
+      decisions: {
+        d1: { q: 'Threshold exceeded?',
+          yesText: '18% failure rate exceeds 5% threshold — TWO checkpoints fire, one in P1 and one in P6, flagging a cross-phase pattern',
+          noText: 'Failure rate is within acceptable range — API errors are transient and do not warrant a checkpoint' },
+        d2: { q: 'Cross-system impact?',
+          yesText: 'Agent 04 (ETL rate limiter) and Agent 05 (heartbeat timing) are both constrained by the same API ceiling',
+          noText: 'Rate limits only affect the source adapter — no downstream agents are impacted' },
+        d3: { q: 'Compounding risk?',
+          yesText: 'P1 rate (18%) + P6 rate (16%) project to P7: only 10% headroom at 500 req/min ceiling — any traffic burst causes cascading 429 errors',
+          noText: 'Failure rates are stable and not trending upward — no escalation curve detected' },
+        d4: { q: 'Remediate or accept risk?',
+          yesText: 'Request 1,000 req/min tier upgrade + implement request coalescing — Agent 15 re-validates capacity',
+          noText: 'Accept 10% headroom — monitor rate limits and trigger manual escalation if 429 errors spike' },
+      },
+    },
+  ];
+}
+
+function _renderPredictiveFlow() {
+  const examples = _getPredictiveExamples();
+
+  // Build agent ecosystem HTML
+  let agentHtml = '';
+  PF_PHASE_GROUPS.forEach(g => {
+    const agents = PF_AGENTS.filter(a => a.phase === g.key);
+    agentHtml += `<div class="pf-agent-group">
+      <div class="pf-agent-group-label">${g.label}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+        ${agents.map(a => `<div class="pf-node" id="pf-agent-${a.num}">
+          <div class="pf-tooltip">${a.purpose}</div>
+          <div style="font-weight:700;font-size:0.6rem;">${a.num}</div>
+          <div style="font-size:0.42rem;color:inherit;">${a.name}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  return `
+    <div class="callout callout-teal" style="margin-top:16px;font-size:0.68rem;line-height:1.6;">
+      <div style="font-weight:700;margin-bottom:6px;">Predictive Intelligence — How 15 Agents Drive Forecasting</div>
+      <p style="margin:0;">The prediction engine emerges from interactions between all 15 agents. When an agent detects an ambiguous condition, it fires a yellow checkpoint whose <code style="font-family:var(--font-mono);color:var(--teal);">cross_system_context</code> cross-references other agents' data. The prediction engine correlates these signals to identify compounding risks. Each prediction drives agent re-execution in a continuous feedback loop. Select an example below to trace a real prediction through the ecosystem.</p>
+    </div>
+    <div class="pf-container">
+      <div class="pf-header">
+        <div class="pf-header-title">Predictive Intelligence Flow</div>
+        <div class="pf-controls">
+          ${examples.map((e, i) => `<button class="pf-example-btn ${i === 0 ? 'active' : ''}" id="pf-ex-${e.id}" onclick="selectPredictiveExample(${e.id})">${e.label}</button>`).join('')}
+          <button class="demo-btn" id="pfReplayBtn" onclick="replayPredictiveDemo()" style="font-size:0.5rem;padding:3px 8px;">&#x25B6; REPLAY</button>
+          <button class="pf-autoplay ${_pfAutoPlay ? 'active' : ''}" onclick="togglePfAutoPlay()">Auto &#x25B6;</button>
+          <button class="pf-autoplay" id="pfPauseBtn" onclick="togglePfPause()">&#x23F8; PAUSE</button>
+          <div class="pf-speed-control">
+            <span class="pf-speed-label" id="pfSpeedLabel">1x</span>
+            <input type="range" class="pf-speed-dial" id="pfSpeedDial" min="0.25" max="3" step="0.25" value="1" oninput="setPfSpeed(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 1: Agent Ecosystem -->
+      <div class="pf-layer">
+        <div class="pf-layer-label">Layer 1 — Agent Ecosystem</div>
+        <div class="pf-agents">${agentHtml}</div>
+      </div>
+
+      <!-- Layer 2: Yellow Checkpoint Bus -->
+      <div class="pf-layer">
+        <div class="pf-layer-label">Layer 2 — Yellow Checkpoint Bus</div>
+        <div class="pf-bus" id="pfCheckpointBus"></div>
+        <div class="pf-caption" id="pfCaption1"></div>
+      </div>
+
+      <!-- Layer 3: Decision Engine -->
+      <div class="pf-layer">
+        <div class="pf-layer-label">Layer 3 — Decision Engine + Prediction</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;min-height:60px;" id="pfDecisionEngine"></div>
+        <div class="pf-caption" id="pfCaption2"></div>
+      </div>
+
+      <!-- Layer 4: Impact + Feedback -->
+      <div class="pf-layer">
+        <div class="pf-layer-label">Layer 4 — Impact Projection + Feedback Loop</div>
+        <div style="text-align:center;min-height:40px;" id="pfImpactZone"></div>
+        <div class="pf-caption" id="pfCaption3"></div>
+        <div class="pf-feedback" id="pfFeedback"></div>
+      </div>
+    </div>`;
+}
+
+function selectPredictiveExample(num) {
+  document.querySelectorAll('.pf-example-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`pf-ex-${num}`);
+  if (btn) btn.classList.add('active');
+  resetPredictiveFlow();
+  playPredictiveDemo(num);
+}
+
+function replayPredictiveDemo() {
+  const activeBtn = document.querySelector('.pf-example-btn.active');
+  const num = activeBtn ? parseInt(activeBtn.id.replace('pf-ex-', '')) : 1;
+  resetPredictiveFlow();
+  playPredictiveDemo(num);
+}
+
+function togglePfAutoPlay() {
+  _pfAutoPlay = !_pfAutoPlay;
+  document.querySelector('.pf-autoplay').classList.toggle('active', _pfAutoPlay);
+}
+
+function setPfSpeed(val) {
+  _pfSpeed = parseFloat(val);
+  const label = document.getElementById('pfSpeedLabel');
+  if (label) label.textContent = _pfSpeed < 1 ? `${_pfSpeed}x` : `${_pfSpeed}x`;
+}
+
+function resetPredictiveFlow() {
+  if (_pfDecisionResolve) { _pfDecisionResolve('cancel'); _pfDecisionResolve = null; }
+  _pfAnimating = false;
+  _pfPaused = false;
+  if (_pfPauseResolve) { _pfPauseResolve(); _pfPauseResolve = null; }
+  const pauseBtn = document.getElementById('pfPauseBtn');
+  if (pauseBtn) { pauseBtn.textContent = '\u23F8 PAUSE'; pauseBtn.classList.remove('active'); }
+  PF_AGENTS.forEach(a => {
+    const el = document.getElementById(`pf-agent-${a.num}`);
+    if (el) el.className = 'pf-node';
+  });
+  ['pfCheckpointBus', 'pfDecisionEngine', 'pfImpactZone', 'pfFeedback'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  ['pfCaption1', 'pfCaption2', 'pfCaption3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = ''; el.classList.remove('pf-visible'); }
+  });
+}
+
+function _pfSleep(ms) {
+  if (_pfPaused) return new Promise(r => { _pfPauseResolve = r; });
+  return new Promise(r => setTimeout(r, ms / _pfSpeed));
+}
+
+let _pfPaused = false;
+let _pfPauseResolve = null;
+
+function togglePfPause() {
+  _pfPaused = !_pfPaused;
+  const btn = document.getElementById('pfPauseBtn');
+  if (btn) {
+    btn.textContent = _pfPaused ? '\u25B6 PLAY' : '\u23F8 PAUSE';
+    btn.classList.toggle('active', _pfPaused);
+  }
+  if (!_pfPaused && _pfPauseResolve) {
+    const r = _pfPauseResolve;
+    _pfPauseResolve = null;
+    r();
+  }
+}
+
+function _pfSetCaption(id, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.add('pf-visible');
+}
+
+function _pfClearCaption(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('pf-visible');
+  setTimeout(() => { if (el) el.textContent = ''; }, 400);
+}
+
+function _pfAwaitDecision(decisionId, question) {
+  return new Promise(resolve => {
+    if (_pfAutoPlay) {
+      setTimeout(() => resolve('yes'), 1500 / _pfSpeed);
+      return;
+    }
+    _pfDecisionResolve = resolve;
+    const yesBtn = document.getElementById(`pf-d-yes-${decisionId}`);
+    const noBtn = document.getElementById(`pf-d-no-${decisionId}`);
+    const waitEl = document.getElementById(`pf-d-wait-${decisionId}`);
+    if (yesBtn) { yesBtn.classList.add('pf-visible'); yesBtn.onclick = () => { _pfDecisionResolve = null; resolve('yes'); }; }
+    if (noBtn) { noBtn.classList.add('pf-visible'); noBtn.onclick = () => { _pfDecisionResolve = null; resolve('no'); }; }
+    const yesDesc = document.getElementById(`pf-d-yesdesc-${decisionId}`);
+    const noDesc = document.getElementById(`pf-d-nodesc-${decisionId}`);
+    if (yesDesc) yesDesc.style.opacity = '1';
+    if (noDesc) noDesc.style.opacity = '1';
+    if (waitEl) waitEl.style.display = 'block';
+  });
+}
+
+function _pfBuildDecision(id, decision) {
+  return `<div class="pf-decision-wrap">
+    <div class="pf-decision" id="pf-diamond-${id}"><div class="pf-decision-label">?</div></div>
+    <div style="font-size:0.5rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;">${decision.q}</div>
+    <div class="pf-decide-btns">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <button class="pf-decide-btn pf-yes-btn" id="pf-d-yes-${id}">YES</button>
+        <div style="font-size:0.42rem;color:var(--green);max-width:140px;text-align:center;line-height:1.3;opacity:0;" id="pf-d-yesdesc-${id}">${decision.yesText}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <button class="pf-decide-btn pf-no-btn" id="pf-d-no-${id}">NO</button>
+        <div style="font-size:0.42rem;color:var(--text-muted);max-width:140px;text-align:center;line-height:1.3;opacity:0;" id="pf-d-nodesc-${id}">${decision.noText}</div>
+      </div>
+    </div>
+    <div class="pf-waiting" id="pf-d-wait-${id}" style="display:none;">awaiting decision...</div>
+  </div>`;
+}
+
+async function playPredictiveDemo(exampleNum) {
+  if (_pfAnimating) return;
+  _pfAnimating = true;
+
+  const examples = _getPredictiveExamples();
+  const ex = examples.find(e => e.id === exampleNum) || examples[0];
+
+  // Step 1: Highlight involved agents
+  ex.sourceAgents.forEach(num => {
+    const el = document.getElementById(`pf-agent-${num}`);
+    if (el) el.style.borderColor = 'var(--cyan)';
+  });
+  const allInvolved = [...new Set([...ex.sourceAgents, ...ex.impactAgents, ...ex.crossRefs.map(r => r.to)])];
+  allInvolved.forEach(num => {
+    const el = document.getElementById(`pf-agent-${num}`);
+    if (el) el.style.borderColor = 'var(--border-light)';
+  });
+  await _pfSleep(800);
+
+  // Step 2: Source agents pulse
+  for (const num of ex.sourceAgents) {
+    const el = document.getElementById(`pf-agent-${num}`);
+    if (el) el.classList.add('pf-active');
+  }
+  _pfSetCaption('pfCaption1', `Agent ${ex.sourceAgents.join(' + Agent ')} detects: ${ex.condition}`);
+  await _pfSleep(1500);
+
+  // Step 3: Decision 1 — Threshold
+  const bus = document.getElementById('pfCheckpointBus');
+  const engine = document.getElementById('pfDecisionEngine');
+  engine.innerHTML = _pfBuildDecision('d1', ex.decisions.d1);
+  const d1Diamond = document.getElementById('pf-diamond-d1');
+  if (d1Diamond) d1Diamond.classList.add('pf-active-amber');
+
+  const d1Result = await _pfAwaitDecision('d1', ex.decisions.d1.q);
+  if (d1Result === 'cancel') return;
+
+  // Mark decision
+  if (d1Diamond) { d1Diamond.classList.remove('pf-active-amber'); d1Diamond.classList.add(d1Result === 'yes' ? 'pf-done' : 'pf-done-no'); }
+  document.getElementById('pf-d-yes-d1')?.classList.add(d1Result === 'yes' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-no-d1')?.classList.add(d1Result === 'no' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-wait-d1').style.display = 'none';
+
+  if (d1Result === 'no') {
+    _pfSetCaption('pfCaption2', ex.decisions.d1.noText);
+    ex.sourceAgents.forEach(n => { const el = document.getElementById(`pf-agent-${n}`); if (el) el.classList.replace('pf-active', 'pf-done'); });
+    _pfAnimating = false;
+    return;
+  }
+
+  _pfSetCaption('pfCaption2', ex.decisions.d1.yesText);
+  await _pfSleep(800);
+
+  // Step 4: Checkpoints fire on bus
+  bus.innerHTML = ex.checkpoints.map(c =>
+    `<div class="pf-node pf-active-amber" id="pf-ck-${c.id}" style="min-width:100px;">
+      <div style="font-weight:700;">${c.id}</div>
+      <div style="font-size:0.42rem;">${c.phase}: ${c.label}</div>
+    </div>`
+  ).join('<span style="color:var(--text-muted);font-size:0.8rem;">+</span>');
+  ex.sourceAgents.forEach(n => { const el = document.getElementById(`pf-agent-${n}`); if (el) { el.classList.remove('pf-active'); el.classList.add('pf-done'); } });
+  await _pfSleep(1200);
+
+  // Step 5: Cross-reference lines (highlight cross-referenced agents)
+  for (const ref of ex.crossRefs) {
+    const agent = document.getElementById(`pf-agent-${ref.to}`);
+    if (agent) agent.classList.add('pf-crossref');
+  }
+  _pfClearCaption('pfCaption2');
+  await _pfSleep(300);
+  _pfSetCaption('pfCaption1', `Cross-system context: ${ex.crossRefs.map(r => `Agent ${r.to} — ${r.reason}`).join(' | ')}`);
+  await _pfSleep(2000);
+
+  // Step 6: Decision 2 — Cross-system impact
+  engine.innerHTML += _pfBuildDecision('d2', ex.decisions.d2);
+  const d2Diamond = document.getElementById('pf-diamond-d2');
+  if (d2Diamond) d2Diamond.classList.add('pf-active-amber');
+
+  const d2Result = await _pfAwaitDecision('d2', ex.decisions.d2.q);
+  if (d2Result === 'cancel') return;
+
+  if (d2Diamond) { d2Diamond.classList.remove('pf-active-amber'); d2Diamond.classList.add(d2Result === 'yes' ? 'pf-done' : 'pf-done-no'); }
+  document.getElementById('pf-d-yes-d2')?.classList.add(d2Result === 'yes' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-no-d2')?.classList.add(d2Result === 'no' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-wait-d2').style.display = 'none';
+
+  if (d2Result === 'no') {
+    _pfSetCaption('pfCaption2', ex.decisions.d2.noText);
+    ex.crossRefs.forEach(r => { const el = document.getElementById(`pf-agent-${r.to}`); if (el) el.classList.remove('pf-crossref'); });
+    ex.checkpoints.forEach(c => { const el = document.getElementById(`pf-ck-${c.id}`); if (el) { el.classList.remove('pf-active-amber'); el.classList.add('pf-done'); } });
+    _pfAnimating = false;
+    return;
+  }
+
+  _pfSetCaption('pfCaption2', ex.decisions.d2.yesText);
+  await _pfSleep(1200);
+
+  // Step 7: Decision 3 — Compounding risk
+  engine.innerHTML += _pfBuildDecision('d3', ex.decisions.d3);
+  const d3Diamond = document.getElementById('pf-diamond-d3');
+  if (d3Diamond) d3Diamond.classList.add('pf-active-amber');
+
+  const d3Result = await _pfAwaitDecision('d3', ex.decisions.d3.q);
+  if (d3Result === 'cancel') return;
+
+  if (d3Diamond) { d3Diamond.classList.remove('pf-active-amber'); d3Diamond.classList.add(d3Result === 'yes' ? 'pf-done' : 'pf-done-no'); }
+  document.getElementById('pf-d-yes-d3')?.classList.add(d3Result === 'yes' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-no-d3')?.classList.add(d3Result === 'no' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-wait-d3').style.display = 'none';
+
+  if (d3Result === 'no') {
+    _pfSetCaption('pfCaption2', ex.decisions.d3.noText);
+    _pfAnimating = false;
+    return;
+  }
+
+  _pfSetCaption('pfCaption2', ex.decisions.d3.yesText);
+  await _pfSleep(800);
+
+  // Step 8: Prediction appears
+  const sevColor = ex.severity === 'critical' ? 'red' : ex.severity === 'high' ? 'amber' : 'blue';
+  engine.innerHTML += `
+    <span style="color:var(--text-muted);font-size:0.8rem;">&#x25B6;</span>
+    <div class="pf-node pf-active-purple" id="pf-prediction" style="min-width:120px;">
+      <div style="font-weight:700;">${ex.prediction.id}</div>
+      <div style="font-size:0.42rem;">${ex.prediction.title.substring(0, 40)}...</div>
+      <span class="badge badge-${sevColor}" style="font-size:0.42rem;margin-top:4px;">${ex.prediction.severity}</span>
+    </div>`;
+  await _pfSleep(1500);
+
+  // Step 9: Impact projection
+  const impact = document.getElementById('pfImpactZone');
+  impact.innerHTML = `
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);">PHASES:</div>
+      ${ex.impactPhases.map(p => `<span class="badge badge-${sevColor}" style="font-size:0.48rem;">${p}</span>`).join('')}
+      <div style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);margin-left:8px;">AGENTS:</div>
+      ${ex.impactAgents.map(a => `<span class="badge badge-cyan" style="font-size:0.48rem;">${a}</span>`).join('')}
+    </div>
+    <div style="font-size:0.62rem;color:var(--${sevColor});font-weight:600;">${ex.impactText}</div>`;
+
+  // Highlight impacted agents in Layer 1
+  ex.impactAgents.forEach(n => {
+    const el = document.getElementById(`pf-agent-${n}`);
+    if (el && !el.classList.contains('pf-done')) el.classList.add('pf-active-red');
+  });
+  await _pfSleep(1500);
+
+  // Step 10: Decision 4 — Remediate
+  _pfSetCaption('pfCaption3', '');
+  const feedback = document.getElementById('pfFeedback');
+  feedback.innerHTML = _pfBuildDecision('d4', ex.decisions.d4);
+  const d4Diamond = document.getElementById('pf-diamond-d4');
+  if (d4Diamond) d4Diamond.classList.add('pf-active-amber');
+
+  const d4Result = await _pfAwaitDecision('d4', ex.decisions.d4.q);
+  if (d4Result === 'cancel') return;
+
+  if (d4Diamond) { d4Diamond.classList.remove('pf-active-amber'); d4Diamond.classList.add(d4Result === 'yes' ? 'pf-done' : 'pf-done-no'); }
+  document.getElementById('pf-d-yes-d4')?.classList.add(d4Result === 'yes' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-no-d4')?.classList.add(d4Result === 'no' ? 'pf-chosen' : 'pf-unchosen');
+  document.getElementById('pf-d-wait-d4').style.display = 'none';
+
+  if (d4Result === 'no') {
+    _pfSetCaption('pfCaption3', ex.decisions.d4.noText);
+    const pred = document.getElementById('pf-prediction');
+    if (pred) { pred.classList.remove('pf-active-purple'); pred.classList.add('pf-active-amber'); }
+    _pfAnimating = false;
+    return;
+  }
+
+  // Step 11: Feedback loop
+  _pfSetCaption('pfCaption3', ex.recommendation);
+  await _pfSleep(1200);
+
+  feedback.innerHTML += `
+    <div class="pf-feedback-arrow pf-visible" style="margin-top:10px;">
+      &#x21B0; FEEDBACK: Agent ${ex.feedbackAgent} re-runs with fix &#x21B0;
+    </div>
+    <div style="font-size:0.52rem;color:var(--teal);margin-top:6px;font-family:var(--font-mono);">
+      Agent re-executes → new checkpoint data feeds back into cycle
+    </div>`;
+
+  // Flash feedback agent
+  const fbAgent = document.getElementById(`pf-agent-${ex.feedbackAgent}`);
+  if (fbAgent) {
+    fbAgent.classList.remove('pf-active-red', 'pf-crossref');
+    fbAgent.classList.add('pf-active');
+    await _pfSleep(1500);
+    fbAgent.classList.remove('pf-active');
+    fbAgent.classList.add('pf-done');
+  }
+
+  // Settle all to done
+  await _pfSleep(800);
+  ex.crossRefs.forEach(r => {
+    const el = document.getElementById(`pf-agent-${r.to}`);
+    if (el) { el.classList.remove('pf-crossref', 'pf-active-red'); el.classList.add('pf-done'); }
+  });
+  ex.impactAgents.forEach(n => {
+    const el = document.getElementById(`pf-agent-${n}`);
+    if (el) { el.classList.remove('pf-active-red'); el.classList.add('pf-done'); }
+  });
+  ex.checkpoints.forEach(c => {
+    const el = document.getElementById(`pf-ck-${c.id}`);
+    if (el) { el.classList.remove('pf-active-amber'); el.classList.add('pf-done'); }
+  });
+  const pred = document.getElementById('pf-prediction');
+  if (pred) { pred.classList.remove('pf-active-purple'); pred.classList.add('pf-done'); }
+
+  _pfAnimating = false;
+}
+
+// ── Prediction Cards ────────────────────────────────────────────────
 
 function renderPredictions(predictions) {
   const panel = document.getElementById('predictionsPanel');
@@ -221,5 +763,19 @@ function renderPredictions(predictions) {
           </div>`;
       }).join('')}
     </div>
+    ${_renderPredictiveFlow()}
   `;
+
+  // Auto-select first example after render
+  setTimeout(() => selectPredictiveExample(1), 300);
+}
+
+// ── Mission Control Blurb ──────────────────────────────────────────
+function _renderMissionBlurb() {
+  return `
+    <details class="callout callout-teal" style="margin-top:20px;cursor:pointer;font-size:0.68rem;line-height:1.6;">
+      <summary style="font-weight:700;user-select:none;">What You're Looking At</summary>
+      <p style="margin:8px 0 0;">Mission Control is the real-time command center for the PAM migration. The stats row shows total account inventory across all waves. The phase timeline tracks progress through 8 phases (P0-P7). Agent health monitors the 15 AI agents executing the migration. Risk profile categorizes accounts by migration complexity. Gate status tracks human approval checkpoints. Yellow checkpoints show AI-detected conditions requiring attention. Predictions forecast risks before they materialize.</p>
+      <p style="margin:6px 0 0;"><strong>For technical teams:</strong> All data originates from the 15-agent orchestrator. Stats aggregate agent outputs (Agent 01 discovery counts, Agent 12 NHI classifications). Predictions are derived from yellow checkpoint <code style="font-family:var(--font-mono);color:var(--teal);">cross_system_context</code> correlations — not static rules. The dashboard refreshes on each page visit to reflect current agent state.</p>
+    </details>`;
 }

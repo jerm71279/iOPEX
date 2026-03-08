@@ -36,6 +36,9 @@
   <button class="nav-link" onclick="showPage('waves',this)">
     <span class="nav-icon">&#x25E7;</span> Wave Execution
   </button>
+  <button class="nav-link" onclick="showPage('accounts',this)">
+    <span class="nav-icon">&#x25A8;</span> Account Explorer
+  </button>
   <button class="nav-link" onclick="showPage('gates',this)">
     <span class="nav-icon">&#x25CF;</span> Gate Tracker
   </button>
@@ -44,6 +47,12 @@
   </button>
   <button class="nav-link" onclick="showPage('compare',this)">
     <span class="nav-icon">&#x2194;</span> Comparison
+  </button>
+  <button class="nav-link" onclick="showPage('mcp',this)">
+    <span class="nav-icon">&#x2B21;</span> MCP Servers
+  </button>
+  <button class="nav-link" onclick="showPage('guide',this)">
+    <span class="nav-icon">&#x2753;</span> Guide & FAQ
   </button>
   <button class="nav-link" onclick="showPage('disclaimer',this)">
     <span class="nav-icon">&#x26A0;</span> Status & Info
@@ -164,6 +173,9 @@
     </div>
   </div>
 
+  <!-- ──── ACCOUNTS ──── -->
+  <div class="page" id="page-accounts"></div>
+
   <!-- ──── GATES ──── -->
   <div class="page" id="page-gates">
     <div class="page-header">
@@ -212,6 +224,24 @@
     <div id="comparisonContent"></div>
   </div>
 
+  <!-- ──── MCP SERVERS ──── -->
+  <div class="page" id="page-mcp">
+    <div class="page-header">
+      <div class="page-title">MCP Servers</div>
+      <div class="page-subtitle">Model Context Protocol — AI Council Conditions 2, 3, 4</div>
+    </div>
+    <div id="mcpContent"></div>
+  </div>
+
+  <!-- ──── GUIDE & FAQ ──── -->
+  <div class="page" id="page-guide">
+    <div class="page-header">
+      <div class="page-title">Guide & FAQ</div>
+      <div class="page-subtitle">Comprehensive Reference — Architecture, Agents, Predictions, Glossary</div>
+    </div>
+    <div id="guideContent"></div>
+  </div>
+
   <!-- ──── DISCLAIMER ──── -->
   <div class="page" id="page-disclaimer">
     <div class="page-header">
@@ -239,8 +269,11 @@
 <script src="/js/agents.js"></script>
 <script src="/js/waves.js"></script>
 <script src="/js/gates.js"></script>
-<script src="/js/yellow.js"></script>
 <script src="/js/compare.js"></script>
+<script src="/js/yellow.js"></script>
+<script src="/js/accounts.js"></script>
+<script src="/js/guide.js"></script>
+<script src="/js/mcp.js"></script>
 <script src="/js/app.js"></script>
 
 </body>

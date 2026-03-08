@@ -51,6 +51,20 @@ async function renderPhaseExplorer() {
       </div>
     </div>`;
   }).join('');
+
+  // Phase Explorer blurb
+  const target = document.getElementById('phaseCards');
+  if (target && !document.getElementById('phaseBlurb')) {
+    const blurb = document.createElement('div');
+    blurb.id = 'phaseBlurb';
+    blurb.innerHTML = `
+      <details class="callout callout-teal" style="margin-top:20px;cursor:pointer;font-size:0.68rem;line-height:1.6;">
+        <summary style="font-weight:700;user-select:none;">Understanding the Phase Explorer</summary>
+        <p style="margin:8px 0 0;">The 8-phase lifecycle (P0-P7) sequences the entire migration from environment setup through decommission. Each phase card shows which AI agents execute, what activities occur, and what deliverables are produced. Phases are gated — you cannot advance until quality gates pass. Click any deliverable to drill down into the actual output data. The agent badges show real-time status: green (complete), amber (active), gray (pending).</p>
+        <p style="margin:6px 0 0;"><strong>For technical teams:</strong> Each phase maps to specific agents in the coordinator's PHASE_SEQUENCE. Agent execution order within a phase is deterministic — earlier agents feed data to later ones (e.g., Agent 01 discovery feeds Agent 09 dependency mapping). The deliverables shown are the actual JSON/table outputs from agent runs.</p>
+      </details>`;
+    target.parentNode.insertBefore(blurb, target.nextSibling);
+  }
 }
 
 function togglePhase(phaseId, forceOpen) {

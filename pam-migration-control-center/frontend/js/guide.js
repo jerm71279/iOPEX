@@ -1,0 +1,257 @@
+/**
+ * Guide & FAQ page — comprehensive reference for the SHIFT Migration Control Center.
+ */
+
+function renderGuide() {
+  const el = document.getElementById('guideContent');
+  if (!el) return;
+
+  el.innerHTML = _guideSection('What Is This Control Center?', `
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
+    <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
+    <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
+  `) +
+
+  _guideSection('The 8 Migration Phases (P0-P7)', `
+    <table style="width:100%;border-collapse:collapse;font-size:0.68rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);color:var(--text-muted);text-align:left;">
+          <th style="padding:6px 8px;">Phase</th>
+          <th style="padding:6px 8px;">Name</th>
+          <th style="padding:6px 8px;">Duration</th>
+          <th style="padding:6px 8px;">Key Focus</th>
+          <th style="padding:6px 8px;">Agents</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${[
+          ['P0', 'Environment Setup', '2-3 weeks', 'Infrastructure provisioning, network, credentials', 'Manual'],
+          ['P1', 'Discovery & Assessment', '3-4 weeks', 'Full environment scan, NHI classification, gap analysis', '11, 01, 09, 12, 02, 03'],
+          ['P2', 'Infrastructure & Staging', '2-3 weeks', 'Target platform config, template validation, staging tests', '13, 10'],
+          ['P3', 'Structure Migration', '2-3 weeks', 'Safe/folder creation, permission mapping, app onboarding setup', '03, 14'],
+          ['P4', 'Pilot Migration', '1-2 weeks', 'Small batch ETL, validate end-to-end pipeline', '04, 05'],
+          ['P5', 'Production Migration', '4-6 weeks', '5-wave production batches, integrations, compliance evidence', '04, 05, 06, 14, 07'],
+          ['P6', 'Parallel Running', '4-6 weeks', 'Dual-system validation, traffic shifting, cutover', '15, 05, 06, 07'],
+          ['P7', 'Decommission', '2-3 weeks', 'Source teardown, final audit, project close-out', '07'],
+        ].map(r => `
+          <tr style="border-bottom:1px solid var(--border-light);">
+            <td style="padding:5px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">${r[0]}</td>
+            <td style="padding:5px 8px;color:var(--text-bright);">${r[1]}</td>
+            <td style="padding:5px 8px;color:var(--text-muted);">${r[2]}</td>
+            <td style="padding:5px 8px;color:var(--text-standard);">${r[3]}</td>
+            <td style="padding:5px 8px;font-family:var(--font-mono);color:var(--teal);">${r[4]}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Each phase is gated — human approvals (gates) must pass before advancing. Phase durations are estimates that vary by environment complexity and account volume.</p>
+  `) +
+
+  _guideSection('15 AI Agents Explained', `
+    <p style="margin-bottom:10px;">Each agent is a specialized Python module in the orchestrator. Agents execute in a deterministic sequence within each phase. Earlier agents feed data to later ones.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);color:var(--text-muted);text-align:left;">
+          <th style="padding:5px 8px;">#</th>
+          <th style="padding:5px 8px;">Name</th>
+          <th style="padding:5px 8px;">Purpose</th>
+          <th style="padding:5px 8px;">Phases</th>
+          <th style="padding:5px 8px;">Key Dependencies</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${[
+          ['01', 'Discovery', 'Scans full CyberArk environment via Applications API', 'P1', 'Agent 11 source data'],
+          ['02', 'Gap Analysis', '10-domain maturity assessment across 4 compliance frameworks', 'P1', 'Agent 01 discovery output'],
+          ['03', 'Permissions', 'Maps 22 CyberArk permissions to target model', 'P1, P3', 'Agent 01 safe members data'],
+          ['04', 'ETL', '7-step ETL pipeline with crash recovery and watchdog', 'P4, P5', 'Agent 10 staging validation'],
+          ['05', 'Heartbeat', '10-check post-migration validation', 'P4-P6', 'Agent 04 migrated accounts'],
+          ['06', 'Integration', 'CCP/AAM code scanning and repointing', 'P5, P6', 'Agent 04 completed accounts'],
+          ['07', 'Compliance', 'PCI-DSS, NIST 800-53, HIPAA, SOX evidence collection', 'P5-P7', 'Agent 05 validation results'],
+          ['08', 'Runbook', 'Phase gate management and decommission procedures', 'P6, P7', 'All previous agents'],
+          ['09', 'Dependency Mapper', '6 scanners: IIS, Windows services, tasks, Jenkins, scripts, configs', 'P1', 'Agent 01 discovery output'],
+          ['10', 'Staging', '10-assertion validation against staging instance', 'P2', 'Agent 13 platform validation'],
+          ['11', 'Source Adapter', 'Multi-vendor extraction: CyberArk, BeyondTrust, SS, HashiCorp, cloud', 'P1', 'Config + credentials'],
+          ['12', 'NHI Handler', 'Weighted multi-signal classification for non-human identities', 'P1', 'Agent 01 + Agent 11 data'],
+          ['13', 'Platform Plugins', 'Validates/exports/imports custom platforms and templates', 'P2', 'Agent 02 gap analysis'],
+          ['14', 'Onboarding Factory', '10-step pipeline for new service account onboarding', 'P3, P5', 'Agent 03 permission map'],
+          ['15', 'Hybrid Fleet', 'Parallel-run traffic shift management (on-prem + cloud)', 'P6', 'Agent 05 heartbeat data'],
+        ].map(r => `
+          <tr style="border-bottom:1px solid var(--border-light);">
+            <td style="padding:4px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">${r[0]}</td>
+            <td style="padding:4px 8px;color:var(--text-bright);">${r[1]}</td>
+            <td style="padding:4px 8px;color:var(--text-standard);">${r[2]}</td>
+            <td style="padding:4px 8px;font-family:var(--font-mono);color:var(--teal);">${r[3]}</td>
+            <td style="padding:4px 8px;color:var(--text-muted);font-size:0.6rem;">${r[4]}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Two additional DX (developer experience) agents handle documentation generation and portal operations but are not part of the core migration orchestrator.</p>
+  `) +
+
+  _guideSection('AI Predictions — 3-Tier Feedback Loop', `
+    <p>Predictions are not static rules — they emerge from a 3-tier cross-referencing model that correlates agent outputs through yellow checkpoints.</p>
+    <div style="margin:12px 0;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:8px;font-size:0.72rem;">Tier 1: Agent Detection</div>
+      <p>Each of the 15 agents monitors its domain. When an agent detects an anomaly (e.g., extraction latency exceeding benchmark, permission escalations above threshold), it flags the condition.</p>
+
+      <div style="font-weight:700;color:var(--text-bright);margin:12px 0 8px;font-size:0.72rem;">Tier 2: Yellow Checkpoint Cross-Reference</div>
+      <p>If the condition exceeds a threshold, the agent fires a <strong>yellow checkpoint</strong>. Each checkpoint includes a <code style="font-family:var(--font-mono);color:var(--teal);">cross_system_context</code> field that explicitly references OTHER agents' data. For example, checkpoint yc-a01 (source extraction latency) cross-references Agent 09 (dependency mapper) and Agent 12 (NHI handler) to assess whether the latency affects downstream operations.</p>
+
+      <div style="font-weight:700;color:var(--text-bright);margin:12px 0 8px;font-size:0.72rem;">Tier 3: Prediction Engine + Feedback</div>
+      <p>The prediction engine correlates multiple checkpoints' cross-references to identify <strong>compounding risks</strong>. A single checkpoint might be informational, but when two or more checkpoints from different phases reference overlapping agents, the engine projects forward impact. Each prediction includes affected phases, affected agents, predicted impact, and a recommended remediation.</p>
+      <p>The feedback loop: when a prediction triggers remediation, the affected agent re-executes with the fix applied. This generates new checkpoint data, which feeds back into the prediction engine — creating a continuous improvement cycle.</p>
+    </div>
+    <p style="font-size:0.62rem;color:var(--text-muted);">See the Predictive Intelligence Flow animation on Mission Control for an interactive walkthrough of this process with three real examples.</p>
+  `) +
+
+  _guideSection('Yellow Checkpoints — AI Contextual Awareness', `
+    <p>Yellow checkpoints are the orchestrator's mechanism for cross-phase contextual awareness. They are NOT simple alerts — they carry structured context that enables the prediction engine.</p>
+    <div style="margin:10px 0;">
+      <div style="font-weight:700;color:var(--amber);margin-bottom:6px;font-size:0.72rem;">Two Types</div>
+      <ul style="margin:0;padding-left:18px;line-height:2;">
+        <li><strong>Procedural</strong> — Mandatory phase gate checks (e.g., "staging validation must pass before P4")</li>
+        <li><strong>AI Detected</strong> — Orchestrator-identified conflicts, decisions, or forecasted errors</li>
+      </ul>
+    </div>
+    <div style="margin:10px 0;">
+      <div style="font-weight:700;color:var(--amber);margin-bottom:6px;font-size:0.72rem;">State Machine (6 States)</div>
+      <p><code style="font-family:var(--font-mono);color:var(--teal);">FIRE</code> &rarr; <code style="font-family:var(--font-mono);color:var(--teal);">CLASSIFY</code> &rarr; <code style="font-family:var(--font-mono);color:var(--teal);">NOTIFY</code> &rarr; <code style="font-family:var(--font-mono);color:var(--teal);">WINDOW</code> &rarr; <code style="font-family:var(--font-mono);color:var(--teal);">BOUNDARY</code> &rarr; <code style="font-family:var(--font-mono);color:var(--teal);">RESOLVE</code></p>
+      <p>Each checkpoint has an SLA window (configurable per severity). If the window expires without resolution, the checkpoint escalates to RED, halting the pipeline.</p>
+    </div>
+    <div style="margin:10px 0;">
+      <div style="font-weight:700;color:var(--amber);margin-bottom:6px;font-size:0.72rem;">Accumulation Thresholds</div>
+      <p>Each phase has a maximum number of open checkpoints. When the threshold is reached, the phase is blocked until checkpoints are resolved. This prevents checkpoint fatigue.</p>
+    </div>
+  `) +
+
+  _guideSection('Wave Execution & ETL Pipeline', `
+    <p>Phase 5 (Production Migration) executes in 5 waves, each processing a batch of accounts through the 7-step ETL pipeline.</p>
+    <div style="margin:10px 0;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:6px;font-size:0.72rem;">5 Waves</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);text-align:left;">
+            <th style="padding:4px 8px;">Wave</th>
+            <th style="padding:4px 8px;">Focus</th>
+            <th style="padding:4px 8px;">Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['1', 'Low-risk service accounts', '~200'],
+            ['2', 'Standard privileged accounts', '~350'],
+            ['3', 'NHI + complex dependencies', '~550'],
+            ['4', 'High-risk + compliance-sensitive', '~400'],
+            ['5', 'Remaining + cleanup', '~200'],
+          ].map(r => `
+            <tr style="border-bottom:1px solid var(--border-light);">
+              <td style="padding:4px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">${r[0]}</td>
+              <td style="padding:4px 8px;color:var(--text-standard);">${r[1]}</td>
+              <td style="padding:4px 8px;color:var(--text-muted);">${r[2]}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin:10px 0;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:6px;font-size:0.72rem;">7-Step ETL Pipeline</div>
+      <ol style="margin:0;padding-left:18px;line-height:2;font-size:0.68rem;">
+        <li><strong>FREEZE</strong> — Lock source accounts (CPM disabled, rotations paused)</li>
+        <li><strong>EXPORT</strong> — Extract account data + retrieve passwords via PVWA API</li>
+        <li><strong>TRANSFORM</strong> — Map fields, resolve platform/template, slug usernames</li>
+        <li><strong>SAFE/FOLDER CREATION</strong> — Create target containers with permissions</li>
+        <li><strong>IMPORT</strong> — Create accounts/secrets in target platform</li>
+        <li><strong>HEARTBEAT</strong> — Validate imported accounts can connect</li>
+        <li><strong>UNFREEZE</strong> — Re-enable CPM/rotation on source (rollback safety)</li>
+      </ol>
+    </div>
+    <div style="margin:10px 0;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:6px;font-size:0.72rem;">Safety Features</div>
+      <ul style="margin:0;padding-left:18px;line-height:2;font-size:0.68rem;">
+        <li><strong>Watchdog timer</strong> — Auto-unfreezes accounts if pipeline stalls (default 120 min)</li>
+        <li><strong>Crash recovery</strong> — Frozen account registry + signal handlers for safe shutdown</li>
+        <li><strong>Startup recovery</strong> — On restart, detects frozen accounts and initiates emergency unfreeze</li>
+      </ul>
+    </div>
+  `) +
+
+  _guideSection('Option A vs Option B', `
+    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);color:var(--text-muted);text-align:left;">
+          <th style="padding:6px 8px;">Aspect</th>
+          <th style="padding:6px 8px;">Option A: Delinea (Secret Server)</th>
+          <th style="padding:6px 8px;">Option B: CyberArk Cloud (Privilege Cloud)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${[
+          ['Timeline', '80 weeks', '50 weeks'],
+          ['Permission Model', '22 &rarr; 4 roles (LOSSY — escalation risk)', '22 &rarr; 22 (1:1 mapping)'],
+          ['Data Structure', 'Safe &rarr; Folder (hierarchical)', 'Safe &rarr; Safe (identical)'],
+          ['Platforms', 'Platform &rarr; Secret Template', 'Platform &rarr; Platform'],
+          ['API Surface', 'Completely different (/api/v1/)', 'Same (/PasswordVault/api/)'],
+          ['Audit Logs', 'Do NOT transfer', 'Can migrate'],
+          ['PSM Recordings', 'Cannot migrate', 'Can migrate'],
+          ['Integration Rework', 'Full re-architecture (CCP/AAM &rarr; OAuth2)', 'Similar patterns'],
+          ['CPM/RPC', 'RPC plugins must be rebuilt per template', 'CPM plugins carry over'],
+          ['Risk Level', 'Higher — permission loss, audit discontinuity', 'Lower — same vendor ecosystem'],
+        ].map(r => `
+          <tr style="border-bottom:1px solid var(--border-light);">
+            <td style="padding:5px 8px;font-weight:600;color:var(--text-bright);">${r[0]}</td>
+            <td style="padding:5px 8px;color:var(--blue);">${r[1]}</td>
+            <td style="padding:5px 8px;color:var(--green);">${r[2]}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Toggle between Option A and Option B using the sidebar switch. All pages update to show the appropriate data, checkpoints, predictions, and timelines for each option.</p>
+  `) +
+
+  _guideSection('Glossary', `
+    <div style="columns:2;column-gap:20px;font-size:0.65rem;">
+      ${[
+        ['NHI', 'Non-Human Identity — service accounts, API keys, SSH keys, certificates used by applications'],
+        ['CPM', 'Central Policy Manager — CyberArk component that rotates passwords on schedule'],
+        ['RPC', 'Remote Password Changing — Secret Server equivalent of CPM'],
+        ['PVWA', 'Password Vault Web Access — CyberArk web management interface'],
+        ['Safe', 'CyberArk container for privileged accounts with access controls'],
+        ['Folder', 'Secret Server container equivalent to CyberArk Safe'],
+        ['Template', 'Secret Server schema defining fields for a credential type'],
+        ['Platform', 'CyberArk definition of how to manage a specific system type'],
+        ['ETL', 'Extract-Transform-Load — the core migration pipeline pattern'],
+        ['MCP', 'Model Context Protocol — standard for AI model tool integration'],
+        ['CCP', 'Central Credential Provider — CyberArk passwordless application auth'],
+        ['AAM', 'Application Access Manager — CyberArk enterprise app integration'],
+        ['PSM', 'Privileged Session Manager — CyberArk session recording/proxy'],
+        ['StrongDM', 'Infrastructure access platform often paired with Secret Server'],
+        ['Gate', 'Human approval checkpoint required before phase advancement'],
+        ['Yellow Checkpoint', 'AI-detected condition requiring contextual evaluation'],
+        ['Heartbeat', 'Automated check that a migrated account can still authenticate'],
+        ['Watchdog', 'Timer that auto-unfreezes accounts if ETL pipeline stalls'],
+        ['SIEM', 'Security Information & Event Management — log aggregation target'],
+        ['SOX', 'Sarbanes-Oxley Act — financial controls compliance framework'],
+      ].map(([term, def]) => `
+        <div style="margin-bottom:8px;break-inside:avoid;">
+          <span style="font-weight:700;color:var(--cyan);font-family:var(--font-mono);">${term}</span>
+          <span style="color:var(--text-standard);"> — ${def}</span>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+
+function _guideSection(title, content) {
+  return `
+    <details class="panel" style="margin-bottom:12px;cursor:pointer;" open>
+      <summary class="panel-header" style="user-select:none;list-style:none;">
+        <div class="panel-title">${title}</div>
+        <span style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono);">CLICK TO TOGGLE</span>
+      </summary>
+      <div class="panel-body" style="padding:14px 16px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+        ${content}
+      </div>
+    </details>`;
+}

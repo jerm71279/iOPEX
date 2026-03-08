@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAM Credential Migration Lifecycle — CyberArk → Privilege Cloud</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── CSS Custom Properties ─────────────────────────── */
+:root {
+  --bg-page: #060D16;
+  --bg-card: #0A1628;
+  --bg-card-hover: #0D2137;
+  --bg-surface: #081422;
+  --border: #1E3050;
+  --border-light: #1A2A42;
+
+  --blue: #3B82F6;
+  --blue-dim: rgba(59, 130, 246, 0.15);
+  --green: #06D6A0;
+  --green-dim: rgba(6, 214, 160, 0.15);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.15);
+  --red: #EF4444;
+  --red-dim: rgba(239, 68, 68, 0.15);
+  --purple: #A855F7;
+  --purple-dim: rgba(168, 85, 247, 0.15);
+  --cyan: #00C8E8;
+
+  --text-bright: #F1F5F9;
+  --text-standard: #CBD5E1;
+  --text-muted: #64748B;
+
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+
+  --radius: 8px;
+  --transition: 0.3s ease;
+}
+
+/* ── Reset & Base ──────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-standard);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ────────────────────────────────────────── */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── Header ────────────────────────────────────────── */
+.header {
+  text-align: center;
+  padding: 60px 0 40px;
+}
+
+.header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.header .subtitle {
+  font-size: 1.1rem;
+  color: var(--blue);
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-card);
+}
+
+.stat strong {
+  color: var(--text-standard);
+}
+
+/* ── Controls ──────────────────────────────────────── */
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.controls button {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.controls button:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-dim);
+}
+
+/* ── Timeline ──────────────────────────────────────── */
+.timeline {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  margin-bottom: 40px;
+}
+
+.timeline-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 40px;
+  right: 40px;
+  height: 2px;
+  background: var(--border);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+.timeline-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  z-index: 1;
+  transition: all var(--transition);
+}
+
+.timeline-node:hover .node-dot {
+  transform: scale(1.3);
+  box-shadow: 0 0 16px currentColor;
+}
+
+.node-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-page);
+  transition: all var(--transition);
+}
+
+.node-dot.risk-low { background: var(--green); color: var(--green); }
+.node-dot.risk-medium { background: var(--amber); color: var(--amber); }
+.node-dot.risk-high { background: var(--red); color: var(--red); }
+
+.timeline-node.active .node-dot {
+  transform: scale(1.4);
+  box-shadow: 0 0 20px currentColor;
+}
+
+.node-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  transition: color var(--transition);
+}
+
+.timeline-node.active .node-label {
+  color: var(--text-bright);
+}
+
+/* ── Architecture Mapping ──────────────────────────── */
+.arch-map {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.arch-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.arch-item .from {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+
+.arch-item .arrow {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+
+.arch-item .to {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--green);
+}
+
+.arch-item .note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.arch-item.parity {
+  border-color: var(--green);
+  background: var(--green-dim);
+}
+
+.arch-item.parity .to {
+  color: var(--green);
+}
+
+/* ── Phase Cards ───────────────────────────────────── */
+.phase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.phase-card.risk-high { border-left-color: var(--red); }
+.phase-card.risk-medium { border-left-color: var(--amber); }
+.phase-card.risk-low { border-left-color: var(--green); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition);
+}
+
+.card-header:hover {
+  background: var(--bg-card-hover);
+}
+
+.phase-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.phase-badge.risk-low { background: var(--green-dim); color: var(--green); }
+.phase-badge.risk-medium { background: var(--amber-dim); color: var(--amber); }
+.phase-badge.risk-high { background: var(--red-dim); color: var(--red); }
+
+.card-title-group { flex: 1; }
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.card-summary {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.status-pill {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: var(--blue-dim);
+  color: var(--blue);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.expand-icon {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  transition: transform var(--transition);
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.phase-card.open .expand-icon {
+  transform: rotate(45deg);
+}
+
+/* Card body expand/collapse */
+.card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.phase-card.open .card-body {
+  max-height: 3000px;
+}
+
+.card-content {
+  padding: 0 24px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.agent-label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--purple);
+  margin: 16px 0 12px;
+}
+
+.detail-list {
+  list-style: none;
+  padding: 0;
+}
+
+.detail-list li {
+  position: relative;
+  padding: 6px 0 6px 20px;
+  font-size: 0.9rem;
+  color: var(--text-standard);
+  line-height: 1.5;
+}
+
+.detail-list li::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.detail-list li code {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--blue);
+  background: var(--blue-dim);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.detail-list li strong {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+/* ── Risk Callout ──────────────────────────────────── */
+.callout {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  border-left: 3px solid;
+}
+
+.callout.warning {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.callout.critical {
+  background: var(--red-dim);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.callout.success {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.callout .callout-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.callout p {
+  color: var(--text-standard);
+  font-size: 0.8rem;
+}
+
+/* ── Migration Pipeline Diagram ──────────────────────────── */
+.etl-pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 20px 0;
+  margin: 16px 0;
+}
+
+.etl-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.etl-box {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.etl-box.source { background: var(--blue-dim); border-color: rgba(59,130,246,0.3); color: var(--blue); }
+.etl-box.local { background: var(--purple-dim); border-color: rgba(168,85,247,0.3); color: var(--purple); }
+.etl-box.target { background: var(--green-dim); border-color: rgba(6,214,160,0.3); color: var(--green); }
+
+.etl-api {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-align: center;
+  max-width: 150px;
+}
+
+.etl-arrow {
+  display: flex;
+  align-items: center;
+  padding-top: 8px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* ── Permission Parity Callout ─────────────────────── */
+.parity-box {
+  margin: 16px 0;
+  padding: 24px;
+  background: var(--green-dim);
+  border: 1px solid rgba(6, 214, 160, 0.3);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.parity-box .parity-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.parity-box h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+
+.parity-box p {
+  font-size: 0.85rem;
+  color: var(--text-standard);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.parity-box .parity-detail {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--green);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(6, 214, 160, 0.2);
+}
+
+/* ── Risk Summary Footer ───────────────────────────── */
+.risk-footer {
+  margin-top: 48px;
+}
+
+.risk-footer h2 {
+  font-size: 1.3rem;
+  color: var(--text-bright);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.risk-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  border-top: 3px solid;
+}
+
+.risk-card.severity-high { border-top-color: var(--red); }
+.risk-card.severity-medium { border-top-color: var(--amber); }
+
+.risk-card .severity-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.severity-badge.high { background: var(--red-dim); color: var(--red); }
+.severity-badge.medium { background: var(--amber-dim); color: var(--amber); }
+
+.risk-card h3 {
+  font-size: 0.95rem;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+}
+
+.risk-card .risk-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.risk-card .mitigation {
+  font-size: 0.8rem;
+  color: var(--text-standard);
+  padding: 10px;
+  background: var(--bg-surface);
+  border-radius: 4px;
+  border-left: 2px solid var(--blue);
+}
+
+.mitigation-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+
+/* ── Section Headers ───────────────────────────────── */
+.section-header {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 40px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .arch-map { grid-template-columns: repeat(2, 1fr); }
+  .risk-grid { grid-template-columns: 1fr; }
+  .stats-bar { gap: 12px; }
+  .timeline-track { overflow-x: auto; padding: 0 10px; gap: 16px; }
+  .node-label { font-size: 0.55rem; }
+}
+
+/* ── Print ─────────────────────────────────────────── */
+@media print {
+  :root {
+    --bg-page: #fff;
+    --bg-card: #f8f9fa;
+    --bg-card-hover: #f0f1f3;
+    --bg-surface: #f0f1f3;
+    --border: #dee2e6;
+    --text-bright: #1a1a1a;
+    --text-standard: #333;
+    --text-muted: #666;
+  }
+  .timeline { position: static; }
+  .controls { display: none; }
+  .card-body { max-height: none !important; }
+  .phase-card.open .card-body { max-height: none !important; }
+  body { font-size: 10pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header">
+    <h1>PAM Credential Migration Lifecycle</h1>
+    <div class="subtitle">CyberArk On-Premises &rarr; CyberArk Privilege Cloud (Option B)</div>
+    <div class="stats-bar">
+      <span class="stat"><strong>Multi-Agent</strong> AI</span>
+      <span class="stat"><strong>8</strong> Phases (P0&ndash;P7)</span>
+      <span class="stat"><strong>5</strong>-Step Migration Pipeline</span>
+      <span class="stat"><strong>22&rarr;22</strong> Permissions</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════ TIMELINE ═══════════════ -->
+  <nav class="timeline" id="timeline">
+    <div class="timeline-track">
+      <div class="timeline-node active" data-target="card-1" onclick="scrollToCard('card-1')">
+        <div class="node-dot risk-low"></div>
+        <span class="node-label">P1<br>Discovery</span>
+      </div>
+      <div class="timeline-node" data-target="card-2" onclick="scrollToCard('card-2')">
+        <div class="node-dot risk-low"></div>
+        <span class="node-label">P1<br>Gap &amp; Perms</span>
+      </div>
+      <div class="timeline-node" data-target="card-2b" onclick="scrollToCard('card-2b')">
+        <div class="node-dot risk-medium"></div>
+        <span class="node-label">P2<br>Staging</span>
+      </div>
+      <div class="timeline-node" data-target="card-3" onclick="scrollToCard('card-3')">
+        <div class="node-dot risk-low"></div>
+        <span class="node-label">P3<br>Safe Prep</span>
+      </div>
+      <div class="timeline-node" data-target="card-4" onclick="scrollToCard('card-4')">
+        <div class="node-dot risk-medium"></div>
+        <span class="node-label">P4/P5<br>Migration</span>
+      </div>
+      <div class="timeline-node" data-target="card-5" onclick="scrollToCard('card-5')">
+        <div class="node-dot risk-low"></div>
+        <span class="node-label">P4/P5<br>Heartbeat</span>
+      </div>
+      <div class="timeline-node" data-target="card-6" onclick="scrollToCard('card-6')">
+        <div class="node-dot risk-medium"></div>
+        <span class="node-label">P6<br>Cutover</span>
+      </div>
+      <div class="timeline-node" data-target="card-7" onclick="scrollToCard('card-7')">
+        <div class="node-dot risk-medium"></div>
+        <span class="node-label">P7<br>Decommission</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ ARCHITECTURE MAPPING ═══════════════ -->
+  <div class="section-header">Architecture Mapping</div>
+  <div class="arch-map">
+    <div class="arch-item">
+      <div class="from">Safe</div>
+      <div class="arrow">&darr;</div>
+      <div class="to">Safe</div>
+      <div class="note">1:1 &mdash; same structure</div>
+    </div>
+    <div class="arch-item">
+      <div class="from">Platform</div>
+      <div class="arrow">&darr;</div>
+      <div class="to">Platform</div>
+      <div class="note">1:1 &mdash; same policies</div>
+    </div>
+    <div class="arch-item">
+      <div class="from">Account</div>
+      <div class="arrow">&darr;</div>
+      <div class="to">Account</div>
+      <div class="note">Same field names</div>
+    </div>
+    <div class="arch-item parity">
+      <div class="from">22 Permissions</div>
+      <div class="arrow">&darr;</div>
+      <div class="to">22 Permissions (1:1 &check;)</div>
+      <div class="note">Full parity &mdash; zero loss</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CONTROLS ═══════════════ -->
+  <div class="section-header">Lifecycle Phases</div>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+  </div>
+
+  <!-- ═══════════════ CARD 1: Discovery ═══════════════ -->
+  <article class="phase-card risk-low" id="card-1">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P1</span>
+      <div class="card-title-group">
+        <div class="card-title">Discovery &amp; Dependency Mapping</div>
+        <div class="card-summary">Scan CyberArk on-prem to inventory accounts, safes, platforms, and NHIs</div>
+      </div>
+      <span class="status-pill">Agents 11, 01, 09, 12</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 11 &mdash; Source Adapter</div>
+        <ul class="detail-list">
+          <li>Normalize accounts from any source vendor (CyberArk, BeyondTrust, HashiCorp, AWS, Azure, GCP) into canonical format</li>
+          <li>Provides unified <code>NormalizedAccount</code> schema regardless of source PAM vendor</li>
+        </ul>
+
+        <div class="agent-label">Agent 01 &mdash; Discovery</div>
+        <ul class="detail-list">
+          <li>Connect to CyberArk PVWA via <code>GET /Accounts</code> (paginated, count-based)</li>
+          <li>Enumerate all safes via <code>GET /Safes</code> &mdash; filter system safes (System, VaultInternal, Notification Engine, etc.)</li>
+          <li>Enumerate platforms via <code>GET /Platforms/Targets</code></li>
+          <li><strong>NHI Detection</strong> (multi-signal): platform-based (UnixSSHKeys, WinServiceAccount, AzureServicePrincipal), name patterns (^svc[_-], ^app[_-], ^api[_-]), safe name patterns (appcred, automation, cicd)</li>
+          <li>Scan for CCP/AAM integrations via <code>GET /Applications</code> + <code>GET /Applications/{id}/Authentications</code></li>
+          <li>Output discovery manifest with account counts, safe inventory, NHI list, integration map, and platform inventory</li>
+        </ul>
+
+        <div class="agent-label">Agent 09 &mdash; Dependency Mapper</div>
+        <ul class="detail-list">
+          <li>Build dependency graph: application &rarr; account &rarr; safe &rarr; platform mappings</li>
+          <li>Scan IIS logs and config files for CCP/AAM connection strings</li>
+          <li>Identify NHI dependency chains that must migrate together</li>
+          <li>Produce migration ordering constraints for Agent 04 Migration Pipeline wave classification</li>
+        </ul>
+
+        <div class="agent-label">Agent 12 &mdash; NHI Handler</div>
+        <ul class="detail-list">
+          <li><strong>Weighted multi-signal NHI classification</strong>: platform (0.35), name pattern (0.20), container context (0.10), dependency graph (0.25), audit frequency (0.10)</li>
+          <li>Risk scoring: confidence threshold (default 0.6) determines NHI vs human classification</li>
+          <li>Generate rotation policies based on NHI type (service account, API key, certificate)</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 2: Gap Analysis & Permissions ═══════════════ -->
+  <article class="phase-card risk-low" id="card-2">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P1</span>
+      <div class="card-title-group">
+        <div class="card-title">Gap Analysis &amp; Permission Mapping</div>
+        <div class="card-summary">10-domain assessment + 1:1 permission parity verification (22&rarr;22, zero loss)</div>
+      </div>
+      <span class="status-pill">Agents 02, 03</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 02 &mdash; Gap Analysis</div>
+        <ul class="detail-list">
+          <li>Assess 10 domains: <strong>auth_integration, session_management, account_lifecycle, platform_policies, cpm_readiness, safe_structure, permission_model, nhi_handling, integration_architecture, audit_compliance</strong></li>
+          <li>Score each domain (0&ndash;5 maturity) with Privilege Cloud-specific checks</li>
+          <li>Map findings to 4 compliance frameworks (PCI-DSS, NIST 800-53, HIPAA, SOX)</li>
+          <li>Identify Cloud CPM connectivity requirements per target network segment</li>
+          <li>Flag Connector Server placement needs for on-prem target access</li>
+        </ul>
+
+        <div class="agent-label">Agent 03 &mdash; Permission Verification (1:1 Parity)</div>
+        <ul class="detail-list">
+          <li>Pull all safe members via <code>GET /Safes/{name}/Members</code></li>
+          <li>Verify all 22 CyberArk permissions map 1:1 to Privilege Cloud &mdash; <strong>same permission model, same ACL structure</strong></li>
+          <li>No permissions lost, no escalation risk, no role compression</li>
+          <li>Validate safe member configurations are compatible with Cloud Vault</li>
+          <li>Generate per-safe permission audit report confirming parity</li>
+        </ul>
+
+        <!-- ── Permission Parity Callout ── -->
+        <div class="parity-box">
+          <div class="parity-icon">&#10003;</div>
+          <h4>1:1 Permission Parity &mdash; Zero Loss</h4>
+          <p>All 22 CyberArk safe permissions map directly to Privilege Cloud with no loss, no compression, and no escalation risk. This is a key advantage over cross-vendor migration options where granular permissions are lost.</p>
+          <div class="parity-detail">
+            UseAccounts &bull; RetrieveAccounts &bull; ListAccounts &bull; AddAccounts &bull; UpdateAccountContent &bull; UpdateAccountProperties &bull; DeleteAccounts &bull; RenameAccounts &bull; ManageSafe &bull; ManageSafeMembers &bull; ViewSafeMembers &bull; ViewAuditLog &bull; BackupSafe &bull; UnlockAccounts &bull; AccessWithoutConfirmation &bull; CreateFolders &bull; DeleteFolders &bull; MoveAccountsAndFolders &bull; SpecifyNextAccountContent &bull; InitiateCPMAccountManagementOperations &bull; RequestsAuthorizationLevel1 &bull; RequestsAuthorizationLevel2
+          </div>
+        </div>
+
+        <div class="callout success">
+          <div class="callout-title">Key Advantage Over Cross-Vendor Migration</div>
+          <p>Because Privilege Cloud uses the same permission model as on-premises CyberArk, there is zero permission loss and zero escalation risk. Cross-vendor migrations (e.g., to Secret Server) map 22 safe permissions to 4 folder roles, though SS compensates with 200+ system role permissions for additional access control granularity.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 2B: Infrastructure & Staging ═══════════════ -->
+  <article class="phase-card risk-medium" id="card-2b">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P2</span>
+      <div class="card-title-group">
+        <div class="card-title">Infrastructure, Staging &amp; Platform Validation</div>
+        <div class="card-summary">Deploy platform plugins, run 10-assertion staging validation, gate production migration</div>
+      </div>
+      <span class="status-pill">Agents 13, 10</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 13 &mdash; Platform Plugins</div>
+        <ul class="detail-list">
+          <li>Validate Privilege Cloud platform policies match on-prem CyberArk platforms</li>
+          <li>Deploy custom connection components for non-standard platforms</li>
+          <li>Verify Connector Server placement for each target network segment</li>
+        </ul>
+
+        <div class="agent-label">Agent 10 &mdash; Staging Validation</div>
+        <ul class="detail-list">
+          <li><strong>10-assertion pipeline</strong> against a staging subset (not production):</li>
+          <li>&nbsp;&nbsp;1. Create test safe &rarr; 2. Add safe member &rarr; 3. Import test account &rarr; 4. Retrieve password</li>
+          <li>&nbsp;&nbsp;5. Verify heartbeat &rarr; 6. Check permissions &rarr; 7. Validate platform &rarr; 8. Test audit log</li>
+          <li>&nbsp;&nbsp;9. Verify metadata &rarr; 10. Confirm rollback</li>
+          <li><strong>Hard-blocks production</strong> &mdash; Agent 04 Migration Pipeline refuses to run in P4/P5 without a passing Agent 10 staging report</li>
+          <li>All staging artifacts are rolled back after validation (no permanent changes)</li>
+        </ul>
+
+        <div class="callout warning">
+          <div class="callout-title">ARC-08 Gate</div>
+          <p>Agent 04 Migration Pipeline enforces ARC-08: it will not start production migration without both Agent 09 dependency map AND Agent 10 staging pass. This prevents migrating into an untested target environment.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 3: Safe & Policy Preparation ═══════════════ -->
+  <article class="phase-card risk-low" id="card-3">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P3</span>
+      <div class="card-title-group">
+        <div class="card-title">Safe &amp; Policy Preparation + App Onboarding</div>
+        <div class="card-summary">Replicate safes, platform policies, and permissions in Privilege Cloud; onboard new applications</div>
+      </div>
+      <span class="status-pill">Agents 03, 14</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 03 &mdash; Safe Replication</div>
+        <ul class="detail-list">
+          <li>Create safes in Privilege Cloud via <code>POST /Safes</code> &mdash; same safe names, same structure</li>
+          <li>Map platform policies via <code>POST /Platforms/Targets</code> &mdash; same platform IDs carry over</li>
+          <li>Apply permissions via <code>POST /Safes/{name}/Members</code> &mdash; same ACL model, identical permission set</li>
+          <li>Configure safe retention and logging policies (mirror on-prem settings)</li>
+          <li>Verify Connector Server placement for on-prem target network access via Cloud CPM</li>
+        </ul>
+
+        <div class="agent-label">Agent 14 &mdash; Application Onboarding</div>
+        <ul class="detail-list">
+          <li><strong>10-step onboarding pipeline</strong> for new application service accounts:</li>
+          <li>Validate request &rarr; Create safe &rarr; Configure permissions &rarr; Map platform</li>
+          <li>Create account &rarr; Assign engine &rarr; Set rotation &rarr; Verify heartbeat &rarr; Generate retrieval instructions</li>
+          <li>Application identity configured via ISPSS Identity Admin portal for CCP/Secrets Hub access</li>
+        </ul>
+
+        <div class="callout success">
+          <div class="callout-title">Same API Surface</div>
+          <p>Privilege Cloud uses the same PVWA REST API as on-premises CyberArk. Safe creation, platform mapping, and permission application use identical endpoints and payloads. No schema translation required.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 4: Migration Pipeline ═══════════════ -->
+  <article class="phase-card risk-medium" id="card-4">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P4/P5</span>
+      <div class="card-title-group">
+        <div class="card-title">Migration Pipeline (5-Step Pipeline)</div>
+        <div class="card-summary">Extract from CyberArk on-prem, minimal transform, load into Privilege Cloud</div>
+      </div>
+      <span class="status-pill">Agent 04</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 04 &mdash; Migration Pipeline Orchestration</div>
+
+        <!-- Migration Pipeline Diagram -->
+        <div class="etl-pipeline">
+          <div class="etl-step">
+            <div class="etl-box source">1. FREEZE</div>
+            <div class="etl-api">PATCH /Accounts/{id}<br>managementEnabled=false</div>
+          </div>
+          <div class="etl-arrow">&rarr;</div>
+          <div class="etl-step">
+            <div class="etl-box source">2. EXPORT</div>
+            <div class="etl-api">GET /Accounts/{id}<br>+ POST .../Retrieve</div>
+          </div>
+          <div class="etl-arrow">&rarr;</div>
+          <div class="etl-step">
+            <div class="etl-box local">3. TRANSFORM</div>
+            <div class="etl-api">Minimal &mdash; same API<br>surface, URL rewrite only</div>
+          </div>
+          <div class="etl-arrow">&rarr;</div>
+          <div class="etl-step">
+            <div class="etl-box target">4. IMPORT</div>
+            <div class="etl-api">POST /PrivilegeCloud/<br>API/Accounts</div>
+          </div>
+          <div class="etl-arrow">&rarr;</div>
+          <div class="etl-step">
+            <div class="etl-box source">5. UNFREEZE</div>
+            <div class="etl-api">PATCH /Accounts/{id}<br>managementEnabled=true</div>
+          </div>
+        </div>
+
+        <ul class="detail-list">
+          <li><strong>5-step pipeline</strong> (vs 7-step for cross-vendor): no folder creation step (safes already exist) and no separate heartbeat step (Cloud CPM handles automatically)</li>
+          <li><strong>Minimal transform</strong>: same field names, same API surface &mdash; only base URL changes from on-prem PVWA to Privilege Cloud tenant</li>
+          <li><strong>Wave classification</strong>: 5 waves by risk (Test/Dev &rarr; Standard &rarr; Infrastructure &rarr; NHIs without CCP &rarr; NHIs with CCP/AAM)</li>
+          <li>Password retrieval failures: account is <strong>skipped</strong> (never imported with empty secrets)</li>
+          <li>Failure threshold: &gt;10% batch failure = status &lsquo;failed&rsquo;, otherwise &lsquo;partial&rsquo;</li>
+          <li><strong>Watchdog timer</strong>: threading.Timer auto-unfreezes all frozen accounts on timeout (default 120 min)</li>
+          <li><strong>Emergency unfreeze</strong>: On any exception, all frozen accounts are automatically unfrozen before re-raising</li>
+        </ul>
+
+        <div class="callout warning">
+          <div class="callout-title">Migration Window Exposure</div>
+          <p>Accounts are frozen (CPM management disabled) during the migration pipeline. The watchdog timer limits maximum exposure to 120 minutes. Emergency unfreeze triggers automatically on any exception to minimize the window.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 5: Heartbeat & Validation ═══════════════ -->
+  <article class="phase-card risk-low" id="card-5">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-low">P4/P5</span>
+      <div class="card-title-group">
+        <div class="card-title">Heartbeat &amp; Validation</div>
+        <div class="card-summary">Verify migrated accounts via Cloud CPM heartbeat and 10 validation checks</div>
+      </div>
+      <span class="status-pill">Agent 05</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 05 &mdash; Heartbeat &amp; Validation</div>
+        <ul class="detail-list">
+          <li><strong>Count comparison</strong> &mdash; on-prem source accounts vs Privilege Cloud accounts (within threshold)</li>
+          <li><strong>Heartbeat status</strong> &mdash; <code>POST /PrivilegeCloud/API/Accounts/{id}/Verify</code> via Cloud CPM (managed service, no manual config)</li>
+          <li><strong>Permission mapping</strong> &mdash; Verify safe permissions are identical (22&rarr;22, no loss to validate)</li>
+          <li><strong>Safe structure</strong> &mdash; Verify safe names and hierarchy preserved 1:1</li>
+          <li><strong>Metadata integrity</strong> &mdash; Account properties, descriptions, and custom fields intact (same schema)</li>
+          <li><strong>Group assignments</strong> &mdash; User/group &rarr; safe member permission mappings verified</li>
+          <li><strong>Platform policies</strong> &mdash; Cloud CPM platform policies match on-prem configuration</li>
+          <li><strong>Access patterns</strong> &mdash; Verify access control lists match source environment exactly</li>
+          <li><strong>Audit continuity</strong> &mdash; Privilege Cloud audit trail populated for migrated accounts</li>
+          <li><strong>Recording capability</strong> &mdash; PSM for Cloud / Secure Tunnel configured for session recording</li>
+        </ul>
+
+        <div class="callout success">
+          <div class="callout-title">Cloud CPM &mdash; Managed Service</div>
+          <p>Cloud CPM is a managed service in Privilege Cloud. No manual Distributed Engine or RPC configuration needed (unlike Secret Server). Heartbeat and password rotation are handled automatically once the Connector Server has network access to targets.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 6: Integration Repointing ═══════════════ -->
+  <article class="phase-card risk-medium" id="card-6">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P6</span>
+      <div class="card-title-group">
+        <div class="card-title">Integration Repointing</div>
+        <div class="card-summary">Redirect CCP/AAM integrations to Privilege Cloud API &mdash; same vendor, simplified migration</div>
+      </div>
+      <span class="status-pill">Agents 15, 06</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 15 &mdash; Hybrid Fleet Orchestration</div>
+        <ul class="detail-list">
+          <li>Orchestrate parallel-run period between CyberArk on-prem and Privilege Cloud</li>
+          <li>Manage traffic routing: gradual percentage shift from on-prem to cloud</li>
+          <li>Monitor both environments for discrepancies during parallel running</li>
+          <li>Cutover decision gate: threshold-based (default 99% success rate required)</li>
+          <li>Automatic rollback if failure threshold exceeded during parallel run</li>
+        </ul>
+
+        <div class="agent-label">Agent 06 &mdash; Integration Repointing</div>
+        <ul class="detail-list">
+          <li>Scan configured directories for CyberArk CCP/AAM patterns:
+            <code>GET /AIMWebService/api/Accounts?AppID=X&amp;Safe=Y&amp;Object=Z</code></li>
+          <li><strong>Same vendor API surface</strong> &mdash; Privilege Cloud supports CCP-compatible endpoints. Many integrations require only a URL change.</li>
+          <li><strong>CyberArk Central Credential Provider</strong>: on-prem CCP &rarr; Privilege Cloud CCP (Conjur Cloud or Secrets Hub for advanced use cases)</li>
+          <li><strong>PowerShell</strong>: <code>psPAS</code> module works for both on-prem and Privilege Cloud &mdash; change base URL and authentication method only</li>
+          <li><strong>.NET</strong>: CyberArk SDK works for both &mdash; update connection string to Privilege Cloud tenant URL</li>
+          <li><strong>REST API</strong>: Same endpoint paths &mdash; <code>/PasswordVault/API/</code> prefix remains the same, only base URL changes</li>
+          <li>Applications using certificate-based auth may need to switch to OAuth2/ISPSS identity tokens</li>
+          <li>Maintain change registry for tracking and rollback during parallel running period</li>
+        </ul>
+
+        <div class="callout warning">
+          <div class="callout-title">Authentication Method Change</div>
+          <p>While the REST API surface is the same, authentication may change from CyberArk Vault auth (LDAP/RADIUS/CyberArk) to CyberArk Identity (ISPSS OAuth2). Applications using CCP certificate-based authentication need to be updated to use the new identity provider.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ CARD 7: Decommission ═══════════════ -->
+  <article class="phase-card risk-medium" id="card-7">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="phase-badge risk-medium">P7</span>
+      <div class="card-title-group">
+        <div class="card-title">Decommission &amp; Close-Out</div>
+        <div class="card-summary">Migrate audit logs and PSM recordings, compliance sign-off, decommission on-prem infrastructure</div>
+      </div>
+      <span class="status-pill">Agent 07</span>
+      <span class="expand-icon">+</span>
+    </div>
+    <div class="card-body">
+      <div class="card-content">
+        <div class="agent-label">Agent 07 &mdash; Compliance &amp; Decommission</div>
+        <ul class="detail-list">
+          <li><strong>Audit logs CAN be migrated</strong> &mdash; CyberArk provides tools to transfer audit history to Privilege Cloud (advantage over cross-vendor migration)</li>
+          <li><strong>PSM recordings CAN be transferred</strong> &mdash; session recordings can be migrated to Privilege Cloud Secure Tunnel / PSM for Cloud storage</li>
+          <li>Verify all 4 compliance frameworks have passing evidence: PCI-DSS v4.0, NIST 800-53 Rev5, HIPAA Security Rule, SOX IT Controls</li>
+          <li>Generate final compliance report &mdash; no permission loss to document, no audit discontinuity</li>
+          <li>After parallel running period, execute <strong>decommission sequence</strong>:</li>
+          <li>&nbsp;&nbsp;1. PSM/PSMP servers &mdash; decommission first (sessions now handled by Privilege Cloud)</li>
+          <li>&nbsp;&nbsp;2. CPM servers &mdash; decommission second (Cloud CPM now manages rotation)</li>
+          <li>&nbsp;&nbsp;3. PVWA servers &mdash; decommission third (Privilege Cloud portal replaces)</li>
+          <li>&nbsp;&nbsp;4. Vault server &mdash; decommission last (only after all data confirmed migrated)</li>
+          <li>Final sign-off gate (human approval required at each decommission step)</li>
+        </ul>
+
+        <div class="callout success">
+          <div class="callout-title">Audit &amp; Recording Continuity</div>
+          <p>Unlike cross-vendor migrations, CyberArk-to-Privilege Cloud migration preserves audit log continuity and PSM session recordings. No data loss and no need to maintain a read-only CyberArk instance for audit compliance.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══════════════ RISK SUMMARY FOOTER ═══════════════ -->
+  <div class="risk-footer">
+    <div class="section-header">Migration Risks &mdash; Privilege Cloud Specific</div>
+    <div class="risk-grid">
+
+      <div class="risk-card severity-medium">
+        <span class="severity-badge medium">MEDIUM</span>
+        <h3>Migration Window Exposure</h3>
+        <div class="risk-desc">Accounts are frozen (CPM management disabled) during migration pipeline execution. If the migration stalls, accounts remain unmanaged until manually unfrozen.</div>
+        <div class="mitigation">
+          <div class="mitigation-label">Mitigation</div>
+          Watchdog timer (120 min default) automatically unfreezes all frozen accounts on timeout. Emergency unfreeze triggers on any exception before re-raising.
+        </div>
+      </div>
+
+      <div class="risk-card severity-medium">
+        <span class="severity-badge medium">MEDIUM</span>
+        <h3>Cloud CPM Connectivity</h3>
+        <div class="risk-desc">Cloud CPM needs a network path to on-prem targets for heartbeat and password rotation. Firewall rules and Connector Server placement are critical.</div>
+        <div class="mitigation">
+          <div class="mitigation-label">Mitigation</div>
+          Deploy Connector Servers in each target network segment. Validate connectivity per segment before wave migration begins. Cloud CPM health checks confirm reachability.
+        </div>
+      </div>
+
+      <div class="risk-card severity-medium">
+        <span class="severity-badge medium">MEDIUM</span>
+        <h3>NHI Dependency Chain</h3>
+        <div class="risk-desc">Applications using CCP/AAM need repointing to Privilege Cloud endpoints. NHI accounts with active integrations must be migrated carefully to avoid service disruption.</div>
+        <div class="mitigation">
+          <div class="mitigation-label">Mitigation</div>
+          NHIs with CCP/AAM integrations are migrated in Wave 5 (last). Parallel running period allows gradual integration cutover. Same-vendor API surface reduces repointing complexity.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+// ── Card expand/collapse ──────────────────────
+function toggleCard(header) {
+  const card = header.closest('.phase-card');
+  card.classList.toggle('open');
+}
+
+function expandAll() {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.add('open'));
+}
+
+function collapseAll() {
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('open'));
+}
+
+// ── Timeline scroll ───────────────────────────
+function scrollToCard(cardId) {
+  const card = document.getElementById(cardId);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Open the card when clicked from timeline
+    if (!card.classList.contains('open')) {
+      card.classList.add('open');
+    }
+  }
+}
+
+// ── Intersection Observer: highlight active timeline node ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const cardId = entry.target.id;
+      document.querySelectorAll('.timeline-node').forEach(node => {
+        node.classList.toggle('active', node.dataset.target === cardId);
+      });
+    }
+  });
+}, {
+  rootMargin: '-100px 0px -60% 0px',
+  threshold: 0.1
+});
+
+document.querySelectorAll('.phase-card').forEach(card => observer.observe(card));
+
+// ── Keyboard accessibility ────────────────────
+document.querySelectorAll('.card-header').forEach(header => {
+  header.setAttribute('tabindex', '0');
+  header.setAttribute('role', 'button');
+  header.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleCard(header);
+    }
+  });
+});
+</script>
+
+</body>
+</html>

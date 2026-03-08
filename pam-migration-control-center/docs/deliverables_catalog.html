@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iOPEX PAM Migration — Deliverables Catalog</title>
+<style>
+  :root {
+    --bg-page: #060D16;
+    --bg-card: #0A1628;
+    --bg-hover: #0D2137;
+    --bg-tag: #112240;
+    --cyan: #00C8E8;
+    --green: #06D6A0;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --purple: #A855F7;
+    --blue: #3B82F6;
+    --teal: #14B8A6;
+    --rose: #F472B6;
+    --text: #CBD5E1;
+    --text-bright: #F1F5F9;
+    --text-muted: #64748B;
+    --border: #1E3050;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-page);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0A1628 0%, var(--bg-page) 100%);
+  }
+  .header h1 {
+    font-size: 2rem;
+    color: var(--text-bright);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header .subtitle {
+    color: var(--cyan);
+    font-size: 1rem;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .header .meta {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--bg-tag);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+  }
+  .stat strong { color: var(--text-bright); }
+
+  /* ── Container ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 40px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 1.25rem;
+    color: var(--text-bright);
+    font-weight: 600;
+  }
+  .section-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg-tag);
+    padding: 2px 10px;
+    border-radius: 12px;
+  }
+
+  /* ── File Cards ── */
+  .file-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .file-card {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+  }
+  .file-card:hover {
+    background: var(--bg-hover);
+    border-color: var(--cyan);
+    transform: translateX(4px);
+  }
+  .file-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .file-icon.html  { background: #06d6a020; color: var(--green); }
+  .file-icon.docx  { background: #3b82f620; color: var(--blue); }
+  .file-icon.pptx  { background: #ef444420; color: var(--red); }
+  .file-icon.video { background: #a855f720; color: var(--purple); }
+  .file-icon.md    { background: #f59e0b20; color: var(--amber); }
+  .file-icon.code  { background: #00c8e820; color: var(--cyan); }
+  .file-icon.mmd   { background: #f59e0b20; color: var(--amber); }
+
+  .file-info { min-width: 0; }
+  .file-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .file-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  .file-tags {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .tag {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .tag.html     { background: #06d6a018; color: var(--green); border: 1px solid #06d6a030; }
+  .tag.docx     { background: #3b82f618; color: var(--blue); border: 1px solid #3b82f630; }
+  .tag.pptx     { background: #ef444418; color: var(--red); border: 1px solid #ef444430; }
+  .tag.video    { background: #a855f718; color: var(--purple); border: 1px solid #a855f730; }
+  .tag.md       { background: #f59e0b18; color: var(--amber); border: 1px solid #f59e0b30; }
+  .tag.jsx      { background: #00c8e818; color: var(--cyan); border: 1px solid #00c8e830; }
+  .tag.animated { background: #f59e0b18; color: var(--amber); border: 1px solid #f59e0b30; }
+  .tag.interactive { background: #a855f718; color: var(--purple); border: 1px solid #a855f730; }
+  .tag.key      { background: #ef444418; color: var(--red); border: 1px solid #ef444430; }
+
+  /* ── Summary Grid ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    text-align: center;
+  }
+  .summary-card .num {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .summary-card .label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+  }
+
+  /* ── Filter Bar ── */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .filter-btn:hover { border-color: var(--cyan); color: var(--text); }
+  .filter-btn.active { background: var(--cyan); color: var(--bg-page); border-color: var(--cyan); }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; color: #1a1a1a; }
+    .header { background: none; border-bottom: 2px solid #ddd; }
+    .header h1 { color: #1a1a1a; }
+    .header .subtitle { color: #0066cc; }
+    .stat { background: #f5f5f5; border: 1px solid #ddd; }
+    .file-card { background: #fafafa; border: 1px solid #ddd; }
+    .file-card:hover { transform: none; }
+    .file-name { color: #1a1a1a; }
+    .section-title { color: #1a1a1a; }
+    .summary-card { background: #fafafa; border: 1px solid #ddd; }
+    .filter-bar { display: none; }
+    .footer { color: #999; }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .file-card { grid-template-columns: 36px 1fr; }
+    .file-tags { grid-column: 1 / -1; justify-content: flex-start; }
+    .header .meta { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>iOPEX PAM Migration — Deliverables Catalog</h1>
+  <div class="subtitle">Agentic AI Migration Operations System</div>
+  <div class="meta">
+    <span class="stat"><strong>Option A</strong> &nbsp;CyberArk → Delinea Platform + StrongDM</span>
+    <span class="stat"><strong>Option B</strong> &nbsp;CyberArk → CyberArk Privilege Cloud</span>
+    <span class="stat"><strong>Multi-Agents</strong> per migration path</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterFiles('all')">All Files</button>
+    <button class="filter-btn" onclick="filterFiles('html')">HTML</button>
+    <button class="filter-btn" onclick="filterFiles('docx')">Word Docs</button>
+    <button class="filter-btn" onclick="filterFiles('pptx')">PowerPoint</button>
+    <button class="filter-btn" onclick="filterFiles('video')">Video</button>
+    <button class="filter-btn" onclick="filterFiles('md')">Markdown</button>
+    <button class="filter-btn" onclick="filterFiles('key')">Key Deliverables</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- OPTION A -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#3b82f620; color:var(--blue);">A</div>
+      <div class="section-title">Option A — CyberArk → Delinea Platform + StrongDM</div>
+      <div class="section-count">4 files</div>
+    </div>
+    <div class="file-grid">
+
+      <div class="file-card" data-type="docx key">
+        <div class="file-icon docx">W</div>
+        <div class="file-info">
+          <div class="file-name">Secret_Server_Migration_Agent_System_Documentation.docx</div>
+          <div class="file-desc">Complete multi-agent system documentation — SS-specific architecture, OAuth2 auth, granular permission mapping (22→200+), RPC heartbeat, Distributed Engine + StrongDM integration</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag docx">DOCX</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="html key">
+        <div class="file-icon html">⟨⟩</div>
+        <div class="file-info">
+          <div class="file-name">SS_Life_of_a_PAM_File.html</div>
+          <div class="file-desc">Animated pipeline visualization — PAM packet moves through 7 Delinea Secret Server migration stages with permission mapping warnings, "vs Privilege Cloud" comparisons, and live CLI telemetry</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag html">HTML</span>
+          <span class="tag animated">ANIMATED</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="html key">
+        <div class="file-icon html">⟨⟩</div>
+        <div class="file-info">
+          <div class="file-name">migration_lifecycle.html</div>
+          <div class="file-desc">Technical reference dashboard — interactive timeline, 7 expandable phase cards, migration pipeline diagram, permission translation diagram (22→4 folder roles + 200+ role permissions), risk summary with mitigations</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag html">HTML</span>
+          <span class="tag interactive">INTERACTIVE</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="md">
+        <div class="file-icon md">◆</div>
+        <div class="file-info">
+          <div class="file-name">README.md</div>
+          <div class="file-desc">Full technical documentation — multi-agents, Secret Server REST API endpoints, folder hierarchy design, template mapping, StrongDM integration, CLI reference</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag md">MD</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- OPTION B -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#06d6a020; color:var(--green);">B</div>
+      <div class="section-title">Option B — CyberArk → CyberArk Privilege Cloud</div>
+      <div class="section-count">6 files</div>
+    </div>
+    <div class="file-grid">
+
+      <div class="file-card" data-type="docx key">
+        <div class="file-icon docx">W</div>
+        <div class="file-info">
+          <div class="file-name">CyberArk_Migration_Agent_System_Documentation.docx</div>
+          <div class="file-desc">Complete multi-agent system documentation — architecture, agent responsibilities, CLI reference, phase gates, RACI matrix, security controls</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag docx">DOCX</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="html key">
+        <div class="file-icon html">⟨⟩</div>
+        <div class="file-info">
+          <div class="file-name">Life of a PAM file.html</div>
+          <div class="file-desc">Animated pipeline visualization — golden PAM packet moves through 6 migration stages with live CLI telemetry and auto-play. Opens directly in browser.</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag html">HTML</span>
+          <span class="tag animated">ANIMATED</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="video key">
+        <div class="file-icon video">▶</div>
+        <div class="file-info">
+          <div class="file-name">Visual Automations / Life of a pam file.mp4</div>
+          <div class="file-desc">Screen recording of the animated "Life of a PAM File" pipeline — shareable without opening HTML. 13.7 MB.</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag video">MP4</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="jsx">
+        <div class="file-icon code">⚛</div>
+        <div class="file-info">
+          <div class="file-name">migration-visualizer / PamMigrationLifecycle.jsx</div>
+          <div class="file-desc">React component — interactive migration lifecycle visualization with phase cards, progress tracking, and risk indicators. Requires Vite build to view.</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag jsx">JSX</span>
+          <span class="tag interactive">REACT</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="md">
+        <div class="file-icon md">◆</div>
+        <div class="file-info">
+          <div class="file-name">README.md</div>
+          <div class="file-desc">Full technical documentation — multi-agents, CLI usage, security features, phase descriptions, configuration reference</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag md">MD</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="md">
+        <div class="file-icon md">◆</div>
+        <div class="file-info">
+          <div class="file-name">thought_process_document.md</div>
+          <div class="file-desc">Agent decision-making documentation — explains the reasoning and design choices behind each agent's behavior</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag md">MD</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- CROSS-PROJECT -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f59e0b20; color:var(--amber);">★</div>
+      <div class="section-title">Cross-Project Deliverables</div>
+      <div class="section-count">5 files</div>
+    </div>
+    <div class="file-grid">
+
+      <div class="file-card" data-type="pptx key">
+        <div class="file-icon pptx">P</div>
+        <div class="file-info">
+          <div class="file-name">Agentic_AI_Migration_System.pptx</div>
+          <div class="file-desc">Executive presentation deck — agentic AI migration system architecture, value proposition, and capabilities overview</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag pptx">PPTX</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="docx key">
+        <div class="file-icon docx">W</div>
+        <div class="file-info">
+          <div class="file-name">iOPEX_PAM_Migration_Runbook.docx</div>
+          <div class="file-desc">Operational runbook — step-by-step execution procedures, phase checklists, rollback plans, approval workflows</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag docx">DOCX</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="docx key">
+        <div class="file-icon docx">W</div>
+        <div class="file-info">
+          <div class="file-name">CyberArk_Migration_Comparison.docx</div>
+          <div class="file-desc">Option A vs Option B comparison — feature-by-feature analysis of Delinea Platform + StrongDM vs CyberArk Privilege Cloud migration paths</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag docx">DOCX</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="docx">
+        <div class="file-icon docx">W</div>
+        <div class="file-info">
+          <div class="file-name">Enhanced_ETL_Migration_v2.docx</div>
+          <div class="file-desc">Detailed migration pipeline plan addressing 5 critical bottlenecks — NHI discovery, integration rework, permission loss, scalability, audit continuity</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag docx">DOCX</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="md">
+        <div class="file-icon md">◆</div>
+        <div class="file-info">
+          <div class="file-name">cyberark_migration_RUNBOOK.md</div>
+          <div class="file-desc">Markdown runbook — detailed operational procedures, same content as .docx in developer-friendly format</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag md">MD</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- REFERENCE INPUTS -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#64748b20; color:var(--text-muted);">↓</div>
+      <div class="section-title">Reference Inputs (Analysis Source Files)</div>
+      <div class="section-count">4 files</div>
+    </div>
+    <div class="file-grid">
+
+      <div class="file-card" data-type="html">
+        <div class="file-icon html">⟨⟩</div>
+        <div class="file-info">
+          <div class="file-name">Cisco_AI_Architecture.html</div>
+          <div class="file-desc">Bundled React app — Cisco AI architecture visualization, used as design reference for dark theme and component patterns</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag html">HTML</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="jsx">
+        <div class="file-icon code">⚛</div>
+        <div class="file-info">
+          <div class="file-name">ai_orchestration_architecture.jsx</div>
+          <div class="file-desc">React component — AI orchestration architecture with component cards, used as design reference for card layout patterns</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag jsx">JSX</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="jsx">
+        <div class="file-icon code">⚛</div>
+        <div class="file-info">
+          <div class="file-name">cyberark_team_workflow.jsx</div>
+          <div class="file-desc">React component — CyberArk team workflow with phase cards and track filtering, used as design reference for expandable card patterns</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag jsx">JSX</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="jsx">
+        <div class="file-icon code">⚛</div>
+        <div class="file-info">
+          <div class="file-name">cisco_azure_architecture.jsx</div>
+          <div class="file-desc">React component — Cisco Azure architecture with grid-based SVG diagrams, used as design reference for flow diagram patterns</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag jsx">JSX</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- DIGITAL EXPERIENCE & INTEGRATION -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#14B8A620; color:var(--teal);">&#x1F310;</div>
+      <div class="section-title">Digital Experience &amp; Integration Layer</div>
+      <div class="section-count">3 deliverables</div>
+    </div>
+    <div class="file-grid">
+
+      <div class="file-card" data-type="code key">
+        <div class="file-icon code">J</div>
+        <div class="file-info">
+          <div class="file-name">PamVendorAdapter Interface + Vendor Adapters</div>
+          <div class="file-desc">Vendor-agnostic Java interface (getSecrets, rotateCredential, checkOut/checkIn, getAuditLog, listAccounts). Adapter JARs for CyberArk, Delinea, StrongDM. New vendors plug in by implementing this interface.</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag jsx">JAVA</span>
+          <span class="tag key">KEY</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="html interactive">
+        <div class="file-icon html">P</div>
+        <div class="file-info">
+          <div class="file-name">Unified PAM Portal (Spring Boot + Thymeleaf)</div>
+          <div class="file-desc">Self-service web portal for credential checkout, session launch, secret browsing, and audit log viewing. RBAC-enforced, dual-backend mode during migration, Swagger/OpenAPI REST API at /api/v1/*.</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag html">PORTAL</span>
+          <span class="tag interactive">INTERACTIVE</span>
+        </div>
+      </div>
+
+      <div class="file-card" data-type="docx">
+        <div class="file-icon docx">I</div>
+        <div class="file-info">
+          <div class="file-name">Integration Migration Package</div>
+          <div class="file-desc">Integration inventory with dependency graph, generated replacement client code (Python, Java, C#, PowerShell), adapter routing config (feature flags), test results, and developer sign-off registry.</div>
+        </div>
+        <div class="file-tags">
+          <span class="tag docx">PACKAGE</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SUMMARY -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="num" style="color:var(--green);">22</div>
+      <div class="label">Total Deliverables</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:var(--cyan);">3</div>
+      <div class="label">HTML Visualizations</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:var(--blue);">6</div>
+      <div class="label">Word Documents</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:var(--red);">1</div>
+      <div class="label">PowerPoint Deck</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:var(--purple);">1</div>
+      <div class="label">Video Recording</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  iOPEX PAM Migration — Agentic AI Migration Operations System &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; Generated March 2026
+</div>
+
+<script>
+  function filterFiles(type) {
+    const cards = document.querySelectorAll('.file-card');
+    const buttons = document.querySelectorAll('.filter-btn');
+
+    buttons.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    cards.forEach(card => {
+      const cardType = card.getAttribute('data-type') || '';
+      if (type === 'all') {
+        card.style.display = '';
+      } else {
+        card.style.display = cardType.includes(type) ? '' : 'none';
+      }
+    });
+
+    // Update section visibility — hide sections with all cards hidden
+    document.querySelectorAll('.section').forEach(section => {
+      const visibleCards = section.querySelectorAll('.file-card:not([style*="display: none"])');
+      section.style.display = visibleCards.length === 0 ? 'none' : '';
+    });
+  }
+</script>
+
+</body>
+</html>

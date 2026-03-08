@@ -1,13 +1,75 @@
 version: '3.8'
 
 services:
+  # ── Control Center (existing FastAPI + SPA) ─────────────────
   control-center:
     build: .
     ports:
       - "8080:8080"
     restart: unless-stopped
+    volumes:
+      - shared-state:/app/output
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/dashboard/stats"]
       interval: 30s
       timeout: 5s
       retries: 3
+
+  # ── PAM Migration MCP Server (Condition 2,3,4) ─────────────
+  pam-migration-mcp:
+    build:
+      context: ./mcp-servers/pam-migration-mcp
+      dockerfile: Dockerfile
+    ports:
+      - "8100:8100"
+    restart: unless-stopped
+    environment:
+      - PAM_MCP_MIGRATION_OPTION=b
+      - PAM_MCP_ENVIRONMENT=dev
+      - PAM_MCP_PORT=8100
+      - PAM_MCP_ORCHESTRATOR_PATH_A=/orchestrator-a
+      - PAM_MCP_ORCHESTRATOR_PATH_B=/orchestrator-b
+      - PAM_MCP_OUTPUT_DIR=/app/output
+      - PAM_MCP_STATE_DIR=/app/output/state
+      - PAM_MCP_LOG_DIR=/app/output/logs
+      - PAM_MCP_FROZEN_REGISTRY_PATH=/app/output/state/frozen_accounts.json
+      # CyberArk PVWA (Condition 4) — set for your environment
+      # - PAM_MCP_CYBERARK_BASE_URL=https://pvwa.company.com
+      # Azure Key Vault — uncomment for production
+      # - PAM_MCP_KEY_VAULT_URI=https://kv-pam.vault.azure.net/
+    volumes:
+      - shared-state:/app/output
+      - ../CyberArk migration:/orchestrator-a:ro
+      - ../Secret Server migration:/orchestrator-b:ro
+    depends_on:
+      control-center:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Control Center MCP Server (FastAPI proxy) ──────────────
+  control-center-mcp:
+    build:
+      context: ./mcp-servers/control-center-mcp
+      dockerfile: Dockerfile
+    ports:
+      - "8101:8101"
+    restart: unless-stopped
+    environment:
+      - CC_MCP_PORT=8101
+      - CC_MCP_CONTROL_CENTER_URL=http://control-center:8080
+    depends_on:
+      control-center:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8101/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  shared-state:
+    driver: local

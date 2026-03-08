@@ -17,9 +17,12 @@ function showPage(pageId, btn) {
     case 'phases': renderPhaseExplorer(); break;
     case 'agents': renderAgentGrid(); break;
     case 'waves': renderWaves(); break;
+    case 'accounts': renderAccountExplorer(); break;
     case 'gates': renderGateTracker(); break;
     case 'yellow': renderYellowCheckpoints(); break;
     case 'compare': renderComparison(); break;
+    case 'mcp': renderMcpDashboard(); break;
+    case 'guide': renderGuide(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }
 }
