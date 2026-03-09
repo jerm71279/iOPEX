@@ -21,6 +21,7 @@ function showPage(pageId, btn) {
     case 'gates': renderGateTracker(); break;
     case 'yellow': renderYellowCheckpoints(); break;
     case 'compare': renderComparison(); break;
+    case 'pamfile': break; // standalone iframe — no render needed
     case 'mcp': renderMcpDashboard(); break;
     case 'guide': renderGuide(); break;
     case 'disclaimer': renderDisclaimer(); break;

@@ -48,6 +48,9 @@
   <button class="nav-link" onclick="showPage('compare',this)">
     <span class="nav-icon">&#x2194;</span> Comparison
   </button>
+  <button class="nav-link" onclick="showPage('pamfile',this)">
+    <span class="nav-icon">&#x25B7;</span> Life of a PAM File
+  </button>
   <button class="nav-link" onclick="showPage('mcp',this)">
     <span class="nav-icon">&#x2B21;</span> MCP Servers
   </button>
@@ -74,6 +77,27 @@
       <div class="page-title">Mission Control</div>
       <div class="page-subtitle" id="missionSubtitle">80-Week PAM Migration — Real-Time Dashboard</div>
     </div>
+    <!-- Life of a PAM File Banner -->
+    <div class="pam-life-banner" onclick="showPage('pamfile',document.querySelector('[onclick*=pamfile]'))">
+      <div class="pam-life-banner-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect x="4" y="2" width="18" height="24" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <path d="M9 8h8M9 12h6M9 16h8M9 20h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="24" cy="22" r="7" stroke="var(--teal)" stroke-width="1.5" fill="var(--bg-card)"/>
+          <path d="M21.5 22l2 2 3-3.5" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="pam-life-banner-text">
+        <div class="pam-life-banner-title">Life of a PAM File</div>
+        <div class="pam-life-banner-sub">Watch a credential flow through the 6-step SHIFT ETL pipeline — from source vault to validated target</div>
+      </div>
+      <div class="pam-life-banner-badge">
+        <span class="badge badge-teal">ANIMATED</span>
+        <span style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);">6 STEPS &bull; BOTH OPTIONS</span>
+      </div>
+      <div class="pam-life-banner-arrow">&#x25B6;</div>
+    </div>
+
     <div id="missionStats" class="stats-grid"></div>
     <div class="panel">
       <div class="panel-header">
@@ -229,6 +253,15 @@
       <div class="page-subtitle" id="compareSubtitle">Delinea (Secret Server + StrongDM) vs CyberArk Cloud (Privilege Cloud)</div>
     </div>
     <div id="comparisonContent"></div>
+  </div>
+
+  <!-- ──── LIFE OF A PAM FILE ──── -->
+  <div class="page" id="page-pamfile">
+    <div class="page-header">
+      <div class="page-title">Life of a PAM File</div>
+      <div class="page-subtitle">Animated ETL Pipeline — SHIFT Migration Workflow</div>
+    </div>
+    <iframe id="pamfileFrame" src="/life-of-pam" style="width:100%;border:none;border-radius:8px;min-height:750px;background:var(--bg-surface);"></iframe>
   </div>
 
   <!-- ──── MCP SERVERS ──── -->

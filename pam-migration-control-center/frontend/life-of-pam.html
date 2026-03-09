@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Life of a PAM File — SHIFT Migration Pipeline</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { background: #030712; color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; overflow: hidden; }
+        .app-container { height: 100vh; display: flex; flex-direction: column; }
+
+        /* Header */
+        .header { text-align: center; padding: 15px 20px; }
+        .header h2 { color: #06d6a0; margin: 0; font-size: 1.2rem; }
+        .header p { color: #64748b; font-size: 0.85rem; margin: 4px 0 0; }
+        .header .shift-badge { display: inline-block; background: rgba(6,214,160,0.15); color: #06d6a0; font-size: 0.7rem; font-weight: 700; padding: 2px 10px; border-radius: 10px; margin-top: 4px; }
+
+        /* Controls */
+        .controls { display: flex; justify-content: center; gap: 10px; padding: 0 0 10px; }
+        .controls button { padding: 8px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.8rem; transition: 0.2s; }
+        .btn-play { background: #06d6a0; color: #030712; }
+        .btn-play.paused { background: #3b82f6; }
+        .btn-play:hover { opacity: 0.85; }
+        .btn-step { background: #1e293b; color: #94a3b8; border: 1px solid #334155 !important; }
+        .btn-step:hover { background: #334155; color: #f1f5f9; }
+        .btn-step:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Architecture Layout */
+        .viewport { flex: 1; position: relative; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; min-height: 160px; }
+        .comp-node { width: 110px; height: 85px; border: 2px solid #1e293b; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; position: relative; z-index: 10; transition: 0.4s; flex-shrink: 0; }
+        .comp-node.active { border-color: #06d6a0; box-shadow: 0 0 30px rgba(6, 214, 160, 0.35); transform: scale(1.1); }
+        .comp-node.active.warn { border-color: #ef4444; box-shadow: 0 0 30px rgba(239, 68, 68, 0.35); }
+        .comp-label { font-size: 0.6rem; color: #64748b; text-transform: uppercase; margin-top: 6px; font-weight: 700; letter-spacing: 0.5px; text-align: center; line-height: 1.2; }
+
+        /* Connection lines */
+        .connection-line { position: absolute; top: 50%; height: 2px; background: #1e293b; z-index: 1; }
+        .connection-line.active { background: linear-gradient(90deg, #06d6a0, #3b82f6); height: 3px; box-shadow: 0 0 8px rgba(6, 214, 160, 0.3); }
+
+        /* The PAM File Packet */
+        .pam-packet {
+            position: absolute; width: 48px; height: 56px; border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; transition: all 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 24px rgba(251, 191, 36, 0.5);
+            background: #fbbf24;
+        }
+        .pam-packet.frozen { background: #3b82f6; box-shadow: 0 0 24px rgba(59, 130, 246, 0.5); }
+        .pam-packet.target { background: #06d6a0; box-shadow: 0 0 24px rgba(6, 214, 160, 0.5); }
+        .pam-packet.danger { background: #ef4444; box-shadow: 0 0 24px rgba(239, 68, 68, 0.5); }
+        .pam-packet .pam-icon { font-size: 18px; }
+        .pam-packet .pam-name { font-size: 7px; color: #000; font-weight: 800; letter-spacing: 0.3px; }
+
+        /* Step indicator */
+        .step-bar { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #1e293b; transition: 0.3s; }
+        .step-dot.done { background: #06d6a0; }
+        .step-dot.current { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; transform: scale(1.3); }
+
+        /* Documentation Panel */
+        .doc-panel { height: 300px; background: #0f172a; border-top: 1px solid #1e293b; padding: 20px 30px; display: flex; gap: 24px; }
+        .doc-card { flex: 1.2; background: #1e293b; border-radius: 12px; padding: 18px; border-left: 4px solid #06d6a0; overflow-y: auto; }
+        .doc-card.warn { border-left-color: #ef4444; }
+        .doc-card .doc-label { color: #06d6a0; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .doc-card.warn .doc-label { color: #ef4444; }
+        .doc-card h3 { margin: 0 0 8px; font-size: 1rem; color: #f1f5f9; }
+        .doc-card p { line-height: 1.6; color: #cbd5e1; font-size: 0.85rem; margin: 0; }
+        .doc-card .executing { margin-top: 14px; font-size: 0.75rem; color: #94a3b8; }
+        .doc-card .executing strong { color: #cbd5e1; }
+        .doc-card .diff-box { margin-top: 12px; padding: 8px 12px; border-radius: 4px; font-size: 0.75rem; }
+        .doc-card .diff-a { background: rgba(59,130,246,0.1); border-left: 3px solid #3b82f6; color: #93c5fd; }
+        .doc-card .diff-a strong { color: #3b82f6; }
+        .doc-card .diff-b { background: rgba(34,197,94,0.1); border-left: 3px solid #22c55e; color: #86efac; margin-top: 6px; }
+        .doc-card .diff-b strong { color: #22c55e; }
+
+        .tech-specs { flex: 0.8; font-family: 'Courier New', 'Consolas', monospace; background: #020617; border-radius: 10px; padding: 15px; color: #22c55e; font-size: 0.8rem; overflow-y: auto; border: 1px solid #0f172a; }
+        .tech-specs .spec-label { color: #64748b; margin-bottom: 8px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
+        .tech-specs .spec-line { margin-bottom: 4px; }
+        .tech-specs .spec-line.warn { color: #ef4444; }
+        .tech-specs .spec-line.info { color: #3b82f6; }
+        .tech-specs .spec-line.gold { color: #fbbf24; }
+        .tech-specs .status-line { margin-top: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const workflow = [
+            {
+                id: "DISCOVERY",
+                nodeIdx: 0,
+                component: "On-Prem Vault",
+                action: "Targeting SQL_SVC_PROD",
+                packetState: "default",
+                packetIcon: "\u{1F511}",
+                isWarn: false,
+                doc: "Agent 01 initiates a multi-signal scan against the CyberArk PVWA. It identifies the SQL Server account, cross-references it with the Applications API to find CCP/AAM dependencies, and checks the target platform for a matching template or safe.",
+                diffA: null,
+                diffB: null,
+                specs: [
+                    { text: "> GET /PasswordVault/API/Accounts", cls: "" },
+                    { text: "> Found: SQL_SVC_PROD (MSSql)", cls: "" },
+                    { text: "> Dependency: WebStore_App (CCP)", cls: "gold" },
+                    { text: "> NHI Check: FALSE (human identity)", cls: "" },
+                    { text: "> Agent 09: 2 dependency scanners hit", cls: "info" },
+                    { text: "> Status: IDENTIFIED", cls: "" },
+                ]
+            },
+            {
+                id: "PERMISSIONS",
+                nodeIdx: 1,
+                component: "Agent 03 (Mapper)",
+                action: "Permission Translation",
+                packetState: "danger",
+                packetIcon: "\u26A0\uFE0F",
+                isWarn: true,
+                doc: "Agent 03 pulls the Safe Members list and reads all 22 individual permission bits from CyberArk. The translation outcome depends entirely on which target platform is selected.",
+                diffA: "DELINEA SECRET SERVER: 22 safe permissions \u2192 4 folder roles (Owner, Edit, View, List) + 200+ system role perms. LOSSY mapping \u2014 escalation risk, 9 permissions have no SS equivalent.",
+                diffB: "CYBERARK PRIVILEGE CLOUD: 22 permissions \u2192 22 permissions (1:1 mapping, zero loss). Same Safe Members API on both sides.",
+                specs: [
+                    { text: "> GET /Safes/SQL-Prod/Members", cls: "" },
+                    { text: "> Members: 6 (excluding built-ins)", cls: "" },
+                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
+                    { text: ">   AD_SQL_Admins \u2192 Owner", cls: "info" },
+                    { text: ">   DBA_Team \u2192 Edit (ESCALATED \u2191)", cls: "warn" },
+                    { text: ">   Lost perms: 3 per member", cls: "warn" },
+                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
+                    { text: ">   22\u219222 (1:1, no loss)", cls: "info" },
+                    { text: "> Status: MAPPED (review required)", cls: "gold" },
+                ]
+            },
+            {
+                id: "FREEZE",
+                nodeIdx: 2,
+                component: "Coordinator",
+                action: "Locking Source Account",
+                packetState: "frozen",
+                packetIcon: "\u2744\uFE0F",
+                isWarn: false,
+                doc: "CRITICAL SAFETY STEP: The Coordinator issues a PATCH to the Source Vault. 'automaticManagementEnabled' is set to False to prevent CPM rotation during the move. A watchdog timer starts \u2014 if the pipeline hangs, all frozen accounts are auto-unfrozen after 120 minutes. Identical for both target platforms.",
+                diffA: null,
+                diffB: null,
+                specs: [
+                    { text: "> PATCH /Accounts/{id}", cls: "" },
+                    { text: "> automaticManagement: FALSE", cls: "" },
+                    { text: "> State: FROZEN", cls: "info" },
+                    { text: "> Watchdog: TIMER_START (120m)", cls: "gold" },
+                    { text: "> Emergency unfreeze: ARMED", cls: "gold" },
+                ]
+            },
+            {
+                id: "TRANSFORM",
+                nodeIdx: 3,
+                component: "Agent 04 (ETL Pipeline)",
+                action: "Extract + Transform + Load",
+                packetState: "frozen",
+                packetIcon: "\u2744\uFE0F",
+                isWarn: false,
+                doc: "Agent 04 retrieves the password and full account metadata from CyberArk. It then transforms the data to fit the target platform's schema. The complexity of this step varies significantly between options.",
+                diffA: "DELINEA: Full schema rewrite \u2014 userName\u2192username slug, address\u2192machine slug, platformId\u2192secretTemplateId, properties\u2192notes. Creates folder hierarchy, then POST /api/v1/secrets with template + field items.",
+                diffB: "PRIVILEGE CLOUD: Minimal transform \u2014 same API surface, same field names. POST /Accounts to create in existing Safe. OAuth2 auth via CyberArk Identity.",
+                specs: [
+                    { text: "> POST /Accounts/{id}/Password/Retrieve", cls: "" },
+                    { text: "> Password: [SECURE_PULL]", cls: "" },
+                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
+                    { text: ">   Map: MSSql \u2192 templateId:6003", cls: "info" },
+                    { text: ">   POST /api/v1/folders + /secrets", cls: "info" },
+                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
+                    { text: ">   POST /Accounts (same schema)", cls: "info" },
+                    { text: "> Status: PAYLOAD_IMPORTED", cls: "" },
+                ]
+            },
+            {
+                id: "HEARTBEAT",
+                nodeIdx: 4,
+                component: "Target Verification",
+                action: "Credential Verification",
+                packetState: "target",
+                packetIcon: "\u{1F49A}",
+                isWarn: false,
+                doc: "Agent 05 triggers a heartbeat against the target platform to confirm the credential is valid from the target's network path. The verification mechanism differs between platforms.",
+                diffA: "DELINEA: POST /api/v1/secrets/{id}/heartbeat via on-prem Distributed Engine (RPC). Requires manual RPC config per secret template.",
+                diffB: "PRIVILEGE CLOUD: POST /Accounts/{id}/Verify via Cloud CPM. Automatic \u2014 no per-platform RPC config needed.",
+                specs: [
+                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
+                    { text: ">   POST /api/v1/secrets/4417/heartbeat", cls: "info" },
+                    { text: ">   Engine: Distributed Engine 01 (RPC)", cls: "" },
+                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
+                    { text: ">   POST /Accounts/{id}/Verify", cls: "info" },
+                    { text: ">   Engine: Cloud CPM (automatic)", cls: "" },
+                    { text: "> Target: sql-prod-01.corp.local:1433", cls: "" },
+                    { text: "> LastHeartbeatStatus: Success", cls: "" },
+                    { text: "> Status: CREDENTIAL_VERIFIED", cls: "" },
+                ]
+            },
+            {
+                id: "COMPLETE",
+                nodeIdx: 5,
+                component: "Agent 07 (Compliance)",
+                action: "Unfreeze + Audit Closeout",
+                packetState: "target",
+                packetIcon: "\u2705",
+                isWarn: true,
+                doc: "The source account is unfrozen (CPM re-enabled). Agent 07 verifies compliance evidence across PCI-DSS, NIST 800-53, HIPAA, and SOX. The audit continuity outcome differs significantly between options.",
+                diffA: "DELINEA: Audit logs do NOT transfer. PSM recordings do NOT migrate. Must keep CyberArk read-only for retention period. Audit gap documented.",
+                diffB: "PRIVILEGE CLOUD: Audit logs can be migrated. PSM recordings transfer to cloud storage. Full audit continuity preserved.",
+                specs: [
+                    { text: "> PATCH /Accounts/{id} (UNFREEZE)", cls: "" },
+                    { text: "> automaticManagement: TRUE", cls: "" },
+                    { text: "> Watchdog: TIMER_STOP", cls: "" },
+                    { text: "> Compliance: PCI-DSS \u2713 NIST \u2713", cls: "" },
+                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
+                    { text: ">   AUDIT LOGS: NOT transferred \u26A0", cls: "warn" },
+                    { text: ">   PSM RECORDINGS: NOT migrated \u26A0", cls: "warn" },
+                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
+                    { text: ">   AUDIT LOGS: Migrated \u2713", cls: "" },
+                    { text: ">   PSM RECORDINGS: Transferred \u2713", cls: "" },
+                    { text: "> Status: MIGRATION_COMPLETE", cls: "" },
+                ]
+            }
+        ];
+
+        const nodeNames = [
+            "Source\nVault",
+            "Permission\nMapper",
+            "Coordinator",
+            "ETL\nPipeline",
+            "Target\nVerification",
+            "Compliance"
+        ];
+
+        function App() {
+            const [step, setStep] = useState(0);
+            const [isPlaying, setIsPlaying] = useState(false);
+
+            useEffect(() => {
+                let timer;
+                if (isPlaying && step < workflow.length - 1) {
+                    timer = setTimeout(() => setStep(s => s + 1), 4500);
+                } else if (isPlaying && step >= workflow.length - 1) {
+                    setIsPlaying(false);
+                }
+                return () => clearTimeout(timer);
+            }, [isPlaying, step]);
+
+            const current = workflow[step];
+            const packetLeft = 4 + (step * (92 / (workflow.length - 1)));
+
+            const restart = () => { setStep(0); setIsPlaying(false); };
+            const prev = () => { if (step > 0) setStep(step - 1); };
+            const next = () => { if (step < workflow.length - 1) setStep(step + 1); };
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <h2>Life of a PAM File &mdash; SHIFT Migration Pipeline</h2>
+                        <p>How a single credential flows through the 15-agent orchestration (CyberArk &rarr; Target Platform)</p>
+                        <div className="shift-badge">6-Step ETL Pipeline &bull; Agent 01 &rarr; 03 &rarr; Coordinator &rarr; 04 &rarr; 05 &rarr; 07</div>
+                    </div>
+
+                    <div className="controls">
+                        <button className="btn-step" onClick={restart}>{"\u27F2"} RESTART</button>
+                        <button className="btn-step" onClick={prev} disabled={step === 0}>{"\u2190"} PREV</button>
+                        <button className={`btn-play ${isPlaying ? 'paused' : ''}`} onClick={() => setIsPlaying(!isPlaying)}>
+                            {isPlaying ? "\u23F8 PAUSE PIPELINE" : "\u25B6 START PIPELINE"}
+                        </button>
+                        <button className="btn-step" onClick={next} disabled={step >= workflow.length - 1}>NEXT {"\u2192"}</button>
+                    </div>
+
+                    <div className="step-bar">
+                        {workflow.map((w, i) => (
+                            <div key={i}
+                                className={`step-dot ${i < step ? 'done' : ''} ${i === step ? 'current' : ''}`}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setStep(i)}
+                                title={w.id}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="viewport">
+                        <div
+                            className={`pam-packet ${current.packetState === 'frozen' ? 'frozen' : ''} ${current.packetState === 'target' ? 'target' : ''} ${current.packetState === 'danger' ? 'danger' : ''}`}
+                            style={{ left: `${packetLeft}%`, top: '35%' }}
+                        >
+                            <span className="pam-icon">{current.packetIcon}</span>
+                            <span className="pam-name">SQL_SVC</span>
+                        </div>
+
+                        {nodeNames.map((name, i) => (
+                            <div
+                                key={i}
+                                className={`comp-node ${step === i ? 'active' : ''} ${step === i && workflow[i].isWarn ? 'warn' : ''}`}
+                            >
+                                <div style={{ fontSize: '1.3rem' }}>{workflow[i].packetIcon}</div>
+                                <div className="comp-label">{name.split('\n').map((l, j) => (
+                                    <span key={j}>{l}{j === 0 && name.includes('\n') ? <br/> : null}</span>
+                                ))}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="doc-panel">
+                        <div className={`doc-card ${current.isWarn ? 'warn' : ''}`}>
+                            <div className="doc-label">
+                                STEP {step + 1} OF {workflow.length} &mdash; PROCESS DOCUMENTATION
+                            </div>
+                            <h3>{current.id}: {current.action}</h3>
+                            <p>{current.doc}</p>
+                            <div className="executing">
+                                <strong>Executing Component:</strong> {current.component}
+                            </div>
+                            {current.diffA && (
+                                <div className="diff-box diff-a">
+                                    <strong>Option A (Delinea): </strong>{current.diffA}
+                                </div>
+                            )}
+                            {current.diffB && (
+                                <div className="diff-box diff-b">
+                                    <strong>Option B (CyberArk Cloud): </strong>{current.diffB}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="tech-specs">
+                            <div className="spec-label">LIVE AGENT TELEMETRY</div>
+                            {current.specs.map((spec, i) => (
+                                <div key={i} className={`spec-line ${spec.cls}`}>{spec.text}</div>
+                            ))}
+                            <div className={`status-line ${isPlaying ? '' : 'info'}`}>
+                                {isPlaying ? "\u28BE [PROCESSING...]" : step >= workflow.length - 1 ? "\u2713 [MIGRATION COMPLETE]" : "\u23F8 [PAUSED]"}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

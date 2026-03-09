@@ -111,6 +111,11 @@ if DOCS_DIR.exists():
     app.mount("/docs", StaticFiles(directory=str(DOCS_DIR), html=True), name="docs")
 
 
+@app.get("/life-of-pam")
+async def life_of_pam():
+    return FileResponse(str(FRONTEND_DIR / "life-of-pam.html"))
+
+
 @app.get("/")
 async def index():
     return FileResponse(str(FRONTEND_DIR / "index.html"))
