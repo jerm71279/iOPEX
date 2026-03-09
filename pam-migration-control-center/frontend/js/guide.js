@@ -7,7 +7,7 @@ function renderGuide() {
   if (!el) return;
 
   el.innerHTML = _guideSection('What Is This Control Center?', `
-    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across a 36-week migration timeline.</p>
     <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
   `) +
@@ -244,7 +244,7 @@ function renderGuide() {
       </thead>
       <tbody>
         ${[
-          ['Timeline', '80 weeks', '50 weeks'],
+          ['Timeline', '36 weeks', '36 weeks'],
           ['Permission Model', '22 &rarr; 4 roles (LOSSY — escalation risk)', '22 &rarr; 22 (1:1 mapping)'],
           ['Data Structure', 'Safe &rarr; Folder (hierarchical)', 'Safe &rarr; Safe (identical)'],
           ['Platforms', 'Platform &rarr; Secret Template', 'Platform &rarr; Platform'],

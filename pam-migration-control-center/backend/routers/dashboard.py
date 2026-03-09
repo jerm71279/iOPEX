@@ -24,7 +24,7 @@ async def get_stats(option: str = "a"):
         "option": option,
         "option_name": opt["short"],
         "target": opt["target"],
-        "total_weeks": 50 if option == "b" else 80,
+        "total_weeks": 36,
         "total_accounts": total_accounts,
         "nhi_accounts": 412,
         "integrations": 89,
