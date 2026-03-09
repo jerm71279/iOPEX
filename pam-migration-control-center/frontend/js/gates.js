@@ -110,13 +110,17 @@ async function viewDeliverableByName(deliverableName) {
 }
 
 async function approveGate(gateId) {
-  await API.post(`/gates/${gateId}/approve`);
+  const result = await API.post(`/gates/${gateId}/approve`);
   renderGateTracker();
-  // Also update mission control if visible
-  if (currentPage === 'mission') renderMissionControl();
+  // Gate approval cascades agent/phase status — refresh related pages
+  if (typeof renderMissionControl === 'function') renderMissionControl();
+  if (result && result.activated_agents && result.activated_agents.length > 0) {
+    console.log(`Gate ${gateId} activated agents: ${result.activated_agents.join(', ')}`);
+  }
 }
 
 async function resetGates() {
   await API.post('/gates/reset');
   renderGateTracker();
+  if (typeof renderMissionControl === 'function') renderMissionControl();
 }

@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from backend.mock_data.data import AGENTS, DELIVERABLES
+from backend.state import state
 
 router = APIRouter()
 
@@ -13,7 +14,7 @@ async def list_agents(option: str = "a"):
             "name": a["name"],
             "phases": a["phases"],
             "weeks": a.get("weeks_b", a["weeks"]) if option == "b" else a["weeks"],
-            "status": a["status"],
+            "status": state.get_agent_status(aid),
             "desc": a["desc"],
             "blocked_by": a.get("blocked_by", []),
         }
@@ -27,6 +28,7 @@ async def get_agent(agent_id: str, option: str = "a"):
     if not a:
         return {"error": f"Agent {agent_id} not found"}
     result = {"id": agent_id, **a}
+    result["status"] = state.get_agent_status(agent_id)
     if option == "b":
         result["weeks"] = a.get("weeks_b", a["weeks"])
     return result

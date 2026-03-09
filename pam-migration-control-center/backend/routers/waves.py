@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import APIRouter
 from backend.mock_data.data import WAVES, AGENTS
+from backend.state import state
 
 router = APIRouter()
 
@@ -25,7 +26,7 @@ async def list_waves(option: str = "a"):
             "weeks": w.get("weeks_b", w["weeks"]) if option == "b" else w["weeks"],
             "description": w["description"],
             "gate": w["gate"],
-            "status": w["status"],
+            "status": state.get_wave_status(wid),
             "etl_steps": w.get(steps_key, w.get("etl_steps_a")),
             "agents": agent_details,
         })

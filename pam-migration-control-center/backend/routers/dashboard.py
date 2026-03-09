@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from backend.mock_data.data import PHASES, AGENTS, WAVES, GATES, OPTIONS, PREDICTIONS_A, PREDICTIONS_B
+from backend.state import state
 
 router = APIRouter()
 
@@ -8,12 +9,12 @@ router = APIRouter()
 async def get_stats(option: str = "a"):
     opt = OPTIONS.get(option, OPTIONS["a"])
     total_accounts = 2847
-    agents_complete = sum(1 for a in AGENTS.values() if a["status"] == "complete")
-    agents_active = sum(1 for a in AGENTS.values() if a["status"] == "active")
+    agents_complete = sum(1 for aid in AGENTS if state.get_agent_status(aid) == "complete")
+    agents_active = sum(1 for aid in AGENTS if state.get_agent_status(aid) == "active")
     gates_passed = sum(1 for g in GATES if g["status"] == "passed")
     current_phase = next(
         (p for p in PHASES.values() if any(
-            AGENTS.get(str(a), AGENTS.get(a, {})).get("status") == "active"
+            state.get_agent_status(str(a)) == "active"
             for a in p["agents"]
         )),
         PHASES["p7"],
@@ -75,10 +76,7 @@ async def get_timeline(option: str = "a"):
 def _phase_status(phase):
     if not phase["agents"]:
         return "complete"
-    statuses = [
-        AGENTS.get(str(a), AGENTS.get(a, {})).get("status", "pending")
-        for a in phase["agents"]
-    ]
+    statuses = [state.get_agent_status(str(a)) for a in phase["agents"]]
     if all(s == "complete" for s in statuses):
         return "complete"
     if any(s in ("active", "complete") for s in statuses):

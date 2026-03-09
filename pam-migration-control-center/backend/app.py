@@ -8,6 +8,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from backend.routers import dashboard, phases, agents, waves, gates, deliverables, accounts, checkpoints, mcp, ml
+from backend.routers import state as state_router
 from backend.mock_data import PHASES, AGENTS, WAVES, GATES, OPTIONS, DELIVERABLES
 
 app = FastAPI(
@@ -31,6 +32,7 @@ app.include_router(accounts.router, prefix="/api/accounts", tags=["Accounts"])
 app.include_router(checkpoints.router, prefix="/api/checkpoints", tags=["Checkpoints"])
 app.include_router(mcp.router, prefix="/api/mcp", tags=["MCP"])
 app.include_router(ml.router, prefix="/api/ml", tags=["ML"])
+app.include_router(state_router.router, prefix="/api/state", tags=["State"])
 
 
 # ── Data Import Endpoint ─────────────────────────────────────────────
