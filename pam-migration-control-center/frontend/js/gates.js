@@ -112,10 +112,60 @@ async function viewDeliverableByName(deliverableName) {
 async function approveGate(gateId) {
   const result = await API.post(`/gates/${gateId}/approve`);
   renderGateTracker();
-  // Gate approval cascades agent/phase status — refresh related pages
   if (typeof renderMissionControl === 'function') renderMissionControl();
-  if (result && result.activated_agents && result.activated_agents.length > 0) {
-    console.log(`Gate ${gateId} activated agents: ${result.activated_agents.join(', ')}`);
+
+  // Show cascade notification
+  if (result && result.status === 'approved') {
+    // Fetch agent names for activated agents
+    let agentLines = '';
+    if (result.activated_agents && result.activated_agents.length > 0) {
+      const agents = await API.get('/agents');
+      const agentMap = {};
+      agents.forEach(a => { agentMap[a.id] = a; });
+
+      agentLines = result.activated_agents.map(aid => {
+        const a = agentMap[aid];
+        const label = a ? `Agent ${a.num} — ${a.name}` : `Agent ${aid}`;
+        return `
+          <div class="toast-cascade-item">
+            <div class="toast-cascade-dot activated"></div>
+            <div class="toast-cascade-label">Activated</div>
+            <div class="toast-cascade-value" onclick="showPage('agents');setTimeout(()=>selectAgent('${aid}'),200)">${label}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // Phase unlocked
+    const phases = result.phases_unlocked || [];
+    const newPhase = phases.length > 0 ? phases[phases.length - 1] : null;
+    const phaseLine = newPhase ? `
+      <div class="toast-cascade-item">
+        <div class="toast-cascade-dot unlocked"></div>
+        <div class="toast-cascade-label">Unlocked</div>
+        <div class="toast-cascade-value" onclick="showPage('phases')">${newPhase.toUpperCase()} Phase</div>
+      </div>` : '';
+
+    // Next gate
+    const nextLine = result.next_gate ? `
+      <div class="toast-cascade-item">
+        <div class="toast-cascade-dot next-gate"></div>
+        <div class="toast-cascade-label">Next Gate</div>
+        <div class="toast-cascade-value">${result.next_gate.toUpperCase()}</div>
+      </div>` : '';
+
+    const hasContent = agentLines || phaseLine || nextLine;
+
+    showToast(`
+      <div class="toast-header">
+        <div class="toast-icon success">&#10003;</div>
+        <div class="toast-title">${gateId.toUpperCase()} Approved</div>
+        <button class="toast-close">&times;</button>
+      </div>
+      <div class="toast-body">
+        ${hasContent ? `${agentLines}${phaseLine}${nextLine}` :
+          '<div style="color:var(--text-muted)">Gate passed — no pending agents to activate at this stage.</div>'}
+      </div>
+    `, 10000);
   }
 }
 
@@ -123,4 +173,14 @@ async function resetGates() {
   await API.post('/gates/reset');
   renderGateTracker();
   if (typeof renderMissionControl === 'function') renderMissionControl();
+  showToast(`
+    <div class="toast-header">
+      <div class="toast-icon success">&#8635;</div>
+      <div class="toast-title">State Reset</div>
+      <button class="toast-close">&times;</button>
+    </div>
+    <div class="toast-body">
+      All agents, gates, and phases reset to mid-migration snapshot (P0-P2 complete, P3 active).
+    </div>
+  `, 5000);
 }

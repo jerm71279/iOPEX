@@ -105,5 +105,32 @@ function colorDimVar(color) {
   return `var(--${c}-dim)`;
 }
 
+// ── Toast Notifications ──
+function showToast(html, duration = 8000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-border-green';
+  toast.innerHTML = html;
+  container.appendChild(toast);
+
+  // Close button
+  const closeBtn = toast.querySelector('.toast-close');
+  if (closeBtn) closeBtn.onclick = () => dismissToast(toast);
+
+  // Animate in
+  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('visible')));
+
+  // Auto-dismiss
+  if (duration > 0) {
+    setTimeout(() => dismissToast(toast), duration);
+  }
+}
+
+function dismissToast(toast) {
+  toast.classList.remove('visible');
+  toast.classList.add('exit');
+  setTimeout(() => toast.remove(), 400);
+}
+
 // ── Init ──
 renderMissionControl();

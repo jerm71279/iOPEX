@@ -1096,6 +1096,61 @@ body {
 }
 .pam-life-banner:hover .pam-life-banner-arrow { transform: translateX(4px); }
 
+/* ── Toast Notifications ───────────────────────────────────────── */
+.toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  min-width: 340px; max-width: 480px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1);
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease;
+}
+.toast.visible { transform: translateX(0); opacity: 1; }
+.toast.exit { transform: translateX(120%); opacity: 0; }
+.toast-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.toast-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.toast-icon.success { background: var(--green-dim); color: var(--green); }
+.toast-title { font-weight: 700; font-size: 0.82rem; color: var(--text-bright); }
+.toast-close {
+  margin-left: auto; background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 16px; padding: 0 4px;
+}
+.toast-close:hover { color: var(--text-bright); }
+.toast-body { font-size: 0.72rem; color: var(--text-standard); line-height: 1.6; }
+.toast-cascade-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.toast-cascade-item:last-child { border-bottom: none; }
+.toast-cascade-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.toast-cascade-dot.activated { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.toast-cascade-dot.unlocked { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.toast-cascade-dot.next-gate { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.toast-cascade-label { color: var(--text-muted); font-size: 0.65rem; min-width: 55px; }
+.toast-cascade-value {
+  color: var(--text-bright); font-size: 0.72rem; font-weight: 600;
+  cursor: pointer;
+}
+.toast-cascade-value:hover { color: var(--teal); }
+.toast-border-green { border-left: 3px solid var(--green); }
+
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { width: 180px; }
