@@ -27,6 +27,8 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/session-demo.html").permitAll()
+                .requestMatchers("/api/sessions/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

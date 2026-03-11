@@ -3,6 +3,7 @@ package com.iopex.pamdx.config;
 import com.iopex.pamdx.adapter.PamVendorAdapter;
 import com.iopex.pamdx.adapter.cyberark.CyberArkAdapter;
 import com.iopex.pamdx.adapter.delinea.DelineaAdapter;
+import com.iopex.pamdx.adapter.demo.DemoAdapter;
 import com.iopex.pamdx.adapter.strongdm.StrongDmAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +43,13 @@ public class AdapterConfig {
         log.info("Configuring PAM adapter for vendor: {}", activeVendor);
 
         return switch (activeVendor.toLowerCase()) {
+            case "demo" -> new DemoAdapter();
             case "cyberark" -> new CyberArkAdapter(cyberArkBaseUrl, cyberArkAuthType);
             case "delinea" -> new DelineaAdapter(delineaBaseUrl);
             case "strongdm" -> new StrongDmAdapter(strongDmApiUrl);
             default -> throw new IllegalArgumentException(
                     "Unknown PAM vendor: " + activeVendor
-                            + ". Supported: cyberark, delinea, strongdm");
+                            + ". Supported: demo, cyberark, delinea, strongdm");
         };
     }
 }
