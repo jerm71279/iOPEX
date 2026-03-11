@@ -50,6 +50,21 @@ public class PamService {
         return adapter.retrievePassword(accountId, reason);
     }
 
+    public String checkOut(String accountId, String reason) {
+        log.info("Check-out requested for account {} — reason: {}", accountId, reason);
+        return adapter.checkOut(accountId, reason);
+    }
+
+    public void checkIn(String accountId) {
+        log.info("Check-in for account {}", accountId);
+        adapter.checkIn(accountId);
+    }
+
+    public boolean rotatePassword(String accountId) {
+        log.info("Rotation requested for account {}", accountId);
+        return adapter.rotatePassword(accountId);
+    }
+
     public List<PamContainer> getContainers() {
         return adapter.getContainers();
     }
