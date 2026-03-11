@@ -286,15 +286,15 @@ function renderGuide() {
           ['4', 'Testing / QA Workstream', '3,000', 'Throughout', 'Sprint 3-40'],
           ['5', 'Wave Planning and Rollout Workstream', '4,800', '22', 'Sprint 8-40'],
           ['6', 'Legacy Retirement Workstream', '2,000', '20', 'Sprint 25-45'],
-        ].map(r => \`
+        ].map(r => `
           <tr style="border-bottom:1px solid var(--border-light);">
-            <td style="padding:5px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">\${r[0]}</td>
-            <td style="padding:5px 8px;color:var(--text-bright);">\${r[1]}</td>
-            <td style="padding:5px 8px;color:var(--amber);font-family:var(--font-mono);font-weight:600;">\${r[2]}</td>
-            <td style="padding:5px 8px;color:var(--text-muted);">\${r[3]}</td>
-            <td style="padding:5px 8px;color:var(--teal);font-family:var(--font-mono);">\${r[4]}</td>
+            <td style="padding:5px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">${r[0]}</td>
+            <td style="padding:5px 8px;color:var(--text-bright);">${r[1]}</td>
+            <td style="padding:5px 8px;color:var(--amber);font-family:var(--font-mono);font-weight:600;">${r[2]}</td>
+            <td style="padding:5px 8px;color:var(--text-muted);">${r[3]}</td>
+            <td style="padding:5px 8px;color:var(--teal);font-family:var(--font-mono);">${r[4]}</td>
           </tr>
-        \`).join('')}
+        `).join('')}
         <tr style="border-top:2px solid var(--border);font-weight:700;">
           <td style="padding:6px 8px;"></td>
           <td style="padding:6px 8px;color:var(--text-bright);">Total Effort</td>
