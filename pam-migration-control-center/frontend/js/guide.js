@@ -7,7 +7,7 @@ function renderGuide() {
   if (!el) return;
 
   el.innerHTML = _guideSection('What Is This Control Center?', `
-    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across a 36-week migration timeline.</p>
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
     <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
   `) +
@@ -244,7 +244,7 @@ function renderGuide() {
       </thead>
       <tbody>
         ${[
-          ['Timeline', '36 weeks', '36 weeks'],
+          ['Timeline', '80 weeks', '50 weeks'],
           ['Permission Model', '22 &rarr; 4 roles (LOSSY — escalation risk)', '22 &rarr; 22 (1:1 mapping)'],
           ['Data Structure', 'Safe &rarr; Folder (hierarchical)', 'Safe &rarr; Safe (identical)'],
           ['Platforms', 'Platform &rarr; Secret Template', 'Platform &rarr; Platform'],
@@ -264,6 +264,55 @@ function renderGuide() {
       </tbody>
     </table>
     <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Toggle between Option A and Option B using the sidebar switch. All pages update to show the appropriate data, checkpoints, predictions, and timelines for each option.</p>
+  `) +
+
+  _guideSection('Vendor Team\'s RoM for Migration to Delinea', `
+    <p style="margin-bottom:12px;">The vendor SI (System Integration) team provided the following <strong>Rough Order of Magnitude (RoM)</strong> estimate for migrating to Delinea Secret Server. This represents the vendor's projected effort across 6 workstreams spanning 45 sprints.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);color:var(--text-muted);text-align:left;">
+          <th style="padding:6px 8px;">#</th>
+          <th style="padding:6px 8px;">SI Task</th>
+          <th style="padding:6px 8px;">RoM (p.hours)</th>
+          <th style="padding:6px 8px;">Sprints</th>
+          <th style="padding:6px 8px;">Sprint Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${[
+          ['1', 'Review POV, Discovery, Traceability Matrix', '250', '5', 'Sprint 1-5'],
+          ['2', 'Digital Engineering & Experience Workstream', '1,000', '10', 'Sprint 3-13'],
+          ['3', 'Agentification Workstream', '1,000', '10', 'Sprint 5-15'],
+          ['4', 'Testing / QA Workstream', '3,000', 'Throughout', 'Sprint 3-40'],
+          ['5', 'Wave Planning and Rollout Workstream', '4,800', '22', 'Sprint 8-40'],
+          ['6', 'Legacy Retirement Workstream', '2,000', '20', 'Sprint 25-45'],
+        ].map(r => \`
+          <tr style="border-bottom:1px solid var(--border-light);">
+            <td style="padding:5px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">\${r[0]}</td>
+            <td style="padding:5px 8px;color:var(--text-bright);">\${r[1]}</td>
+            <td style="padding:5px 8px;color:var(--amber);font-family:var(--font-mono);font-weight:600;">\${r[2]}</td>
+            <td style="padding:5px 8px;color:var(--text-muted);">\${r[3]}</td>
+            <td style="padding:5px 8px;color:var(--teal);font-family:var(--font-mono);">\${r[4]}</td>
+          </tr>
+        \`).join('')}
+        <tr style="border-top:2px solid var(--border);font-weight:700;">
+          <td style="padding:6px 8px;"></td>
+          <td style="padding:6px 8px;color:var(--text-bright);">Total Effort</td>
+          <td style="padding:6px 8px;color:var(--red);font-family:var(--font-mono);font-size:0.75rem;">12,050</td>
+          <td colspan="2" style="padding:6px 8px;color:var(--text-muted);">45 sprints</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout amber" style="margin-top:14px;font-size:0.68rem;line-height:1.6;">
+      <div class="callout-title" style="font-size:0.72rem;">Key Observations</div>
+      <ul style="margin:0;padding-left:18px;line-height:2;">
+        <li><strong>Testing/QA</strong> is the largest workstream at 3,000 hours, running nearly the entire project (Sprint 3-40)</li>
+        <li><strong>Wave Planning and Rollout</strong> consumes 4,800 hours — the most resource-intensive phase of the migration</li>
+        <li><strong>Agentification</strong> (1,000 hours) covers the AI-driven automation buildout for the migration tooling</li>
+        <li><strong>Legacy Retirement</strong> (2,000 hours) begins at Sprint 25 and extends to Sprint 45, covering decommission and cutover</li>
+        <li>Total effort of <strong>12,050 person-hours</strong> across 45 sprints reflects the scale and complexity of a cross-vendor PAM migration</li>
+      </ul>
+    </div>
   `) +
 
   _guideSection('Glossary', `

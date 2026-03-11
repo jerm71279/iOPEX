@@ -1,6 +1,6 @@
 # PAM Migration Control Center
 
-Interactive control center for the 36-week CyberArk PAM migration project. Visualizes the full migration journey — phases, agents, gates, wave execution, inputs/outputs/deliverables.
+Interactive control center for the 80-week CyberArk PAM migration project. Visualizes the full migration journey — phases, agents, gates, wave execution, inputs/outputs/deliverables.
 
 ## Quick Start (One Command)
 
