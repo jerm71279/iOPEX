@@ -3,6 +3,7 @@ package com.iopex.pamdx.adapter;
 import com.iopex.pamdx.adapter.cyberark.CyberArkAdapter;
 import com.iopex.pamdx.adapter.delinea.DelineaAdapter;
 import com.iopex.pamdx.adapter.strongdm.StrongDmAdapter;
+import com.iopex.pamdx.adapter.demo.DemoAdapter;
 import com.iopex.pamdx.adapter.model.PamHealthStatus;
 import org.junit.jupiter.api.Test;
 
@@ -62,5 +63,40 @@ class PamVendorAdapterContractTest {
             PamHealthStatus health = adapter.preflightCheck();
             assertNotNull(health, "Preflight check should return a result for " + adapter.getVendorName());
         }
+    }
+
+    @Test
+    void demoAdapterReturnsCorrectVendorName() {
+        PamVendorAdapter adapter = new DemoAdapter();
+        assertEquals("Demo", adapter.getVendorName());
+        assertTrue(adapter.isConnected()); // always connected
+    }
+
+    @Test
+    void demoAdapterCheckOutReturnsCredential() {
+        DemoAdapter adapter = new DemoAdapter();
+        String secret = adapter.checkOut("demo-account-001", "test reason");
+        assertNotNull(secret);
+        assertFalse(secret.isBlank());
+    }
+
+    @Test
+    void demoAdapterRotatePasswordChangesCredential() {
+        DemoAdapter adapter = new DemoAdapter();
+        String before = adapter.checkOut("demo-account-001", "test");
+        adapter.checkIn("demo-account-001");
+        boolean rotated = adapter.rotatePassword("demo-account-001");
+        assertTrue(rotated);
+        String after = adapter.checkOut("demo-account-001", "test after rotation");
+        assertNotEquals(before, after, "Credential should change after rotation");
+    }
+
+    @Test
+    void demoAdapterPreflightAlwaysPasses() {
+        DemoAdapter adapter = new DemoAdapter();
+        PamHealthStatus health = adapter.preflightCheck();
+        assertEquals("Demo", health.vendor());
+        assertTrue(health.connected());
+        assertTrue(health.checks().stream().allMatch(PamHealthStatus.CheckItem::passed));
     }
 }

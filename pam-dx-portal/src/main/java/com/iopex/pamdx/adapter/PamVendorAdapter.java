@@ -67,6 +67,36 @@ public interface PamVendorAdapter {
      */
     String retrievePassword(String accountId, String reason);
 
+    // ── Session & Rotation ────────────────────────────────────
+
+    /**
+     * Trigger immediate CPM password rotation for an account.
+     * Maps to: CyberArk POST /Accounts/{id}/Change.
+     * Called at session end so the injected credential is immediately invalidated.
+     *
+     * @param accountId the account to rotate
+     * @return true if rotation was successfully scheduled
+     */
+    boolean rotatePassword(String accountId);
+
+    /**
+     * Check out an account for exclusive use.
+     * Returns the credential. Must be followed by {@link #checkIn(String)} on session end.
+     *
+     * @param accountId the account to check out
+     * @param reason    business justification
+     * @return the secret value
+     */
+    String checkOut(String accountId, String reason);
+
+    /**
+     * Release the exclusive lock on a checked-out account.
+     * Triggers rotation for accounts configured with automatic change on check-in.
+     *
+     * @param accountId the account to check in
+     */
+    void checkIn(String accountId);
+
     // ── Containers (Safes / Folders) ──────────────────────────
 
     /**

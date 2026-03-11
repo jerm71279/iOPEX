@@ -76,6 +76,23 @@ public class StrongDmAdapter implements PamVendorAdapter {
     }
 
     @Override
+    public boolean rotatePassword(String accountId) {
+        // TODO: POST /Accounts/{id}/Change (CyberArk) or equivalent
+        throw new UnsupportedOperationException("rotatePassword not yet implemented for " + getVendorName());
+    }
+
+    @Override
+    public String checkOut(String accountId, String reason) {
+        // Fall back to retrieve — most vendors don't require explicit exclusive check-out
+        return retrievePassword(accountId, reason);
+    }
+
+    @Override
+    public void checkIn(String accountId) {
+        // No-op for adapters without exclusive check-out
+    }
+
+    @Override
     public List<PamContainer> getContainers() {
         // TODO: List StrongDM resource groups / tags
         throw new UnsupportedOperationException("StrongDM getContainers() not yet implemented");

@@ -83,6 +83,23 @@ public class CyberArkAdapter implements PamVendorAdapter {
     }
 
     @Override
+    public boolean rotatePassword(String accountId) {
+        // TODO: POST /Accounts/{id}/Change (CyberArk) or equivalent
+        throw new UnsupportedOperationException("rotatePassword not yet implemented for " + getVendorName());
+    }
+
+    @Override
+    public String checkOut(String accountId, String reason) {
+        // Fall back to retrieve — most vendors don't require explicit exclusive check-out
+        return retrievePassword(accountId, reason);
+    }
+
+    @Override
+    public void checkIn(String accountId) {
+        // No-op for adapters without exclusive check-out
+    }
+
+    @Override
     public List<PamContainer> getContainers() {
         // TODO: GET /Safes (filter system safes)
         // Normalize Safe → PamContainer: SafeName → name, Description → description
