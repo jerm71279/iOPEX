@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JIT Session Demo — SHIFT Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Demo page overrides & extensions ─────────────────── */
+    body { display: block; }
+
+    .demo-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────── */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 36px;
+    }
+
+    .top-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #14B8A6;
+      letter-spacing: 2px;
+    }
+
+    .brand-sep {
+      width: 1px;
+      height: 22px;
+      background: #1E3050;
+    }
+
+    .brand-label {
+      font-size: 0.8rem;
+      color: #64748B;
+      font-weight: 500;
+    }
+
+    .top-bar-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .top-bar-links a {
+      font-size: 0.75rem;
+      color: #64748B;
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid #1E3050;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+
+    .top-bar-links a:hover {
+      color: #CBD5E1;
+      border-color: #3B82F6;
+    }
+
+    /* ── Hero banner ──────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: #3B82F6;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px;
+      background: rgba(59,130,246,0.07);
+      margin-bottom: 18px;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3B82F6;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59,130,246,0.6); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(59,130,246,0); }
+    }
+
+    .hero-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #F1F5F9;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-title span { color: #06D6A0; }
+
+    .hero-sub {
+      font-size: 0.9rem;
+      color: #64748B;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Two-column grid ──────────────────────────────────── */
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .card {
+      background: #0A1628;
+      border: 1px solid #1E3050;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #1E3050;
+      background: #081422;
+    }
+
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #F1F5F9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+
+    .icon-blue { background: rgba(59,130,246,0.15); color: #3B82F6; }
+    .icon-green { background: rgba(6,214,160,0.15); color: #06D6A0; }
+    .icon-amber { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .icon-red { background: rgba(239,68,68,0.15); color: #EF4444; }
+
+    .card-body { padding: 24px; }
+
+    /* ── Form controls ────────────────────────────────────── */
+    .field { margin-bottom: 18px; }
+
+    .field:last-child { margin-bottom: 0; }
+
+    .field label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: #64748B;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: #081422;
+      border: 1px solid #1E3050;
+      border-radius: 8px;
+      color: #CBD5E1;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      outline: none;
+      transition: 0.2s;
+      appearance: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.12);
+    }
+
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748B' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn-start {
+      width: 100%;
+      padding: 13px 20px;
+      background: linear-gradient(135deg, #14B8A6, #3B82F6);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+      margin-top: 24px;
+    }
+
+    .btn-start:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-start:active { transform: translateY(0); }
+    .btn-start:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-end {
+      width: 100%;
+      padding: 11px 20px;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.35);
+      border-radius: 8px;
+      color: #EF4444;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .btn-end:hover { background: rgba(239,68,68,0.2); border-color: #EF4444; }
+    .btn-end:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-reset {
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid #1E3050;
+      border-radius: 8px;
+      color: #64748B;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-reset:hover { border-color: #64748B; color: #CBD5E1; }
+
+    /* ── Phase: Active session ────────────────────────────── */
+    #phase-active { display: none; }
+    #phase-setup { display: block; }
+
+    /* ── Session info row ─────────────────────────────────── */
+    .session-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: #081422;
+      border-bottom: 1px solid #1E3050;
+    }
+
+    .session-id-block { flex: 1; }
+
+    .session-id-label {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: #64748B;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .session-id-value {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #3B82F6;
+      word-break: break-all;
+    }
+
+    .status-badge {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      transition: 0.3s;
+    }
+
+    .status-active {
+      background: rgba(6,214,160,0.12);
+      color: #06D6A0;
+      border: 1px solid rgba(6,214,160,0.25);
+    }
+
+    .status-rotating {
+      background: rgba(245,158,11,0.12);
+      color: #F59E0B;
+      border: 1px solid rgba(245,158,11,0.25);
+      animation: amber-pulse 1.2s infinite;
+    }
+
+    .status-ended {
+      background: rgba(100,116,139,0.12);
+      color: #64748B;
+      border: 1px solid rgba(100,116,139,0.2);
+    }
+
+    @keyframes amber-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.35); }
+      50% { box-shadow: 0 0 0 4px rgba(245,158,11,0); }
+    }
+
+    /* ── Timer ────────────────────────────────────────────── */
+    .timer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid #1E3050;
+      background: #060D16;
+    }
+
+    .timer-icon { font-size: 0.8rem; color: #3B82F6; }
+
+    .timer-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: #64748B;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex: 1;
+    }
+
+    .timer-value {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #F1F5F9;
+    }
+
+    /* ── Credential vault box ─────────────────────────────── */
+    .vault-box {
+      margin: 20px;
+      background: #060D16;
+      border: 1px solid #1E3050;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .vault-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid #1E3050;
+    }
+
+    .vault-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #3B82F6;
+      letter-spacing: 1px;
+    }
+
+    .vault-label-hex {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .vault-label-rotated {
+      color: #06D6A0;
+    }
+
+    .vault-cred-area {
+      padding: 18px 16px;
+    }
+
+    .vault-cred-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .vault-cred-row:last-child { margin-bottom: 0; }
+
+    .cred-type-tag {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: #64748B;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      width: 56px;
+      flex-shrink: 0;
+    }
+
+    .cred-value {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #CBD5E1;
+      background: #0A1628;
+      border: 1px solid #1E3050;
+      border-radius: 6px;
+      padding: 7px 12px;
+      flex: 1;
+      transition: 0.4s;
+    }
+
+    .cred-value.old-cred {
+      text-decoration: line-through;
+      color: #EF4444;
+      background: rgba(239,68,68,0.05);
+      border-color: rgba(239,68,68,0.2);
+    }
+
+    .cred-value.new-cred {
+      color: #06D6A0;
+      background: rgba(6,214,160,0.05);
+      border-color: rgba(6,214,160,0.25);
+      animation: reveal-glow 0.8s ease;
+    }
+
+    @keyframes reveal-glow {
+      0% { box-shadow: 0 0 0 0 rgba(6,214,160,0.6); opacity: 0; }
+      50% { box-shadow: 0 0 16px 4px rgba(6,214,160,0.2); opacity: 0.8; }
+      100% { box-shadow: 0 0 0 0 rgba(6,214,160,0); opacity: 1; }
+    }
+
+    /* ── Rotation progress ────────────────────────────────── */
+    .rotation-panel {
+      margin: 0 20px 20px;
+      display: none;
+    }
+
+    .rotation-panel.visible { display: block; }
+
+    .rotation-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .rotation-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #081422;
+      border: 1px solid #1E3050;
+      transition: 0.3s;
+    }
+
+    .rotation-step.current {
+      border-color: rgba(245,158,11,0.3);
+      background: rgba(245,158,11,0.05);
+    }
+
+    .rotation-step.done {
+      border-color: rgba(6,214,160,0.2);
+      background: rgba(6,214,160,0.04);
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #1E3050;
+      flex-shrink: 0;
+      transition: 0.3s;
+    }
+
+    .rotation-step.current .step-dot {
+      background: #F59E0B;
+      animation: spin-dot 1s linear infinite;
+      border-radius: 0;
+      border: 2px solid #F59E0B;
+      border-top-color: transparent;
+      width: 9px;
+      height: 9px;
+    }
+
+    @keyframes spin-dot {
+      to { transform: rotate(360deg); }
+    }
+
+    .rotation-step.done .step-dot {
+      background: #06D6A0;
+    }
+
+    .step-text {
+      font-size: 0.75rem;
+      color: #64748B;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .rotation-step.current .step-text { color: #F59E0B; }
+    .rotation-step.done .step-text { color: #06D6A0; }
+
+    /* Progress bar */
+    .progress-track {
+      height: 4px;
+      background: #0A1628;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #1E3050;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3B82F6, #06D6A0);
+      border-radius: 4px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Account info section ─────────────────────────────── */
+    .account-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 20px;
+      padding-bottom: 0;
+    }
+
+    .meta-item { }
+
+    .meta-label {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: #64748B;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      font-size: 0.8rem;
+      color: #CBD5E1;
+      font-weight: 500;
+    }
+
+    /* ── Audit log panel ──────────────────────────────────── */
+    .audit-panel {
+      display: none;
+    }
+
+    .audit-panel.visible { display: block; }
+
+    .audit-log {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .audit-log::-webkit-scrollbar { width: 4px; }
+    .audit-log::-webkit-scrollbar-track { background: #060D16; }
+    .audit-log::-webkit-scrollbar-thumb { background: #1E3050; border-radius: 2px; }
+
+    .audit-row {
+      display: grid;
+      grid-template-columns: 130px 160px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 11px 20px;
+      border-bottom: 1px solid rgba(30,48,80,0.4);
+      animation: slide-in-audit 0.25s ease;
+    }
+
+    @keyframes slide-in-audit {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .audit-ts {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: #64748B;
+      padding-top: 1px;
+    }
+
+    .audit-type {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .audit-type-SESSION_STARTED  { background: rgba(59,130,246,0.12); color: #3B82F6; }
+    .audit-type-ROTATION_STARTING { background: rgba(245,158,11,0.12); color: #F59E0B; }
+    .audit-type-ROTATION_PROGRESS { background: rgba(245,158,11,0.08); color: #F59E0B; }
+    .audit-type-ROTATION_COMPLETE { background: rgba(6,214,160,0.12); color: #06D6A0; }
+    .audit-type-SESSION_ENDED     { background: rgba(100,116,139,0.1); color: #64748B; }
+    .audit-type-ERROR             { background: rgba(239,68,68,0.12); color: #EF4444; }
+    .audit-type-CREDENTIAL_INJECTED { background: rgba(168,85,247,0.12); color: #A855F7; }
+
+    .audit-msg {
+      font-size: 0.75rem;
+      color: #CBD5E1;
+      line-height: 1.5;
+    }
+
+    /* ── Completion banner ────────────────────────────────── */
+    .completion-banner {
+      display: none;
+      margin: 20px;
+      padding: 16px 20px;
+      background: rgba(6,214,160,0.06);
+      border: 1px solid rgba(6,214,160,0.2);
+      border-left: 3px solid #06D6A0;
+      border-radius: 8px;
+    }
+
+    .completion-banner.visible { display: block; }
+
+    .completion-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #06D6A0;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .completion-detail {
+      font-size: 0.75rem;
+      color: #64748B;
+      line-height: 1.5;
+    }
+
+    /* ── Empty audit state ────────────────────────────────── */
+    .audit-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #64748B;
+      font-size: 0.78rem;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .demo-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="demo-layout">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <div class="brand-logo">SHIFT</div>
+      <div class="brand-sep"></div>
+      <div class="brand-label">PAM Digital Experience Portal</div>
+    </div>
+    <div class="top-bar-links">
+      <a href="/">&#x25A3; Dashboard</a>
+      <a href="/sessions">&#x25B6; Sessions</a>
+      <a href="/swagger-ui.html" target="_blank">&#x2194; API Docs</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">Live JIT Demo</div>
+    <div class="hero-title">Just-In-Time <span>Privileged Session</span></div>
+    <div class="hero-sub">
+      Request ephemeral access to a privileged account. When the session ends,
+      CyberArk Vault rotates the credential in real time — watch it happen.
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="demo-grid">
+
+    <!-- LEFT COLUMN: Setup / Active session -->
+    <div>
+
+      <!-- Phase 1: Setup form -->
+      <div id="phase-setup">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <div class="card-title-icon icon-blue">&#x25B6;</div>
+              Request Privileged Access
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>Target Account</label>
+              <select id="accountId">
+                <option value="demo-account-001">demo-account-001 — Linux Root (prod-web-01)</option>
+                <option value="demo-account-002">demo-account-002 — Windows Admin (dc01.corp.local)</option>
+                <option value="demo-account-003">demo-account-003 — Oracle DBA (db-prod-ora)</option>
+                <option value="demo-account-004">demo-account-004 — AWS IAM (svc-deploy-prod)</option>
+                <option value="demo-account-005">demo-account-005 — Kubernetes Admin (k8s-prod-cluster)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Requesting User</label>
+              <input type="text" id="userId" value="demo-admin" placeholder="User ID">
+            </div>
+            <div class="field">
+              <label>Business Reason</label>
+              <input type="text" id="reason" value="Emergency access - incident #INC-4821" placeholder="Justification for access...">
+            </div>
+            <button class="btn-start" id="btnStart" onclick="startSession()">
+              <span>&#x25B6;</span> Start Privileged Session
+            </button>
+          </div>
+        </div>
+
+        <!-- Info callout -->
+        <div style="margin-top:16px; padding:14px 16px; background: rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.15); border-left:3px solid #3B82F6; border-radius:8px;">
+          <div style="font-size:0.72rem; font-weight:700; color:#3B82F6; margin-bottom:5px;">How this works</div>
+          <div style="font-size:0.72rem; color:#64748B; line-height:1.6;">
+            A time-boxed session is opened against the CyberArk Vault. The masked credential is injected.
+            When you click "End Session", the vault immediately rotates the secret — the old one is revoked
+            and a new one is issued in &lt;5 seconds.
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2: Active session -->
+      <div id="phase-active">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <div class="card-title-icon icon-green">&#x25CF;</div>
+              Active Privileged Session
+            </div>
+            <button class="btn-reset" onclick="resetDemo()">&#x21BA; Reset</button>
+          </div>
+
+          <!-- Session ID + status -->
+          <div class="session-info-row">
+            <div class="session-id-block">
+              <div class="session-id-label">Session ID</div>
+              <div class="session-id-value" id="displaySessionId">—</div>
+            </div>
+            <div class="status-badge status-active" id="statusBadge">ACTIVE</div>
+          </div>
+
+          <!-- Timer -->
+          <div class="timer-row">
+            <span class="timer-icon">&#x23F1;</span>
+            <span class="timer-label">Session Duration</span>
+            <span class="timer-value" id="timerDisplay">00:00:00</span>
+          </div>
+
+          <!-- Account metadata -->
+          <div class="account-meta">
+            <div class="meta-item">
+              <div class="meta-label">Account</div>
+              <div class="meta-value" id="displayAccountId">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Requesting User</div>
+              <div class="meta-value" id="displayUserId">—</div>
+            </div>
+          </div>
+
+          <!-- Credential vault box -->
+          <div class="vault-box">
+            <div class="vault-header">
+              <div class="vault-label" id="vaultLabel">
+                <span class="vault-label-hex">&#x2B22;</span>
+                CyberArk Vault
+              </div>
+              <div style="font-family:var(--font-mono); font-size:0.58rem; color:#64748B; letter-spacing:1px;">CREDENTIAL STORE</div>
+            </div>
+            <div class="vault-cred-area">
+              <div class="vault-cred-row" id="oldCredRow">
+                <div class="cred-type-tag">Current</div>
+                <div class="cred-value" id="currentCred">••••••••••••</div>
+              </div>
+              <div class="vault-cred-row" id="newCredRow" style="display:none;">
+                <div class="cred-type-tag">Rotated</div>
+                <div class="cred-value new-cred" id="newCred">••••••••••••</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rotation progress (hidden until rotation starts) -->
+          <div class="rotation-panel" id="rotationPanel">
+            <div class="rotation-steps" id="rotationSteps">
+              <div class="rotation-step" id="step-init">
+                <div class="step-dot"></div>
+                <div class="step-text">Initiating rotation request to vault...</div>
+              </div>
+              <div class="rotation-step" id="step-revoke">
+                <div class="step-dot"></div>
+                <div class="step-text">Revoking current credential</div>
+              </div>
+              <div class="rotation-step" id="step-generate">
+                <div class="step-dot"></div>
+                <div class="step-text">Generating new cryptographic secret</div>
+              </div>
+              <div class="rotation-step" id="step-propagate">
+                <div class="step-dot"></div>
+                <div class="step-text">Propagating to dependent systems</div>
+              </div>
+              <div class="rotation-step" id="step-verify">
+                <div class="step-dot"></div>
+                <div class="step-text">Verifying vault commit &amp; audit record</div>
+              </div>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+
+          <!-- Completion banner -->
+          <div class="completion-banner" id="completionBanner">
+            <div class="completion-title">&#x2713; Rotation Complete</div>
+            <div class="completion-detail">
+              The old credential has been revoked in the CyberArk Vault.
+              A new secret is now active and all access with the previous credential is denied.
+              Full audit trail recorded.
+            </div>
+          </div>
+
+          <!-- End session button -->
+          <div style="padding:0 20px 20px;">
+            <button class="btn-end" id="btnEnd" onclick="endSession()">
+              &#x23F9; End Session &amp; Rotate Secret
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end left column -->
+
+    <!-- RIGHT COLUMN: Audit log -->
+    <div>
+      <div class="card audit-panel" id="auditPanel">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon icon-amber">&#x1F4CB;</div>
+            Real-Time Audit Log
+          </div>
+          <div style="font-family:var(--font-mono); font-size:0.62rem; color:#64748B; letter-spacing:1px;">
+            <span id="auditCount">0</span> events
+          </div>
+        </div>
+
+        <!-- Column headers -->
+        <div style="display:grid; grid-template-columns:130px 160px 1fr; gap:12px; padding:8px 20px; background:#060D16; border-bottom:1px solid #1E3050;">
+          <div style="font-family:var(--font-mono); font-size:0.58rem; color:#64748B; letter-spacing:1.5px; text-transform:uppercase;">Timestamp</div>
+          <div style="font-family:var(--font-mono); font-size:0.58rem; color:#64748B; letter-spacing:1.5px; text-transform:uppercase;">Event Type</div>
+          <div style="font-family:var(--font-mono); font-size:0.58rem; color:#64748B; letter-spacing:1.5px; text-transform:uppercase;">Message</div>
+        </div>
+
+        <div class="audit-log" id="auditLog">
+          <div class="audit-empty" id="auditEmpty">
+            No events yet. Start a session to begin the audit trail.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: pre-session explainer (shown when no session) -->
+      <div id="explainerPanel" style="display:block;">
+        <div style="padding:32px 24px; text-align:center; border:1px dashed #1E3050; border-radius:12px; color:#64748B;">
+          <div style="font-size:2rem; margin-bottom:12px; opacity:0.3;">&#x1F511;</div>
+          <div style="font-size:0.82rem; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Audit Trail</div>
+          <div style="font-size:0.75rem; line-height:1.6;">
+            Every session event is logged here in real time via Server-Sent Events (SSE).
+            Start a session to see the live feed.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end right column -->
+
+  </div><!-- end grid -->
+</div><!-- end layout -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   JIT Session Demo — Client Logic
+   ═══════════════════════════════════════════════════════════════ */
+
+let currentSessionId = null;
+let eventSource = null;
+let timerInterval = null;
+let sessionStartTs = null;
+let auditEventCount = 0;
+
+// ── Rotation step ordering ──────────────────────────────────────
+const ROTATION_STEPS = ['step-init', 'step-revoke', 'step-generate', 'step-propagate', 'step-verify'];
+
+// Map SSE progressPct → step index to highlight
+function progressToStepIndex(pct) {
+  if (pct === 0)   return 0;
+  if (pct <= 25)   return 1;
+  if (pct <= 55)   return 2;
+  if (pct <= 85)   return 3;
+  return 4;
+}
+
+// ── Timer ───────────────────────────────────────────────────────
+function startTimer() {
+  sessionStartTs = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - sessionStartTs) / 1000);
+    const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${h}:${m}:${s}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+// ── Audit log ───────────────────────────────────────────────────
+function addAuditRow(type, message) {
+  const log = document.getElementById('auditLog');
+  const empty = document.getElementById('auditEmpty');
+  if (empty) empty.remove();
+
+  auditEventCount++;
+  document.getElementById('auditCount').textContent = auditEventCount;
+
+  const now = new Date();
+  const ts = now.toTimeString().split(' ')[0] + '.' +
+             String(now.getMilliseconds()).padStart(3, '0');
+
+  const row = document.createElement('div');
+  row.className = 'audit-row';
+  row.innerHTML = `
+    <div class="audit-ts">${ts}</div>
+    <div class="audit-type audit-type-${type}">${type}</div>
+    <div class="audit-msg">${escapeHtml(message)}</div>
+  `;
+  // Prepend — newest at top
+  log.insertBefore(row, log.firstChild);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Rotation step display ───────────────────────────────────────
+function advanceRotationSteps(upToIndex) {
+  ROTATION_STEPS.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (idx < upToIndex) {
+      el.className = 'rotation-step done';
+    } else if (idx === upToIndex) {
+      el.className = 'rotation-step current';
+    } else {
+      el.className = 'rotation-step';
+    }
+  });
+}
+
+function markAllStepsDone() {
+  ROTATION_STEPS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'rotation-step done';
+  });
+}
+
+// ── Status badge ────────────────────────────────────────────────
+function setStatus(status) {
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'status-badge';
+  if (status === 'ACTIVE') {
+    badge.classList.add('status-active');
+    badge.textContent = 'ACTIVE';
+  } else if (status === 'ROTATING') {
+    badge.classList.add('status-rotating');
+    badge.textContent = 'ROTATING';
+  } else {
+    badge.classList.add('status-ended');
+    badge.textContent = 'ENDED';
+  }
+}
+
+// ── SSE event stream ────────────────────────────────────────────
+function openEventStream(sessionId) {
+  if (eventSource) {
+    eventSource.close();
+  }
+
+  eventSource = new EventSource(`/api/sessions/${sessionId}/events`);
+
+  // SESSION_STARTED
+  eventSource.addEventListener('SESSION_STARTED', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      const record = typeof payload.data === 'string'
+        ? JSON.parse(payload.data) : payload.data;
+      if (record && record.maskedSecret) {
+        document.getElementById('currentCred').textContent = record.maskedSecret;
+      }
+      addAuditRow('SESSION_STARTED', payload.message || 'Session started');
+    } catch(e) {
+      console.error('SESSION_STARTED parse error', e);
+    }
+  });
+
+  // CREDENTIAL_INJECTED (optional)
+  eventSource.addEventListener('CREDENTIAL_INJECTED', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      addAuditRow('CREDENTIAL_INJECTED', payload.message || 'Credential injected');
+    } catch(e) {}
+  });
+
+  // ROTATION_STARTING
+  eventSource.addEventListener('ROTATION_STARTING', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      setStatus('ROTATING');
+      document.getElementById('btnEnd').disabled = true;
+
+      // Show rotation panel
+      const panel = document.getElementById('rotationPanel');
+      panel.classList.add('visible');
+
+      // Strike out old cred
+      document.getElementById('currentCred').classList.add('old-cred');
+
+      // Update vault label
+      document.getElementById('vaultLabel').innerHTML =
+        `<span class="vault-label-hex">&#x2B22;</span> CyberArk Vault — Rotating...`;
+
+      advanceRotationSteps(0);
+      document.getElementById('progressFill').style.width = '5%';
+
+      addAuditRow('ROTATION_STARTING', payload.message || 'Rotation starting');
+    } catch(e) {
+      console.error('ROTATION_STARTING parse error', e);
+    }
+  });
+
+  // ROTATION_PROGRESS
+  eventSource.addEventListener('ROTATION_PROGRESS', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      const pct = payload.progressPct || 0;
+      document.getElementById('progressFill').style.width = pct + '%';
+      const stepIdx = progressToStepIndex(pct);
+      advanceRotationSteps(stepIdx);
+      addAuditRow('ROTATION_PROGRESS', payload.message || `Rotation in progress (${pct}%)`);
+    } catch(e) {
+      console.error('ROTATION_PROGRESS parse error', e);
+    }
+  });
+
+  // ROTATION_COMPLETE
+  eventSource.addEventListener('ROTATION_COMPLETE', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      const record = typeof payload.data === 'string'
+        ? JSON.parse(payload.data) : payload.data;
+
+      // Fill progress bar
+      document.getElementById('progressFill').style.width = '100%';
+      markAllStepsDone();
+
+      // Show new credential
+      const newMasked = (record && record.rotationNewMasked)
+        ? record.rotationNewMasked : 'T3mp••••••••••••2024';
+      document.getElementById('newCred').textContent = newMasked;
+      document.getElementById('newCredRow').style.display = 'flex';
+
+      // Update vault label
+      document.getElementById('vaultLabel').innerHTML =
+        `<span class="vault-label-hex" style="color:#06D6A0">&#x2B22;</span>
+         <span class="vault-label-rotated">CyberArk Vault (Rotated)</span>`;
+
+      addAuditRow('ROTATION_COMPLETE', payload.message || 'Credential rotation complete');
+    } catch(e) {
+      console.error('ROTATION_COMPLETE parse error', e);
+    }
+  });
+
+  // SESSION_ENDED
+  eventSource.addEventListener('SESSION_ENDED', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      setStatus('ENDED');
+      stopTimer();
+
+      // Show completion banner
+      document.getElementById('completionBanner').classList.add('visible');
+
+      // Update header icon color
+      document.querySelector('#phase-active .card-title-icon').className =
+        'card-title-icon icon-amber';
+
+      addAuditRow('SESSION_ENDED', payload.message || 'Session terminated');
+
+      // Close stream
+      eventSource.close();
+      eventSource = null;
+    } catch(e) {
+      console.error('SESSION_ENDED parse error', e);
+    }
+  });
+
+  // ERROR
+  eventSource.addEventListener('ERROR', (raw) => {
+    try {
+      const payload = JSON.parse(raw.data);
+      addAuditRow('ERROR', payload.message || 'An error occurred');
+    } catch(e) {}
+  });
+
+  eventSource.onerror = () => {
+    // SSE connection closed by server after session ends — expected
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+  };
+}
+
+// ── Start session ───────────────────────────────────────────────
+async function startSession() {
+  const userId    = document.getElementById('userId').value.trim();
+  const accountId = document.getElementById('accountId').value;
+  const reason    = document.getElementById('reason').value.trim();
+
+  if (!userId || !reason) {
+    alert('Please fill in User ID and Business Reason.');
+    return;
+  }
+
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true;
+  btn.innerHTML = '<span>&#x23F3;</span> Requesting access...';
+
+  try {
+    const resp = await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, accountId, reason })
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Server returned ${resp.status}`);
+    }
+
+    const session = await resp.json();
+    currentSessionId = session.sessionId;
+
+    // Populate active panel
+    document.getElementById('displaySessionId').textContent =
+      currentSessionId.length > 40
+        ? currentSessionId.substring(0, 20) + '...' + currentSessionId.slice(-12)
+        : currentSessionId;
+    document.getElementById('displayAccountId').textContent = session.accountId || accountId;
+    document.getElementById('displayUserId').textContent = session.userId || userId;
+
+    if (session.maskedSecret) {
+      document.getElementById('currentCred').textContent = session.maskedSecret;
+    }
+
+    // Show active phase, hide setup
+    document.getElementById('phase-setup').style.display = 'none';
+    document.getElementById('phase-active').style.display = 'block';
+
+    // Show audit panel, hide explainer
+    document.getElementById('auditPanel').classList.add('visible');
+    document.getElementById('explainerPanel').style.display = 'none';
+
+    // Start timer
+    startTimer();
+
+    // Open SSE stream
+    openEventStream(currentSessionId);
+
+  } catch (err) {
+    alert('Failed to start session: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = '<span>&#x25B6;</span> Start Privileged Session';
+  }
+}
+
+// ── End session ─────────────────────────────────────────────────
+async function endSession() {
+  if (!currentSessionId) return;
+
+  const btn = document.getElementById('btnEnd');
+  btn.disabled = true;
+  btn.innerHTML = '&#x23F3; Initiating rotation...';
+
+  try {
+    const resp = await fetch(`/api/sessions/${currentSessionId}/end`, {
+      method: 'POST'
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Server returned ${resp.status}`);
+    }
+    // SSE events will drive the rest of the UI
+  } catch (err) {
+    alert('Failed to end session: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = '&#x23F9; End Session &amp; Rotate Secret';
+  }
+}
+
+// ── Reset demo ──────────────────────────────────────────────────
+function resetDemo() {
+  // Close SSE
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  stopTimer();
+
+  currentSessionId = null;
+  auditEventCount = 0;
+
+  // Reset displays
+  document.getElementById('timerDisplay').textContent = '00:00:00';
+  document.getElementById('displaySessionId').textContent = '—';
+  document.getElementById('displayAccountId').textContent = '—';
+  document.getElementById('displayUserId').textContent = '—';
+  document.getElementById('currentCred').textContent = '••••••••••••';
+  document.getElementById('currentCred').className = 'cred-value';
+  document.getElementById('newCred').textContent = '••••••••••••';
+  document.getElementById('newCredRow').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('auditCount').textContent = '0';
+  document.getElementById('vaultLabel').innerHTML =
+    '<span class="vault-label-hex">&#x2B22;</span> CyberArk Vault';
+
+  // Reset rotation steps
+  ROTATION_STEPS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'rotation-step';
+  });
+
+  // Reset rotation panel
+  document.getElementById('rotationPanel').classList.remove('visible');
+  document.getElementById('completionBanner').classList.remove('visible');
+
+  // Reset status badge
+  setStatus('ACTIVE');
+  document.querySelector('#phase-active .card-title-icon').className =
+    'card-title-icon icon-green';
+
+  // Reset start button
+  const btn = document.getElementById('btnStart');
+  btn.disabled = false;
+  btn.innerHTML = '<span>&#x25B6;</span> Start Privileged Session';
+
+  // Rebuild audit log
+  const log = document.getElementById('auditLog');
+  log.innerHTML = '<div class="audit-empty" id="auditEmpty">No events yet. Start a session to begin the audit trail.</div>';
+
+  // Show setup, hide active
+  document.getElementById('phase-setup').style.display = 'block';
+  document.getElementById('phase-active').style.display = 'none';
+  document.getElementById('auditPanel').classList.remove('visible');
+  document.getElementById('explainerPanel').style.display = 'block';
+}
+</script>
+</body>
+</html>
