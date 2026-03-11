@@ -24,6 +24,7 @@ function showPage(pageId, btn) {
     case 'pamfile': break; // standalone iframe — no render needed
     case 'mcp': renderMcpDashboard(); break;
     case 'guide': renderGuide(); break;
+    case 'lab': renderLabShowcase(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }
 }

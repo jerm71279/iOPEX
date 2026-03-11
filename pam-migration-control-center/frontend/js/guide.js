@@ -6,7 +6,131 @@ function renderGuide() {
   const el = document.getElementById('guideContent');
   if (!el) return;
 
-  el.innerHTML = _guideSection('What Is This Control Center?', `
+  el.innerHTML = _guideSection('&#x1F3D7; Customer Current Architecture — CyberArk PAS + Conjur', `
+
+    <p style="margin-bottom:18px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+      The customer's existing environment is a full CyberArk deployment split into two pillars:
+      <strong>Core PAS</strong> (vaults, password rotation, session management for human admins)
+      and <strong>Conjur</strong> (machine identity — secrets for Kubernetes, CI/CD pipelines, and app workloads).
+      This is the <em>current state</em> that SHIFT migrates from.
+    </p>
+
+    <!-- Architecture diagram -->
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:24px;overflow-x:auto;">
+
+      <!-- Top row: Cyber Admins -->
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:2px;margin-bottom:8px;">CYBER ADMINS</div>
+        <div style="display:inline-flex;gap:12px;justify-content:center;">
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 14px;text-align:center;">
+            <div style="font-size:1rem;">&#x1F464;</div>
+            <div style="font-size:0.62rem;color:var(--text-standard);margin-top:3px;">Ops</div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 14px;text-align:center;">
+            <div style="font-size:1rem;">&#x1F465;</div>
+            <div style="font-size:0.62rem;color:var(--text-standard);margin-top:3px;">Engineering</div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 14px;text-align:center;">
+            <div style="font-size:1rem;">&#x1F465;</div>
+            <div style="font-size:0.62rem;color:var(--text-standard);margin-top:3px;">Platform</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:var(--border);margin:8px 0;font-size:0.9rem;">&#x25BC;</div>
+      </div>
+
+      <!-- Middle row: User | CyberArk Platform | Targets -->
+      <div style="display:grid;grid-template-columns:80px 1fr 200px;gap:20px;align-items:start;">
+
+        <!-- User -->
+        <div style="text-align:center;padding-top:40px;">
+          <div style="font-size:1.6rem;">&#x1F464;</div>
+          <div style="font-size:0.62rem;color:var(--text-muted);margin-top:4px;font-family:var(--font-mono);">USER</div>
+          <div style="margin-top:8px;color:var(--border);font-size:0.9rem;">&rarr;</div>
+        </div>
+
+        <!-- CyberArk Platform (Core PAS + Conjur) -->
+        <div style="border:2px solid var(--blue);border-radius:8px;padding:14px;">
+          <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--blue);letter-spacing:2px;margin-bottom:12px;text-align:center;">CYBERARK</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+            <!-- Core PAS -->
+            <div style="background:var(--bg-card);border:1px solid var(--cyan);border-radius:6px;padding:12px;">
+              <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--cyan);letter-spacing:1.5px;margin-bottom:8px;text-align:center;">CORE PAS</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div class="badge badge-cyan" style="text-align:center;font-size:0.62rem;">&#x1F3DB; Vaults</div>
+                <div class="badge badge-cyan" style="text-align:center;font-size:0.62rem;">&#x1F504; Password Rotation</div>
+                <div class="badge badge-cyan" style="text-align:center;font-size:0.62rem;">&#x25B6; Session Management</div>
+                <div class="badge badge-cyan" style="text-align:center;font-size:0.62rem;">&#x2630; Others</div>
+              </div>
+            </div>
+
+            <!-- Conjur -->
+            <div style="background:var(--bg-card);border:1px solid var(--purple);border-radius:6px;padding:12px;">
+              <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--purple);letter-spacing:1.5px;margin-bottom:8px;text-align:center;">CONJUR</div>
+              <div style="font-size:0.62rem;color:var(--text-standard);text-align:center;line-height:1.6;margin-bottom:8px;">Stores &amp; retrieves<br>Credentials</div>
+              <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--purple);text-align:center;letter-spacing:1px;">FOR PLATFORM<br>PROVISIONS</div>
+            </div>
+
+          </div>
+
+          <!-- Bottom accounts row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+            <div style="text-align:center;">
+              <div style="font-size:0.9rem;margin-bottom:4px;">&#x1F465;</div>
+              <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);">ADMINS</div>
+              <div style="font-size:0.58rem;color:var(--text-muted);margin-top:2px;">Privileged Accounts</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:0.9rem;margin-bottom:4px;">&#x1F9D1;&#x200D;&#x1F4BB;</div>
+              <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);">DEVELOPERS</div>
+              <div style="font-size:0.58rem;color:var(--text-muted);margin-top:2px;">Cluster / Service · App Accounts</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target examples -->
+        <div>
+          <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:2px;margin-bottom:8px;text-align:center;">TARGET EXAMPLES</div>
+
+          <!-- Core PAS targets -->
+          <div style="background:var(--bg-card);border:1px solid var(--cyan);border-radius:6px;padding:10px;margin-bottom:8px;">
+            <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--cyan);letter-spacing:1.5px;margin-bottom:6px;">CORE PAS</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+              <span class="badge badge-cyan" style="font-size:0.58rem;">Windows</span>
+              <span class="badge badge-cyan" style="font-size:0.58rem;">UNIX</span>
+              <span class="badge badge-cyan" style="font-size:0.58rem;">Database</span>
+              <span class="badge badge-cyan" style="font-size:0.58rem;">Network</span>
+              <span class="badge badge-cyan" style="font-size:0.58rem;">Web Apps</span>
+            </div>
+          </div>
+
+          <!-- Conjur targets -->
+          <div style="background:var(--bg-card);border:1px solid var(--purple);border-radius:6px;padding:10px;">
+            <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--purple);letter-spacing:1.5px;margin-bottom:6px;">CONJUR</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+              <span class="badge badge-purple" style="font-size:0.58rem;">Kubernetes</span>
+              <span class="badge badge-purple" style="font-size:0.58rem;">Database</span>
+              <span class="badge badge-purple" style="font-size:0.58rem;">OpenShift</span>
+              <span class="badge badge-purple" style="font-size:0.58rem;">CI/CD Pipeline</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /middle grid -->
+    </div><!-- /diagram -->
+
+    <div class="callout blue" style="margin-top:16px;font-size:0.68rem;line-height:1.6;">
+      <div class="callout-title">Migration Scope</div>
+      <p><strong>Core PAS</strong> accounts migrate via the 15-agent SHIFT orchestrator (Phases P1–P7).
+      <strong>Conjur</strong> secrets require platform re-architecture — app teams update their SDK calls;
+      the Conjur migrator handles policy translation. The SHIFT Agent 11 (Multi-Vendor Source Adapter)
+      handles both pillars as separate source streams.</p>
+    </div>
+
+  `) +
+
+  _guideSection('What Is This Control Center?', `
     <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
     <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
