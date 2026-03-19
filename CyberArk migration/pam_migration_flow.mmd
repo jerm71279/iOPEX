@@ -1,0 +1,39 @@
+```mermaid
+sequenceDiagram
+    actor User
+    participant Coordinator
+    participant Agent01 as 01-Discovery
+    participant Agent04 as 04-ETL
+    participant Agent05 as 05-Heartbeat
+    participant OnPremAPI as CyberArk On-Prem API
+    participant PCloudAPI as Privilege Cloud API
+
+    User->>Coordinator: python3 cli.py run P1
+    Coordinator->>Agent01: run("P1")
+    Agent01->>OnPremAPI: GET /Accounts
+    OnPremAPI-->>Agent01: List of accounts
+    Agent01->>OnPremAPI: GET /Safes
+    OnPremAPI-->>Agent01: List of safes
+    Agent01-->>Coordinator: result(status="success", data={...})
+    Coordinator-->>User: Phase P1 complete
+
+    User->>Coordinator: python3 cli.py run P4 (Pilot)
+    Coordinator->>Agent04: run("P4")
+    Agent04->>OnPremAPI: PATCH /Accounts/{id} (Freeze)
+    OnPremAPI-->>Agent04: {status: "frozen"}
+    Agent04->>OnPremAPI: POST /Accounts/{id}/Password/Retrieve
+    OnPremAPI-->>Agent04: "password_value"
+    Agent04->>PCloudAPI: POST /Safes (Create if not exists)
+    PCloudAPI-->>Agent04: {safe_details}
+    Agent04->>PCloudAPI: POST /Accounts (Import)
+    PCloudAPI-->>Agent04: {account_details}
+    Agent04->>OnPremAPI: PATCH /Accounts/{id} (Unfreeze)
+    OnPremAPI-->>Agent04: {status: "unfrozen"}
+    Agent04-->>Coordinator: result(status="success", data={...})
+
+    Coordinator->>Agent05: run("P4")
+    Agent05->>PCloudAPI: POST /Accounts/{id}/Verify
+    PCloudAPI-->>Agent05: {verification_status}
+    Agent05-->>Coordinator: result(status="success", data={...})
+    Coordinator-->>User: Phase P4 complete
+```

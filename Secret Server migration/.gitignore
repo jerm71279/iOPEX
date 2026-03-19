@@ -1,0 +1,36 @@
+# Credentials and secrets
+config.json
+*.pem
+*.key
+*.p12
+.env
+.env.*
+
+# Runtime output
+output/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.bak
+*.tmp
+*.orig
