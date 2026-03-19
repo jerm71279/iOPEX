@@ -1124,12 +1124,12 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
             ['TLS misconfiguration', 'LOW', 'IOPEX_DELIVERY', 'Pre-P1 cert validation; pentest pre-P5'],
           ].map(([risk, sev, owner, mit]) => {
             const col = sev === 'HIGH' ? 'var(--red)' : sev === 'MEDIUM' ? 'var(--amber)' : 'var(--green)';
-            return \`<tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:5px 8px;color:var(--text-standard);">\${risk}</td>
-              <td style="padding:5px 8px;"><span style="color:\${col};font-weight:700;font-family:var(--font-mono);">\${sev}</span></td>
-              <td style="padding:5px 8px;color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem;">\${owner}</td>
-              <td style="padding:5px 8px;color:var(--text-muted);">\${mit}</td>
-            </tr>\`;
+            return '<tr style="border-bottom:1px solid var(--border);">'
+              + '<td style="padding:5px 8px;color:var(--text-standard);">' + risk + '</td>'
+              + '<td style="padding:5px 8px;"><span style="color:' + col + ';font-weight:700;font-family:var(--font-mono);">' + sev + '</span></td>'
+              + '<td style="padding:5px 8px;color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem;">' + owner + '</td>'
+              + '<td style="padding:5px 8px;color:var(--text-muted);">' + mit + '</td>'
+              + '</tr>';
           }).join('')}
         </tbody>
       </table>
