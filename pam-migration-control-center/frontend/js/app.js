@@ -23,6 +23,7 @@ function showPage(pageId, btn) {
     case 'compare': renderComparison(); break;
     case 'pamfile': break; // standalone iframe — no render needed
     case 'mcp': renderMcpDashboard(); break;
+    case 'pmo': renderPMODashboard(); break;
     case 'guide': renderGuide(); break;
     case 'lab': renderLabShowcase(); break;
     case 'disclaimer': renderDisclaimer(); break;
@@ -35,23 +36,28 @@ function switchOption(opt) {
   document.getElementById('opt-' + opt).classList.add('active');
 
   const ind = document.getElementById('optionIndicator');
-  if (opt === 'a') {
-    ind.textContent = 'DELINEA: SECRET SERVER + STRONGDM';
-    ind.style.background = 'var(--blue-dim)';
-    ind.style.color = 'var(--blue)';
-  } else {
-    ind.textContent = 'CYBERARK CLOUD: PRIVILEGE CLOUD';
-    ind.style.background = 'var(--green-dim)';
-    ind.style.color = 'var(--green)';
-  }
-
-  // Update week plan labels
   const weekLabel = document.getElementById('weekPlanLabel');
   const missionSub = document.getElementById('missionSubtitle');
-  if (weekLabel) weekLabel.textContent = opt === 'a' ? '80-WEEK PLAN' : '50-WEEK PLAN';
-  if (missionSub) missionSub.textContent = opt === 'a'
-    ? '80-Week PAM Migration — Real-Time Dashboard'
-    : '50-Week PAM Migration — Real-Time Dashboard';
+
+  if (opt === 'a') {
+    ind.textContent = 'DEVOLUTIONS: RDM + DEVOLUTIONS SERVER';
+    ind.style.background = 'var(--blue-dim)';
+    ind.style.color = 'var(--blue)';
+    if (weekLabel) weekLabel.textContent = '44-WEEK PLAN';
+    if (missionSub) missionSub.textContent = '44-Week PAM Migration — Real-Time Dashboard';
+  } else if (opt === 'b') {
+    ind.textContent = 'KEEPER: KEEPERPAM + KSM + KCM';
+    ind.style.background = 'var(--cyan-dim)';
+    ind.style.color = 'var(--cyan)';
+    if (weekLabel) weekLabel.textContent = '36-WEEK PLAN';
+    if (missionSub) missionSub.textContent = '36-Week PAM Migration — Real-Time Dashboard';
+  } else {
+    ind.textContent = 'MINIORANGE: PAM + IDENTITY';
+    ind.style.background = 'var(--purple-dim)';
+    ind.style.color = 'var(--purple)';
+    if (weekLabel) weekLabel.textContent = '32-WEEK PLAN';
+    if (missionSub) missionSub.textContent = '32-Week PAM Migration — Real-Time Dashboard';
+  }
 
   // Re-render current page with new option
   showPage(currentPage, document.querySelector('.nav-link.active'));

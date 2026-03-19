@@ -10,7 +10,7 @@ router = APIRouter()
 async def list_waves(option: str = "a"):
     result = []
     for wid, w in WAVES.items():
-        steps_key = "etl_steps_a" if option == "a" else "etl_steps_b"
+        steps_key = "etl_steps_a" if option == "a" else ("etl_steps_b" if option == "b" else "etl_steps_c")
         agent_details = []
         for aid in w["agents"]:
             agent = AGENTS.get(str(aid), {})
@@ -23,7 +23,7 @@ async def list_waves(option: str = "a"):
             "type": w["type"],
             "account_pct": w["account_pct"],
             "account_count": w["account_count"],
-            "weeks": w.get("weeks_b", w["weeks"]) if option == "b" else w["weeks"],
+            "weeks": w.get("weeks_c", w["weeks"]) if option == "c" else (w.get("weeks_b", w["weeks"]) if option == "b" else w["weeks"]),
             "description": w["description"],
             "gate": w["gate"],
             "status": state.get_wave_status(wid),
@@ -38,10 +38,10 @@ async def get_wave(wave_id: str, option: str = "a"):
     w = WAVES.get(wave_id)
     if not w:
         return {"error": f"Wave {wave_id} not found"}
-    steps_key = "etl_steps_a" if option == "a" else "etl_steps_b"
+    steps_key = "etl_steps_a" if option == "a" else ("etl_steps_b" if option == "b" else "etl_steps_c")
     return {
         "id": wave_id,
-        **{k: v for k, v in w.items() if k not in ("etl_steps_a", "etl_steps_b")},
+        **{k: v for k, v in w.items() if k not in ("etl_steps_a", "etl_steps_b", "etl_steps_c")},
         "etl_steps": w.get(steps_key, w.get("etl_steps_a")),
     }
 
@@ -52,7 +52,7 @@ async def simulate_wave(wave_id: str, option: str = "a"):
     w = WAVES.get(wave_id)
     if not w:
         return {"error": f"Wave {wave_id} not found"}
-    steps_key = "etl_steps_a" if option == "a" else "etl_steps_b"
+    steps_key = "etl_steps_a" if option == "a" else ("etl_steps_b" if option == "b" else "etl_steps_c")
     steps = w.get(steps_key, w.get("etl_steps_a"))
     count = w["account_count"]
     sim_steps = []
@@ -76,16 +76,40 @@ async def simulate_wave(wave_id: str, option: str = "a"):
 
 
 def _step_detail(step, count, success, option):
-    details = {
-        "FREEZE": f"{count} accounts frozen — CPM management disabled",
-        "EXPORT": f"{success} passwords retrieved, {count - success} failed (locked)",
-        "TRANSFORM": f"{success} accounts transformed to target format",
-        "CREATE FOLDERS": f"Folders created in Secret Server /Imported/ hierarchy",
-        "CREATE SAFES": f"Safes created in Privilege Cloud (matching source names)",
-        "IMPORT": f"{success} secrets created in target",
-        "HEARTBEAT": f"{success - 1}/{success} heartbeat verified ({(success-1)/success*100:.1f}%)",
-        "UNFREEZE": f"{count} accounts unfrozen — CPM management re-enabled",
-        "RECODE INTEGRATIONS": f"CCP/AAM integration code updated for target API",
-        "UPDATE ENDPOINTS": f"CCP/AAM endpoint URLs updated for Privilege Cloud",
-    }
+    if option == "b":
+        details = {
+            "FREEZE": f"{count} accounts frozen in CyberArk — Keeper import session initiated",
+            "EXPORT": f"{success} passwords retrieved, {count - success} failed (locked)",
+            "TRANSFORM": f"{success} accounts mapped to pamUser/pamResource 3-tier hierarchy",
+            "BUILD HIERARCHY": f"PAM Config → Shared Folder structure created in Keeper Vault",
+            "BULK IMPORT": f"{success} records bulk-imported via cyberark-import tool",
+            "POST-IMPORT TRANSFORM": f"{success} flat records restructured into pamUser/pamMachine/pamDatabase",
+            "RECODE INTEGRATIONS": f"KSM SDK replaces CCP/AAM — {success} integration code packages generated",
+            "HEARTBEAT": f"{success - 1}/{success} Keeper secrets verified via Gateway rotation check",
+            "INTEGRITY": f"Agent 18: 12 IC checks passed — Keeper 3-tier hierarchy schema confirmed",
+            "UNFREEZE": f"{count} accounts unfrozen — CPM management re-enabled in source",
+        }
+    elif option == "c":
+        details = {
+            "FREEZE": f"{count} accounts frozen in CyberArk — MiniOrange import session initiated",
+            "EXPORT": f"{success} passwords retrieved, {count - success} failed (locked)",
+            "TRANSFORM": f"{success} accounts mapped to MiniOrange Resource Group format",
+            "CREATE RESOURCE GROUPS": f"Resource Groups created in MiniOrange vault (matching CyberArk Safe names)",
+            "UPDATE ENDPOINTS": f"REST API endpoints updated to MiniOrange — {success} integration configs patched",
+            "IMPORT": f"{success} credentials created in MiniOrange target vault",
+            "HEARTBEAT": f"{success - 1}/{success} MiniOrange credentials verified via agent check ({(success-1)/success*100:.1f}%)",
+            "UNFREEZE": f"{count} accounts unfrozen — CPM management re-enabled",
+        }
+    else:  # option == "a" — Devolutions
+        details = {
+            "FREEZE": f"{count} accounts frozen in CyberArk — Devolutions import session initiated",
+            "EXPORT": f"{success} passwords retrieved, {count - success} failed (locked)",
+            "TRANSFORM": f"{success} accounts transformed to Devolutions Entry format",
+            "CREATE VAULTS": f"Vaults created in Devolutions Server (matching CyberArk Safe names)",
+            "RECODE INTEGRATIONS": f"Devolutions REST replaces CCP/AAM — {success} integration scripts regenerated",
+            "IMPORT": f"{success} credential entries created in Devolutions Server",
+            "HEARTBEAT": f"{success - 1}/{success} Devolutions entries verified via RDM Agent check ({(success-1)/success*100:.1f}%)",
+            "INTEGRITY": f"Agent 18: 12 IC checks passed — Devolutions vault schema confirmed (read-only session)",
+            "UNFREEZE": f"{count} accounts unfrozen — CPM management re-enabled",
+        }
     return details.get(step, f"{step} completed")

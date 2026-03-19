@@ -9,12 +9,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from backend.routers import dashboard, phases, agents, waves, gates, deliverables, accounts, checkpoints, mcp, ml
 from backend.routers import state as state_router
+from backend.routers import integrity, circuit_breaker, schema_drift
+from backend.routers import pmo as pmo_router
 from backend.mock_data import PHASES, AGENTS, WAVES, GATES, OPTIONS, DELIVERABLES
 
 app = FastAPI(
     title="PAM Migration Control Center",
     version="1.0.0",
-    description="Interactive control center for PAM migration journey (80-week Delinea / 50-week CyberArk Cloud)",
+    description="Interactive control center for PAM migration journey (Cisco: Devolutions 44w / Keeper 36w / MiniOrange 32w)",
 )
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
@@ -33,6 +35,10 @@ app.include_router(checkpoints.router, prefix="/api/checkpoints", tags=["Checkpo
 app.include_router(mcp.router, prefix="/api/mcp", tags=["MCP"])
 app.include_router(ml.router, prefix="/api/ml", tags=["ML"])
 app.include_router(state_router.router, prefix="/api/state", tags=["State"])
+app.include_router(integrity.router, prefix="/api/integrity", tags=["Integrity"])
+app.include_router(circuit_breaker.router, prefix="/api/circuit-breaker", tags=["Circuit Breaker"])
+app.include_router(schema_drift.router, prefix="/api/schema-drift", tags=["Schema Drift"])
+app.include_router(pmo_router.router, prefix="/api/pmo", tags=["PMO Intelligence"])
 
 
 # ── Data Import Endpoint ─────────────────────────────────────────────

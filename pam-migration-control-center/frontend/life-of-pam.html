@@ -118,17 +118,17 @@
                 packetIcon: "\u26A0\uFE0F",
                 isWarn: true,
                 doc: "Agent 03 pulls the Safe Members list and reads all 22 individual permission bits from CyberArk. The translation outcome depends entirely on which target platform is selected.",
-                diffA: "DELINEA SECRET SERVER: 22 safe permissions \u2192 4 folder roles (Owner, Edit, View, List) + 200+ system role perms. LOSSY mapping \u2014 escalation risk, 9 permissions have no SS equivalent.",
-                diffB: "CYBERARK PRIVILEGE CLOUD: 22 permissions \u2192 22 permissions (1:1 mapping, zero loss). Same Safe Members API on both sides.",
+                diffA: "DEVOLUTIONS: 22 safe permissions \u2192 Vault roles (Vault Admin, Vault Operator, Viewer). LOSSY mapping \u2014 escalation risk, 9 permissions have no Vault role equivalent.",
+                diffB: "KEEPER PAM: 22 permissions \u2192 4 boolean axes (can_manage, can_create, can_share, can_edit). LOSSY mapping \u2014 12 permissions have no direct Keeper equivalent.",
                 specs: [
                     { text: "> GET /Safes/SQL-Prod/Members", cls: "" },
                     { text: "> Members: 6 (excluding built-ins)", cls: "" },
-                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
-                    { text: ">   AD_SQL_Admins \u2192 Owner", cls: "info" },
-                    { text: ">   DBA_Team \u2192 Edit (ESCALATED \u2191)", cls: "warn" },
+                    { text: "> --- Option A (Devolutions) ---", cls: "gold" },
+                    { text: ">   AD_SQL_Admins \u2192 Vault Admin", cls: "info" },
+                    { text: ">   DBA_Team \u2192 Vault Operator (ESCALATED \u2191)", cls: "warn" },
                     { text: ">   Lost perms: 3 per member", cls: "warn" },
-                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
-                    { text: ">   22\u219222 (1:1, no loss)", cls: "info" },
+                    { text: "> --- Option B (Keeper) ---", cls: "gold" },
+                    { text: ">   22\u21924 axes (LOSSY)", cls: "info" },
                     { text: "> Status: MAPPED (review required)", cls: "gold" },
                 ]
             },
@@ -160,16 +160,16 @@
                 packetIcon: "\u2744\uFE0F",
                 isWarn: false,
                 doc: "Agent 04 retrieves the password and full account metadata from CyberArk. It then transforms the data to fit the target platform's schema. The complexity of this step varies significantly between options.",
-                diffA: "DELINEA: Full schema rewrite \u2014 userName\u2192username slug, address\u2192machine slug, platformId\u2192secretTemplateId, properties\u2192notes. Creates folder hierarchy, then POST /api/v1/secrets with template + field items.",
-                diffB: "PRIVILEGE CLOUD: Minimal transform \u2014 same API surface, same field names. POST /Accounts to create in existing Safe. OAuth2 auth via CyberArk Identity.",
+                diffA: "DEVOLUTIONS: Full schema rewrite \u2014 Safe\u2192Vault, account\u2192RDM Entry, platform\u2192Connection type. POST /api/v1/entries to create entries in Devolutions Server vault.",
+                diffB: "KEEPER PAM: 3-tier hierarchy \u2014 PAM Config \u2192 PAM Resource \u2192 PAM User. POST /api/pam/v2/resources with resource type + credentials via Keeper Gateway.",
                 specs: [
                     { text: "> POST /Accounts/{id}/Password/Retrieve", cls: "" },
                     { text: "> Password: [SECURE_PULL]", cls: "" },
-                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
-                    { text: ">   Map: MSSql \u2192 templateId:6003", cls: "info" },
-                    { text: ">   POST /api/v1/folders + /secrets", cls: "info" },
-                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
-                    { text: ">   POST /Accounts (same schema)", cls: "info" },
+                    { text: "> --- Option A (Devolutions) ---", cls: "gold" },
+                    { text: ">   Safe\u2192Vault, Entry type: ServerConnection", cls: "info" },
+                    { text: ">   POST /api/v1/entries (Devolutions Server)", cls: "info" },
+                    { text: "> --- Option B (Keeper) ---", cls: "gold" },
+                    { text: ">   POST /api/pam/v2/resources (3-tier)", cls: "info" },
                     { text: "> Status: PAYLOAD_IMPORTED", cls: "" },
                 ]
             },
@@ -182,15 +182,15 @@
                 packetIcon: "\u{1F49A}",
                 isWarn: false,
                 doc: "Agent 05 triggers a heartbeat against the target platform to confirm the credential is valid from the target's network path. The verification mechanism differs between platforms.",
-                diffA: "DELINEA: POST /api/v1/secrets/{id}/heartbeat via on-prem Distributed Engine (RPC). Requires manual RPC config per secret template.",
-                diffB: "PRIVILEGE CLOUD: POST /Accounts/{id}/Verify via Cloud CPM. Automatic \u2014 no per-platform RPC config needed.",
+                diffA: "DEVOLUTIONS: Heartbeat via RDM Agent rotation script per entry type. Requires per-connection-type script configuration in Devolutions Server.",
+                diffB: "KEEPER PAM: POST /api/pam/v2/resources/{id}/verify via Keeper Gateway. Gateway must be reachable to target system network.",
                 specs: [
-                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
-                    { text: ">   POST /api/v1/secrets/4417/heartbeat", cls: "info" },
-                    { text: ">   Engine: Distributed Engine 01 (RPC)", cls: "" },
-                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
-                    { text: ">   POST /Accounts/{id}/Verify", cls: "info" },
-                    { text: ">   Engine: Cloud CPM (automatic)", cls: "" },
+                    { text: "> --- Option A (Devolutions) ---", cls: "gold" },
+                    { text: ">   RDM Agent rotation script (entry-type)", cls: "info" },
+                    { text: ">   Engine: Devolutions RDM Agent", cls: "" },
+                    { text: "> --- Option B (Keeper) ---", cls: "gold" },
+                    { text: ">   POST /api/pam/v2/resources/{id}/verify", cls: "info" },
+                    { text: ">   Engine: Keeper Gateway (Docker)", cls: "" },
                     { text: "> Target: sql-prod-01.corp.local:1433", cls: "" },
                     { text: "> LastHeartbeatStatus: Success", cls: "" },
                     { text: "> Status: CREDENTIAL_VERIFIED", cls: "" },
@@ -205,19 +205,19 @@
                 packetIcon: "\u2705",
                 isWarn: true,
                 doc: "The source account is unfrozen (CPM re-enabled). Agent 07 verifies compliance evidence across PCI-DSS, NIST 800-53, HIPAA, and SOX. The audit continuity outcome differs significantly between options.",
-                diffA: "DELINEA: Audit logs do NOT transfer. PSM recordings do NOT migrate. Must keep CyberArk read-only for retention period. Audit gap documented.",
-                diffB: "PRIVILEGE CLOUD: Audit logs can be migrated. PSM recordings transfer to cloud storage. Full audit continuity preserved.",
+                diffA: "DEVOLUTIONS: Audit logs do NOT transfer from CyberArk. RDM session recordings active going forward. CyberArk kept read-only for retention. Audit gap documented.",
+                diffB: "KEEPER PAM: Audit logs do NOT transfer from CyberArk. KCM (Guacamole) session recordings active going forward. CyberArk kept read-only for retention. Audit gap documented.",
                 specs: [
                     { text: "> PATCH /Accounts/{id} (UNFREEZE)", cls: "" },
                     { text: "> automaticManagement: TRUE", cls: "" },
                     { text: "> Watchdog: TIMER_STOP", cls: "" },
                     { text: "> Compliance: PCI-DSS \u2713 NIST \u2713", cls: "" },
-                    { text: "> --- Option A (Delinea) ---", cls: "gold" },
+                    { text: "> --- Option A (Devolutions) ---", cls: "gold" },
                     { text: ">   AUDIT LOGS: NOT transferred \u26A0", cls: "warn" },
-                    { text: ">   PSM RECORDINGS: NOT migrated \u26A0", cls: "warn" },
-                    { text: "> --- Option B (CyberArk Cloud) ---", cls: "gold" },
-                    { text: ">   AUDIT LOGS: Migrated \u2713", cls: "" },
-                    { text: ">   PSM RECORDINGS: Transferred \u2713", cls: "" },
+                    { text: ">   RDM RECORDINGS: Active going forward \u2713", cls: "info" },
+                    { text: "> --- Option B (Keeper) ---", cls: "gold" },
+                    { text: ">   AUDIT LOGS: NOT transferred \u26A0", cls: "warn" },
+                    { text: ">   KCM RECORDINGS: Active going forward \u2713", cls: "info" },
                     { text: "> Status: MIGRATION_COMPLETE", cls: "" },
                 ]
             }
@@ -315,12 +315,12 @@
                             </div>
                             {current.diffA && (
                                 <div className="diff-box diff-a">
-                                    <strong>Option A (Delinea): </strong>{current.diffA}
+                                    <strong>Option A (Devolutions): </strong>{current.diffA}
                                 </div>
                             )}
                             {current.diffB && (
                                 <div className="diff-box diff-b">
-                                    <strong>Option B (CyberArk Cloud): </strong>{current.diffB}
+                                    <strong>Option B (Keeper): </strong>{current.diffB}
                                 </div>
                             )}
                         </div>

@@ -32,8 +32,11 @@ async function renderWaves() {
   // ETL pipeline for selected wave
   renderETLPipeline(waves[0]);
 
-  // Heartbeat checks (show pilot validation format)
+  // Heartbeat checks
   renderHeartbeatChecks();
+
+  // Agent 18 integrity report (default wave 1)
+  renderIntegrityReport('1');
 }
 
 function renderETLPipeline(wave) {
@@ -87,8 +90,9 @@ async function runWaveSimulation() {
   btn.disabled = false;
   waveAnimating = false;
 
-  // Update heartbeat after simulation
+  // Update heartbeat + integrity after simulation
   renderHeartbeatChecks();
+  renderIntegrityReport(waveId);
 }
 
 async function viewWaveDetail(waveId) {
@@ -132,18 +136,48 @@ async function viewWaveDetail(waveId) {
 }
 
 function renderHeartbeatChecks() {
-  const isOptB = API.option === 'b';
+  const opt = API.option;
   const checks = [
     { name: 'Count Comparison', msg: '2847 source = 2847 target (0.0% variance)', status: 'pass' },
     { name: 'Heartbeat Status', msg: '2705/2847 verified (95.0%)', status: 'pass' },
-    { name: 'Permission Mapping', msg: isOptB ? '22→22 parity verified, 0 exceptions' : '22→4 role mapping verified, 0 exceptions', status: 'pass' },
-    { name: isOptB ? 'Safe Structure' : 'Folder Structure', msg: isOptB ? '142 safes created in Privilege Cloud' : '142 folders created, hierarchy correct', status: 'pass' },
+    {
+      name: 'Permission Mapping',
+      msg: opt === 'b' ? '22→4 axes verified, 3 escalation flags reviewed' :
+           opt === 'c' ? '22→3 levels verified, 5 escalation flags reviewed' :
+           '22→Vault roles verified, 2 escalation flags reviewed',
+      status: 'pass',
+    },
+    {
+      name: opt === 'b' ? 'Shared Folder / PAM Hierarchy' : opt === 'c' ? 'Resource Group Structure' : 'Vault Structure',
+      msg: opt === 'b' ? '142 shared folders + PAM hierarchy created (pamUser/pamMachine/pamDatabase)' :
+           opt === 'c' ? '142 resource groups created, hierarchy correct' :
+           '142 vaults created in Devolutions Server, hierarchy correct',
+      status: 'pass',
+    },
     { name: 'Metadata Integrity', msg: 'All description/custom fields preserved', status: 'pass' },
     { name: 'Group Assignments', msg: '234 group memberships translated', status: 'pass' },
-    { name: 'Password Policies', msg: isOptB ? 'Cloud CPM rotation active per platform' : 'Rotation policies applied per template', status: 'pass' },
-    { name: 'Access Patterns', msg: '0 unexpected permission escalations', status: 'pass' },
-    { name: 'Audit Continuity', msg: isOptB ? 'Audit logs migrated to Privilege Cloud' : 'Audit entries present for all accounts', status: 'pass' },
-    { name: 'Recording Preservation', msg: isOptB ? 'PSM recordings transferred to cloud storage' : 'Manual verification required in P7', status: isOptB ? 'pass' : 'warn' },
+    {
+      name: 'Password Policies',
+      msg: opt === 'b' ? 'Keeper Gateway rotation active per platform (~25-30 platforms covered)' :
+           opt === 'c' ? 'MiniOrange rotation policies applied per resource group' :
+           'Devolutions RDM Agent rotation active per entry type',
+      status: 'pass',
+    },
+    { name: 'Access Patterns', msg: '0 unexpected permission escalations detected', status: 'pass' },
+    {
+      name: 'Audit Continuity',
+      msg: opt === 'b' ? 'CyberArk audit archived read-only; Keeper event log active' :
+           opt === 'c' ? 'CyberArk audit archived read-only; MiniOrange basic audit active' :
+           'CyberArk audit archived read-only; Devolutions audit log active',
+      status: 'warn',
+    },
+    {
+      name: 'Recording Preservation',
+      msg: opt === 'b' ? 'CyberArk PSM archived; KCM (Guacamole) session recording active going forward' :
+           opt === 'c' ? 'CyberArk PSM archived; MiniOrange limited recording — manual verification required' :
+           'CyberArk PSM archived; RDM session recording active going forward',
+      status: opt === 'c' ? 'warn' : 'pass',
+    },
   ];
 
   document.getElementById('heartbeatChecks').innerHTML = checks.map(c => `
@@ -158,3 +192,69 @@ function renderHeartbeatChecks() {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Agent 18 — Integrity Validation Report ──────────────────────────
+
+async function renderIntegrityReport(waveId) {
+  const panel = document.getElementById('integrityChecksPanel');
+  const badge = document.getElementById('integrityAccBadge');
+  if (!panel) return;
+
+  panel.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.7rem;">Loading integrity report...</div>';
+
+  const data = await API.get(`/integrity/${waveId}`);
+  if (data.error) {
+    panel.innerHTML = `<div style="padding:14px;color:var(--red);font-size:0.7rem;">${data.error}</div>`;
+    return;
+  }
+
+  const accColor = data.accuracy_pct >= 99 ? 'var(--green)' : data.accuracy_pct >= 95 ? 'var(--amber)' : 'var(--red)';
+  if (badge) badge.textContent = `${data.accuracy_pct.toFixed(1)}% ACCURACY`;
+
+  const statusColor = { pass: 'dot-green', warn: 'dot-amber', fail: 'dot-red' };
+  const statusLabel = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' };
+  const statusBadge = { pass: 'badge-green', warn: 'badge-amber', fail: 'badge-red' };
+  const sevColor = { CRITICAL: 'var(--red)', HIGH: 'var(--amber)', MEDIUM: 'var(--blue)' };
+
+  panel.innerHTML = `
+    <div style="padding:14px 18px 8px;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:8px;">
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);min-width:70px;">
+        <div style="font-size:1.1rem;font-weight:800;color:${accColor}">${data.accuracy_pct.toFixed(1)}%</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Accuracy</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);min-width:60px;">
+        <div style="font-size:1.1rem;font-weight:800;color:var(--green)">${data.passed}</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Passed</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid ${data.failed > 0 ? 'var(--red)' : 'var(--border)'};border-radius:var(--radius);min-width:60px;">
+        <div style="font-size:1.1rem;font-weight:800;color:${data.failed > 0 ? 'var(--red)' : 'var(--text-muted)'}">${data.failed}</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Failed</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid ${data.warned > 0 ? 'var(--amber)' : 'var(--border)'};border-radius:var(--radius);min-width:60px;">
+        <div style="font-size:1.1rem;font-weight:800;color:${data.warned > 0 ? 'var(--amber)' : 'var(--text-muted)'}">${data.warned}</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Warned</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);min-width:160px;">
+        <div style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono);">WAVE ${data.wave} — ${data.wave_name}</div>
+        <div style="font-size:0.6rem;color:var(--text-muted);margin-top:3px;">${data.total_accounts.toLocaleString()} accounts &bull; ${data.checks_run} IC checks</div>
+        <div style="font-size:0.55rem;color:var(--purple);margin-top:3px);font-family:var(--font-mono);">${data.session}</div>
+      </div>
+    </div>
+    <div class="health-grid" style="padding:8px 14px 14px;">
+      ${data.checks.map(c => `
+        <div class="health-item" style="${c.status === 'fail' ? 'border:1px solid var(--red-dim);background:var(--red-dim);border-radius:4px;' : c.status === 'warn' ? 'border:1px solid var(--amber-dim);background:var(--amber-dim);border-radius:4px;' : ''}">
+          <div class="health-dot ${statusColor[c.status]}"></div>
+          <div style="flex:1">
+            <div class="health-name" style="display:flex;gap:6px;align-items:center;">
+              <span>${c.id}</span>
+              <span style="color:var(--text-standard)">${c.name}</span>
+              ${c.blocking ? '<span style="font-size:0.42rem;font-family:var(--font-mono);color:' + sevColor[c.severity] + ';border:1px solid currentColor;padding:1px 4px;border-radius:2px;">BLOCKING</span>' : ''}
+            </div>
+            <div class="health-msg">${c.detail}</div>
+          </div>
+          <span class="badge ${statusBadge[c.status]}" style="font-size:0.42rem;">${statusLabel[c.status]}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}

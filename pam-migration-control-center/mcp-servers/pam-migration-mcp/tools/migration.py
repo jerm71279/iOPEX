@@ -14,7 +14,7 @@ async def start_migration(migration_id: str, option: str = "b") -> dict:
 
     Args:
         migration_id: Unique identifier for this migration run.
-        option: Migration target — "a" (Privilege Cloud) or "b" (Secret Server).
+        option: Migration target — "a" (Devolutions), "b" (Keeper), or "c" (MiniOrange).
     """
     state = _get_state()
     audit = _get_audit()

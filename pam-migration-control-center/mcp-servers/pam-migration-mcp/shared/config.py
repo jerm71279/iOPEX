@@ -20,7 +20,7 @@ class PamMcpSettings(BaseSettings):
     port: int = 8100
     server_name: str = "pam-migration-mcp"
 
-    # Migration option: "a" (Privilege Cloud) or "b" (Secret Server)
+    # Migration option: "a" (Devolutions), "b" (Keeper), or "c" (MiniOrange)
     migration_option: str = "b"
 
     # Orchestrator paths (mounted read-only in Docker)

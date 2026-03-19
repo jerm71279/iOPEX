@@ -16,12 +16,13 @@
   <div class="sidebar-sub">Secure Hybrid Identity & Function Transfer</div>
 
   <div class="option-switch">
-    <button class="option-btn active" id="opt-a" onclick="switchOption('a')">Delinea</button>
-    <button class="option-btn" id="opt-b" onclick="switchOption('b')">CyberArk Cloud</button>
+    <button class="option-btn active" id="opt-a" onclick="switchOption('a')">Devolutions</button>
+    <button class="option-btn" id="opt-b" onclick="switchOption('b')">Keeper</button>
+    <button class="option-btn" id="opt-c" onclick="switchOption('c')">MiniOrange</button>
   </div>
   <div class="option-indicator" id="optionIndicator"
        style="background:var(--blue-dim);color:var(--blue);">
-    DELINEA: SECRET SERVER + STRONGDM
+    DEVOLUTIONS: RDM + DEVOLUTIONS SERVER
   </div>
 
   <button class="nav-link active" onclick="showPage('mission',this)">
@@ -60,13 +61,16 @@
   <button class="nav-link" onclick="showPage('lab',this)">
     <span class="nav-icon">&#x1F9EA;</span> Lab Showcase
   </button>
+  <button class="nav-link" onclick="showPage('pmo',this)">
+    <span class="nav-icon">&#x1F4CA;</span> PMO Intelligence
+  </button>
   <button class="nav-link" onclick="showPage('disclaimer',this)">
     <span class="nav-icon">&#x26A0;</span> Status & Info
   </button>
 
   <div class="sidebar-footer">
-    iOPEX SHIFT v2.0<br>
-    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+2 AGENTS<br>
+    iOPEX SHIFT v2.1<br>
+    <span id="weekPlanLabel">44-WEEK PLAN</span> / 15+3 AGENTS<br>
     FastAPI + Vanilla JS
   </div>
 </nav>
@@ -150,6 +154,20 @@
       </div>
       <div id="predictionsPanel"></div>
     </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Circuit Breaker Status</div>
+        <span class="badge badge-cyan" id="cbStatusBadge"></span>
+      </div>
+      <div id="circuitBreakerPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Schema Drift Monitor</div>
+        <span class="badge badge-amber" id="driftEventCount"></span>
+      </div>
+      <div id="schemaDriftPanel"></div>
+    </div>
   </div>
 
   <!-- ──── PHASE EXPLORER ──── -->
@@ -186,7 +204,7 @@
       <div class="panel-header">
         <div class="panel-title">ETL Pipeline Simulation</div>
         <div>
-          <select id="waveSelect" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
+          <select id="waveSelect" onchange="renderIntegrityReport(this.value)" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
             <option value="1">Wave 1</option>
             <option value="2">Wave 2</option>
             <option value="3">Wave 3</option>
@@ -201,9 +219,19 @@
     </div>
     <div class="panel" style="margin-top:16px;">
       <div class="panel-header">
-        <div class="panel-title">Heartbeat Validation (10 Checks)</div>
+        <div class="panel-title">Heartbeat Validation — Agent 05 (10 Checks)</div>
       </div>
       <div class="health-grid" id="heartbeatChecks"></div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div class="panel-title">Integrity Validation — Agent 18 (12 IC Checks)</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge badge-purple" id="integrityAccBadge"></span>
+          <span style="font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">INDEPENDENT SESSION</span>
+        </div>
+      </div>
+      <div id="integrityChecksPanel"></div>
     </div>
   </div>
 
@@ -253,7 +281,7 @@
   <div class="page" id="page-compare">
     <div class="page-header">
       <div class="page-title">Option Comparison</div>
-      <div class="page-subtitle" id="compareSubtitle">Delinea (Secret Server + StrongDM) vs CyberArk Cloud (Privilege Cloud)</div>
+      <div class="page-subtitle" id="compareSubtitle">Devolutions vs Keeper Security vs MiniOrange — Cisco Migration Target Evaluation</div>
     </div>
     <div id="comparisonContent"></div>
   </div>
@@ -274,6 +302,15 @@
       <div class="page-subtitle">Model Context Protocol — AI Council Conditions 2, 3, 4</div>
     </div>
     <div id="mcpContent"></div>
+  </div>
+
+  <!-- ──── PMO INTELLIGENCE ──── -->
+  <div class="page" id="page-pmo">
+    <div class="page-header">
+      <div class="page-title">PMO Intelligence</div>
+      <div class="page-subtitle">Layer 0 — AI-Native Project Management &bull; iOPEX PMO Engine + Execution Engine + RAG Dashboard</div>
+    </div>
+    <div id="shift-pmo-dashboard"></div>
   </div>
 
   <!-- ──── GUIDE & FAQ ──── -->
@@ -331,6 +368,7 @@
 <script src="/js/guide.js"></script>
 <script src="/js/mcp.js"></script>
 <script src="/js/lab.js"></script>
+<script src="/js/pmo.js"></script>
 <script src="/js/app.js"></script>
 
 </body>

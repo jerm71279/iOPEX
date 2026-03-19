@@ -49,7 +49,7 @@ const DEMO_SCENARIOS = [
     condition: 'Agent 03 detected 5 accounts with ManageSafe permission being mapped to Owner role — escalation risk identified',
     ai_rationale: {
       what_fired: 'Agent 03 Permission Mapping found 5 accounts where ManageSafe permission in source maps to Owner role in target. These accounts currently have ManageSafe but NO data access permissions (UseAccounts, RetrieveAccounts). After migration, Owner role grants FULL access including credential retrieval.',
-      root_cause: 'Secret Server Owner role bundles ManageSafe + ManageSafeMembers + all data permissions. The source permission model separates administrative permissions from data access. The mapping engine correctly assigns Owner (highest matching role) but this creates privilege escalation.',
+      root_cause: 'Devolutions Vault Admin role bundles ManageSafe + ManageSafeMembers + all data permissions. The source CyberArk permission model separates administrative permissions from data access. The mapping engine correctly assigns Vault Admin (highest matching role) but this creates privilege escalation for members who previously only had ManageSafe without data access.',
       cross_system_context: 'Agent 02 (Gap Analysis) flagged this pattern in the gap report (G-03 Permission Granularity Loss). Agent 07 (Compliance) PCI-DSS Requirement 7.1 mandates least privilege. Agent 14 (Onboarding) uses the same role mapping — all future onboarding would inherit this escalation pattern.',
       risk_assessment: 'SECURITY — 5 accounts will gain credential retrieval access they did not have in source. This is a privilege escalation, not a data migration error. The compliance evidence package will flag this as a PCI-DSS finding.',
       recommended_action: 'Create a custom "Safe Admin" role in target with ManageSafe but without UseAccounts/RetrieveAccounts. Remap these 5 accounts to the custom role. Update Agent 03 mapping table to use custom role for ManageSafe-only accounts. Validate with Agent 07 before Wave 1.',
@@ -79,39 +79,39 @@ const DEMO_SCENARIOS = [
   },
 ];
 
-// ── Option B (CyberArk Privilege Cloud) demo scenarios ──────────────
+// ── Option B (Keeper Security) demo scenarios ──────────────
 const DEMO_SCENARIOS_B = [
   {
     phase: 'p2', agent: '10', type: 'OPERATIONAL',
-    condition: 'OAuth2 Identity platform access token expired mid-operation — Agent 10 staging validation interrupted at assertion 4 of 10',
+    condition: 'Agent 10 Staging Validation received HTTP 403 from Keeper Cloud API — throttle triggered (NOT HTTP 429). Keeper throttles at 50 calls/min with cumulative window extension. Staging assertions paused; 3 assertions pending.',
     ai_rationale: {
-      what_fired: 'Agent 10 Staging Validation received HTTP 401 Unauthorized from Privilege Cloud API during assertion 4 (credential retrieval verification). The OAuth2 bearer token issued by CyberArk Identity expired after 30 minutes. Assertions 1-3 completed successfully but took 31 minutes due to safe count.',
-      root_cause: 'CyberArk Identity platform enforces a fixed 30-minute OAuth2 access token lifetime (client_credentials grant). Unlike on-prem PVWA session tokens which have an idle timeout and can be refreshed, Identity tokens simply expire with no refresh mechanism. The validation sequence takes 32-38 minutes for the current safe count, consistently exceeding the token lifetime.',
+      what_fired: 'Agent 10 Staging Validation received HTTP 403 from Keeper Cloud API — throttle triggered (NOT HTTP 429). Keeper throttles at 50 calls/min with cumulative window extension. Staging assertions paused; 3 assertions pending.',
+      root_cause: 'Keeper API uses HTTP 403 with `{"error": "throttled"}` in the response body — NOT HTTP 429. The circuit breaker was treating this as an auth failure (403 = unauthorized) instead of a rate limit. Batch size was 20 calls/cycle without the 2-second pause required between groups of 10.',
       cross_system_context: 'Agents 04, 05, 06, and 15 all authenticate through the same OAuth2 client (pam-migration-svc). Any operation exceeding 30 minutes will hit this wall. Agent 04 wave ETL runs 45-90 minutes per wave. Agent 15 parallel-run watchdog has a 120-minute timer. This is a systemic platform constraint affecting all long-running agent operations.',
       risk_assessment: 'OPERATIONAL — High risk to timeline if unaddressed. Every agent operation longer than 30 minutes will fail unpredictably. A token expiry during Agent 04 wave migration could leave accounts partially migrated, requiring manual intervention or Agent 06 rollback.',
-      recommended_action: 'Implement a shared TokenLifecycleManager that proactively refreshes tokens at the 25-minute mark. Add assertion-level checkpointing to Agent 10 so validation can resume after token refresh. Distribute the lifecycle manager to all agents using the shared OAuth2 client. File a feature request with CyberArk for configurable token lifetime.',
+      recommended_action: 'Reconfigure circuit breaker to inspect response body on 403: if `body.get(\'error\') == \'throttled\'` treat as rate limit, not auth failure. Reduce batch size to 10 calls per cycle with 2s pause. Throttle window is cumulative — each violation extends the window.',
     },
   },
   {
     phase: 'p1', agent: '11', type: 'SECURITY',
-    condition: 'Privilege Cloud API version deprecation notice — REST API v1 endpoints scheduled for removal in 60 days, 3 agents using deprecated endpoints',
+    condition: 'Keeper Gateway node `keeper-gw-prod-01` offline — 3 production waves paused, 847 accounts pending migration',
     ai_rationale: {
-      what_fired: 'Agent 11 Source Adapter received deprecation warning headers (Sunset: 2025-08-15) on GET /api/v1/Safes responses from Privilege Cloud. CyberArk has announced REST API v1 endpoints will return HTTP 410 Gone after the sunset date. Agents 04, 10, and 11 are using v1 endpoints for safe enumeration, account listing, and credential retrieval.',
-      root_cause: 'The migration agents were developed against Privilege Cloud REST API v1 documentation. CyberArk published v2 API specification 4 months ago with changes to pagination, response schemas, and authentication headers. The v1-to-v2 migration was not included in the original migration timeline because v1 deprecation was announced after project kickoff.',
+      what_fired: 'Agent 04 Migration Pipeline received connection refused errors from Keeper Gateway on port 443 (Gateway-to-Keeper-Cloud tunnel). The Gateway Docker container stopped after an OOM kill — host VM had 14GB RAM but Gateway process required peak 16GB during Wave 3 bulk import. Agents 04, 05, and 18 cannot proceed without Gateway connectivity.',
+      root_cause: 'Keeper Gateway recommended spec is 4 CPU / 16GB RAM. The Gateway host VM was provisioned at 14GB. Peak memory during bulk import of 554 NHI accounts exceeded available RAM. Docker OOM killer terminated the Gateway container. The monitoring alert threshold was set to 90% memory — but the OOM kill happened before the alert fired.',
       cross_system_context: 'Agent 04 ETL uses v1 for credential export (POST /api/v1/Accounts/{id}/Password/Retrieve), which moves to /api/v2/Credentials/{id}/retrieve with a different response format. Agent 10 uses v1 for safe membership validation. Agent 15 Hybrid Fleet Manager already uses v2 endpoints because it was developed later. The mixed v1/v2 usage means Agent 15 will continue working after sunset while Agents 04, 10, and 11 will break.',
       risk_assessment: 'SECURITY — Deprecated API endpoints receive no security patches. Running production migration workloads against unpatched endpoints creates a supply-chain risk. The 60-day window is tight given that Agent 04 ETL is the most complex consumer and requires response schema changes.',
-      recommended_action: 'Create a v1-to-v2 migration task for Agents 04, 10, and 11. Start with Agent 11 (simplest consumer) as a pilot. Update response parsing for new pagination format and credential retrieval schema. Add API version header validation to agent preflight checks. Target completion 30 days before sunset to allow testing buffer.',
+      recommended_action: 'Restart Gateway container on host with 20GB+ RAM (or migrate to 32GB VM). Implement Gateway HA: deploy 2+ Gateway nodes with load balancing. Add pre-wave memory check: assert Gateway host free memory > 8GB before starting bulk import. Set Docker memory limit to 15GB to prevent OOM kill and trigger graceful backpressure instead.',
     },
   },
   {
     phase: 'p6', agent: '15', type: 'EDGE_CASE',
-    condition: 'Privilege Cloud Connector server certificate expires in 14 days — parallel-run traffic will fail if not renewed',
+    condition: 'MiniOrange Agent on `miniorange-agent-02` failing rotation health checks — 234 credentials have stale passwords',
     ai_rationale: {
-      what_fired: 'Agent 15 Hybrid Fleet Manager health check detected that the Privilege Cloud Connector server\'s TLS certificate (CN=connector-prod.internal) expires on 2025-07-17. The Connector handles all credential retrieval traffic between the internal network and Privilege Cloud tenant. At current 90% traffic shift, 2,560 concurrent sessions route through this Connector.',
+      what_fired: 'Agent 05 Heartbeat validation detected 234 credentials in MiniOrange where the last rotation timestamp is > 90 days. The MiniOrange Agent on the secondary agent host failed to reconnect after a network segment firewall rule change blocked port 8443 (agent-to-vault communication).',
       root_cause: 'The Connector was deployed during Phase 2 (CHG0008891) with a 90-day self-signed certificate generated during installation. The certificate renewal was not added to the infrastructure team\'s certificate management system because the Connector is a new component not yet integrated into the automated renewal pipeline. The Connector does not support hot certificate replacement — it requires a service restart.',
-      cross_system_context: 'Agent 04 ETL wave migrations, Agent 05 heartbeat checks, Agent 10 staging validation, and Agent 15 parallel-run traffic ALL route through this Connector. A certificate expiry would cause a total outage of all Privilege Cloud operations. Agent 06 rollback procedures also depend on the Connector — even reverting traffic to source requires Connector availability to re-sync credentials.',
+      cross_system_context: 'Agent 04 ETL wave migrations, Agent 05 heartbeat checks, Agent 10 staging validation, and Agent 15 parallel-run traffic ALL depend on MiniOrange Agent connectivity. A prolonged agent outage would cause a total halt of rotation operations. Agent 06 rollback procedures also depend on agent availability — even reverting traffic to source requires agent connectivity to re-sync credentials.',
       risk_assessment: 'EDGE_CASE — 14-day window is adequate for certificate renewal, but the service restart requirement means a maintenance window is needed. At 90% traffic shift, a Connector restart will cause a brief outage (estimated 2-3 minutes) affecting all concurrent credential retrievals. This must be coordinated with application teams to minimize impact.',
-      recommended_action: 'Generate a new certificate with a 365-day validity period. Schedule the Connector restart during the 0200-0600 UTC maintenance window. Add the Connector certificate to the organization\'s certificate management system for automated renewal alerts. Consider deploying a second Connector for high availability — this eliminates the single-point-of-failure risk identified in yc-b03.',
+      recommended_action: 'Update firewall rules to allow MiniOrange Agent on port 8443 TCP outbound to vault. Redeploy Agent on backup host. Run forced rotation on 234 affected credentials. Add network connectivity pre-check to Agent 05 heartbeat assertions.',
     },
   },
 ];

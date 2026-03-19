@@ -1,8 +1,9 @@
 """Permission mapping tool — wraps Agent 03.
 
 Maps CyberArk safe permissions to the target platform:
-  - Option A (Secret Server): 22 → 4 roles (LOSSY — escalation detection)
-  - Option B (Privilege Cloud): 22 → 22 (1:1 mapping)
+  - Option A (Devolutions): 22 → Vault roles (LOSSY — escalation detection)
+  - Option B (Keeper): 22 → 4 boolean axes (LOSSY — 12 permissions lost)
+  - Option C (MiniOrange): 22 → 3 levels (LOSSY — highest compression)
 """
 
 import logging
@@ -23,8 +24,9 @@ async def map_permissions(option: str = "b", dry_run: bool = True) -> dict:
     """Run permission mapping (Agent 03).
 
     Maps CyberArk 22-permission model to the target platform.
-    For Secret Server: 22 → 4 roles with escalation detection and loss tracking.
-    For Privilege Cloud: 22 → 22 direct mapping.
+    For Devolutions: 22 → Vault roles with escalation detection and loss tracking.
+    For Keeper: 22 → 4 boolean axes with escalation detection.
+    For MiniOrange: 22 → 3 levels (Admin/Edit/View).
 
     Args:
         option: Migration target — "a" or "b".

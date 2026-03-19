@@ -19,15 +19,15 @@ SECRET_MAP = {
     # CyberArk on-prem PVWA
     "cyberark-username": "CYBERARK_USERNAME",
     "cyberark-password": "CYBERARK_PASSWORD",
-    # Privilege Cloud (Option A)
-    "pcloud-client-id": "PCLOUD_CLIENT_ID",
-    "pcloud-client-secret": "PCLOUD_CLIENT_SECRET",
-    # Secret Server (Option B)
-    "ss-client-id": "SS_CLIENT_ID",
-    "ss-client-secret": "SS_CLIENT_SECRET",
-    # StrongDM (Option A)
-    "strongdm-access-key": "SDM_ACCESS_KEY",
-    "strongdm-secret-key": "SDM_SECRET_KEY",
+    # Devolutions Server (Option A)
+    "devolutions-app-key": "DEVOLUTIONS_APP_KEY",
+    "devolutions-app-secret": "DEVOLUTIONS_APP_SECRET",
+    # Keeper (Option B)
+    "keeper-client-id": "KEEPER_CLIENT_ID",
+    "keeper-client-secret": "KEEPER_CLIENT_SECRET",
+    # MiniOrange (Option C)
+    "miniorange-client-id": "MINIORANGE_CLIENT_ID",
+    "miniorange-client-secret": "MINIORANGE_CLIENT_SECRET",
 }
 
 

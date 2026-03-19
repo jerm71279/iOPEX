@@ -25,7 +25,7 @@ async def run_discovery(option: str = "b", dry_run: bool = True) -> dict:
     gap analysis, and maps permissions.
 
     Args:
-        option: Migration target — "a" (Privilege Cloud) or "b" (Secret Server).
+        option: Migration target — "a" (Devolutions), "b" (Keeper), or "c" (MiniOrange).
         dry_run: If True, simulate without making API calls (default: True).
     """
     state = _get_state()

@@ -129,6 +129,12 @@ async function renderMissionControl() {
   // Predictive Insights
   renderPredictions(predictions);
 
+  // Circuit Breaker Status
+  renderCircuitBreaker();
+
+  // Schema Drift Monitor
+  renderSchemaDrift();
+
   // Mission Control blurb (appended after all panels)
   const blurbTarget = document.getElementById('page-mission');
   if (blurbTarget && !document.getElementById('missionBlurb')) {
@@ -157,6 +163,7 @@ const PF_AGENTS = [
   { num: '14', name: 'Onbd', phase: 'p3', purpose: '10-step app onboarding pipeline' },
   { num: '04', name: 'ETL', phase: 'p45', purpose: '7-step ETL with crash recovery' },
   { num: '05', name: 'Hrtb', phase: 'p45', purpose: '10-check post-migration validation' },
+  { num: '18', name: 'Intgr', phase: 'p45', purpose: '12-check independent integrity re-validation (Agent 18)' },
   { num: '06', name: 'Intg', phase: 'p67', purpose: 'CCP/AAM integration repointing' },
   { num: '07', name: 'Comp', phase: 'p67', purpose: 'PCI-DSS, NIST, HIPAA, SOX evidence' },
   { num: '15', name: 'Hybr', phase: 'p67', purpose: 'Parallel-run traffic shift manager' },
@@ -771,6 +778,130 @@ function renderPredictions(predictions) {
 
   // Auto-select first example after render
   setTimeout(() => selectPredictiveExample(1), 300);
+}
+
+// ── Circuit Breaker Panel ──────────────────────────────────────────
+
+async function renderCircuitBreaker() {
+  const panel = document.getElementById('circuitBreakerPanel');
+  const badge = document.getElementById('cbStatusBadge');
+  if (!panel) return;
+
+  const data = await API.get('/circuit-breaker');
+  if (!data || data.error) return;
+
+  const stateColor = { CLOSED: 'green', HALF_OPEN: 'amber', OPEN: 'red' };
+  const stateDot   = { CLOSED: 'dot-green', HALF_OPEN: 'dot-amber', OPEN: 'dot-red' };
+  const stateBadge = { CLOSED: 'badge-green', HALF_OPEN: 'badge-amber', OPEN: 'badge-red' };
+
+  const s = data.summary;
+  if (badge) {
+    if (s.open > 0) {
+      badge.className = 'badge badge-red';
+      badge.textContent = `${s.open} OPEN`;
+    } else if (s.half_open > 0) {
+      badge.className = 'badge badge-amber';
+      badge.textContent = `${s.half_open} HALF-OPEN`;
+    } else {
+      badge.className = 'badge badge-green';
+      badge.textContent = 'ALL CLOSED';
+    }
+  }
+
+  const targets = Object.entries(data.targets);
+  panel.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px;">
+      ${targets.map(([key, t]) => `
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-top:3px solid var(--${stateColor[t.state]});border-radius:var(--radius);padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:0.68rem;font-weight:700;color:var(--text-bright)">${t.label}</div>
+            <span class="badge ${stateBadge[t.state]}" style="font-size:0.45rem;">${t.state.replace('_', '-')}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <div class="health-dot ${stateDot[t.state]}"></div>
+            <div style="font-size:0.6rem;color:var(--text-muted);">
+              ${t.state === 'CLOSED' ? 'Normal operation' :
+                t.state === 'HALF_OPEN' ? 'Recovery probe — ' + t.half_open_probes + ' probe(s)' :
+                'All calls rejected'}
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
+            <div style="font-size:0.58rem;color:var(--text-muted);">Failures<br><span style="color:var(--${t.failure_count > 0 ? 'amber' : 'text-standard'});font-weight:700;">${t.failure_count}</span></div>
+            <div style="font-size:0.58rem;color:var(--text-muted);">Error Rate<br><span style="color:var(--${t.error_rate_pct > 5 ? 'red' : t.error_rate_pct > 1 ? 'amber' : 'text-standard'});font-weight:700;">${t.error_rate_pct.toFixed(1)}%</span></div>
+            <div style="font-size:0.58rem;color:var(--text-muted);">Avg Latency<br><span style="color:var(--${t.avg_latency_ms > 2000 ? 'red' : t.avg_latency_ms > 500 ? 'amber' : 'text-standard'});font-weight:700;">${t.avg_latency_ms}ms</span></div>
+            <div style="font-size:0.58rem;color:var(--text-muted);">Fallback<br><span style="color:var(--cyan);font-family:var(--font-mono);font-size:0.5rem;">${t.fallback_strategy.replace('_', ' ')}</span></div>
+          </div>
+          ${t.last_trip ? `<div style="font-size:0.52rem;color:var(--amber);margin-top:8px;font-family:var(--font-mono);">Last trip: ${new Date(t.last_trip).toLocaleTimeString()}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+    <div style="padding:0 14px 12px;font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">
+      CLOSED = normal &nbsp;&bull;&nbsp; HALF-OPEN = recovery probe &nbsp;&bull;&nbsp; OPEN = all calls rejected &nbsp;&bull;&nbsp; Updated: ${new Date(data.last_updated).toLocaleTimeString()}
+    </div>
+  `;
+}
+
+// ── Schema Drift Panel ─────────────────────────────────────────────
+
+async function renderSchemaDrift() {
+  const panel = document.getElementById('schemaDriftPanel');
+  const badge = document.getElementById('driftEventCount');
+  if (!panel) return;
+
+  const data = await API.get('/schema-drift/events');
+  if (!data || data.error) return;
+
+  const s = data.summary;
+  if (badge) {
+    const hasCritHigh = s.critical > 0 || s.high > 0;
+    badge.className = `badge ${hasCritHigh ? 'badge-red' : s.medium > 0 ? 'badge-amber' : 'badge-muted'}`;
+    badge.textContent = `${s.total} EVENTS`;
+  }
+
+  const sevColor  = { CRITICAL: 'red', HIGH: 'amber', MEDIUM: 'blue', LOW: 'green', INFO: 'text-muted' };
+  const sevBadge  = { CRITICAL: 'badge-red', HIGH: 'badge-amber', MEDIUM: 'badge-cyan', LOW: 'badge-green', INFO: 'badge-muted' };
+  const catIcon   = { STRUCTURAL: '&#x25A0;', PLATFORM: '&#x25C6;', ACCOUNT: '&#x25CF;', POLICY: '&#x26A0;', MEMBERSHIP: '&#x21C4;', CONNECTIVITY: '&#x26A1;' };
+
+  const bs = data.baseline_snapshot;
+  const cs = data.current_snapshot;
+
+  panel.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 8px;">
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;">
+        <div style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:4px;">BASELINE — ${bs.phase} SNAPSHOT</div>
+        <div style="font-size:0.65rem;color:var(--text-standard);">${bs.total_safes} Safes &bull; ${bs.total_accounts.toLocaleString()} Accounts</div>
+        <div style="font-size:0.5rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:4px;">hash: ${bs.schema_hash}</div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid ${bs.schema_hash !== cs.schema_hash ? 'var(--amber)' : 'var(--border)'};border-radius:var(--radius);padding:10px 12px;">
+        <div style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:4px;">CURRENT SNAPSHOT</div>
+        <div style="font-size:0.65rem;color:var(--text-standard);">${cs.total_safes} Safes &bull; ${cs.total_accounts.toLocaleString()} Accounts
+          <span style="color:var(--amber);margin-left:6px;">+${cs.total_safes - bs.total_safes} Safe</span>
+          <span style="color:var(--amber);margin-left:6px;">+${cs.total_accounts - bs.total_accounts} Accts</span>
+        </div>
+        <div style="font-size:0.5rem;color:${bs.schema_hash !== cs.schema_hash ? 'var(--amber)' : 'var(--green)'};font-family:var(--font-mono);margin-top:4px;">hash: ${cs.schema_hash} ${bs.schema_hash !== cs.schema_hash ? '⚠ DRIFTED' : '✓ MATCH'}</div>
+      </div>
+    </div>
+    <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:6px;">
+      ${data.events.map(e => `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--bg-surface);border:1px solid var(--border);border-left:3px solid var(--${sevColor[e.severity]});border-radius:var(--radius);">
+          <span style="font-size:0.8rem;color:var(--${sevColor[e.severity]});margin-top:1px;">${catIcon[e.category] || '&#x25CF;'}</span>
+          <div style="flex:1">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;flex-wrap:wrap;">
+              <span class="badge ${sevBadge[e.severity]}" style="font-size:0.42rem;">${e.severity}</span>
+              <span class="badge badge-muted" style="font-size:0.42rem;">${e.category}</span>
+              <span style="font-size:0.58rem;color:var(--text-bright);font-weight:600;">${e.safe_name}</span>
+              ${e.status === 'YELLOW_CHECKPOINT_FIRED' ? `<span style="font-size:0.42rem;color:var(--amber);font-family:var(--font-mono);">&#x1F7E1; ${e.checkpoint_id}</span>` : ''}
+            </div>
+            <div style="font-size:0.62rem;color:var(--text-standard);line-height:1.5;">${e.description}</div>
+            <div style="font-size:0.55rem;color:var(--text-muted);margin-top:3px;font-family:var(--font-mono);">${e.delta} &bull; ${new Date(e.detected_at).toLocaleString()}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="padding:0 14px 12px;font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">
+      ${s.checkpoints_fired} checkpoint(s) fired &bull; Last scan: ${new Date(data.last_scan).toLocaleTimeString()} &bull; Prevents 98%→77% accuracy decay over multi-year Cisco engagement
+    </div>
+  `;
 }
 
 // ── Mission Control Blurb ──────────────────────────────────────────
