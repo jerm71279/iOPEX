@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HELIX — BT Autonomous Healing Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">HELIX</div>
+  <div class="sidebar-sub">BT Autonomous Healing Architecture</div>
+
+  <div class="option-switch">
+    <button class="option-btn active" id="opt-a" onclick="switchOption('a')">Current</button>
+    <button class="option-btn" id="opt-b" onclick="switchOption('b')">AI Layer</button>
+    <button class="option-btn" id="opt-c" onclick="switchOption('c')">Full Heal</button>
+  </div>
+  <div class="option-indicator" id="optionIndicator"
+       style="background:var(--bt-dim);color:var(--bt);">
+    CURRENT STATE — MANUAL INTERVENTION
+  </div>
+
+  <button class="nav-link active" onclick="showPage('mission',this)">
+    <span class="nav-icon">&#x25A3;</span> Mission Control
+  </button>
+  <button class="nav-link" onclick="showPage('architecture',this)">
+    <span class="nav-icon">&#x2B21;</span> Architecture
+  </button>
+  <button class="nav-link" onclick="showPage('agents',this)">
+    <span class="nav-icon">&#x25C8;</span> AI Agents
+  </button>
+  <button class="nav-link" onclick="showPage('cascade',this)">
+    <span class="nav-icon">&#x25B6;</span> Cascade Simulator
+  </button>
+  <button class="nav-link" onclick="showPage('howitworks',this)">
+    <span class="nav-icon">&#x25B7;</span> How It Works
+  </button>
+  <button class="nav-link" onclick="showPage('subjects',this)">
+    <span class="nav-icon">&#x25A8;</span> Test Subjects
+  </button>
+  <button class="nav-link" onclick="showPage('safeguards',this)">
+    <span class="nav-icon">&#x25CF;</span> Safety Nets
+  </button>
+  <button class="nav-link" onclick="showPage('audit',this)">
+    <span class="nav-icon">&#x2261;</span> Audit Log
+  </button>
+  <button class="nav-link" onclick="showPage('guide',this)">
+    <span class="nav-icon">&#x2753;</span> Guide
+  </button>
+
+  <div class="sidebar-footer">
+    iOPEX HELIX v1.0<br>
+    BT Autonomous Healing &bull; 4 AI Agents<br>
+    Vanilla JS + CSS
+  </div>
+</nav>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<main class="main">
+
+  <!-- ──── MISSION CONTROL ──── -->
+  <div class="page active" id="page-mission">
+    <div class="page-header">
+      <div class="page-title">Mission Control</div>
+      <div class="page-subtitle" id="missionSubtitle">BT Autonomous Healing Architecture — System Status Dashboard</div>
+    </div>
+    <div id="missionStats" class="stats-grid"></div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Domain Health</div>
+        <span class="badge badge-green" id="domainHealthBadge">5 DOMAINS</span>
+      </div>
+      <div class="health-grid" id="domainHealthGrid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">AI Agent Status</div>
+        <span class="badge badge-bt" id="agentStatusBadge">4 AGENTS</span>
+      </div>
+      <div class="health-grid" id="agentHealthGrid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Recent Events</div>
+        <span class="badge badge-cyan" id="eventCount"></span>
+      </div>
+      <div id="recentEvents" style="padding:0 14px 14px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Cascade Health</div>
+        <span class="badge badge-amber" id="cascadeHealthBadge"></span>
+      </div>
+      <div id="cascadeHealthPanel" class="cascade-pipeline"></div>
+    </div>
+  </div>
+
+  <!-- ──── ARCHITECTURE ──── -->
+  <div class="page" id="page-architecture">
+    <div class="page-header">
+      <div class="page-title">System Architecture</div>
+      <div class="page-subtitle">Existing BT components + iOPEX AI Intelligence Layer — no changes to existing systems</div>
+    </div>
+    <div id="architectureContent"></div>
+  </div>
+
+  <!-- ──── AI AGENTS ──── -->
+  <div class="page" id="page-agents">
+    <div class="page-header">
+      <div class="page-title">AI Agents</div>
+      <div class="page-subtitle">4-Agent Autonomous Healing Layer — Intercept, Fix, Restore, Recover</div>
+    </div>
+    <div id="agentDetail" style="display:none;"></div>
+    <div id="agentGrid" class="agent-grid"></div>
+  </div>
+
+  <!-- ──── CASCADE SIMULATOR ──── -->
+  <div class="page" id="page-cascade">
+    <div class="page-header">
+      <div class="page-title">Cascade Simulator</div>
+      <div class="page-subtitle">Simulate the Partial Success Trap and watch AI agents resolve it in real time</div>
+    </div>
+    <div id="cascadeContent"></div>
+  </div>
+
+  <!-- ──── HOW IT WORKS ──── -->
+  <div class="page" id="page-howitworks">
+    <div class="page-header">
+      <div class="page-title">How It Works</div>
+      <div class="page-subtitle">Animated walkthrough — from The Tangle to Autonomous Healing</div>
+    </div>
+    <div id="howItWorksContent"></div>
+  </div>
+
+  <!-- ──── TEST SUBJECTS ──── -->
+  <div class="page" id="page-subjects">
+    <div class="page-header">
+      <div class="page-title">Test Subjects</div>
+      <div class="page-subtitle">Validation targets for cross-system consistency verification</div>
+    </div>
+    <div id="subjectsContent"></div>
+  </div>
+
+  <!-- ──── SAFETY NETS ──── -->
+  <div class="page" id="page-safeguards">
+    <div class="page-header">
+      <div class="page-title">Safety Nets</div>
+      <div class="page-subtitle">3 Legacy Safeguards — preserved alongside the AI layer</div>
+    </div>
+    <div id="safeguardsContent"></div>
+  </div>
+
+  <!-- ──── AUDIT LOG ──── -->
+  <div class="page" id="page-audit">
+    <div class="page-header">
+      <div class="page-title">Audit Log</div>
+      <div class="page-subtitle">Every agent action logged — data delta, destination, timestamp</div>
+    </div>
+    <div id="auditContent"></div>
+  </div>
+
+  <!-- ──── GUIDE ──── -->
+  <div class="page" id="page-guide">
+    <div class="page-header">
+      <div class="page-title">Guide</div>
+      <div class="page-subtitle">Architecture reference — The Tangle, agents, cascade, team ownership</div>
+    </div>
+    <div id="guideContent"></div>
+  </div>
+
+</main>
+
+<!-- ════════════ TOAST NOTIFICATIONS ════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ════════════ DRILL-DOWN OVERLAY ════════════ -->
+<div class="overlay" id="drillOverlay" onclick="if(event.target===this)closeDrill()">
+  <div class="overlay-panel">
+    <button class="overlay-close" onclick="closeDrill()">&times;</button>
+    <div id="drillTitle" style="font-size:1rem;font-weight:700;color:var(--text-bright);margin-bottom:12px;"></div>
+    <div id="drillContent"></div>
+  </div>
+</div>
+
+<script src="js/mission.js"></script>
+<script src="js/architecture.js"></script>
+<script src="js/agents.js"></script>
+<script src="js/cascade.js"></script>
+<script src="js/howitworks.js"></script>
+<script src="js/subjects.js"></script>
+<script src="js/safeguards.js"></script>
+<script src="js/audit.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
