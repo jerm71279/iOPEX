@@ -23,11 +23,20 @@ const CASCADE_STEPS = [
     status: 'idle',
   },
   {
+    id: 'eedsp',
+    system: 'EEDSP + TMF APIs',
+    label: 'MIDDLEWARE  APP20717 · SVC14123/14352/14353',
+    event: 'Identity delta routed via EEDSP platform → TMF632 PartyManagement / TMF672 UserRolesAndPermissions',
+    result: '⚠ Partial — delta accepted by EEDSP; downstream dispatch to SAF stalled at TMF layer',
+    status: 'idle',
+    partial: true,
+  },
+  {
     id: 'saf',
     system: 'SAF',
-    label: 'DIGITAL IDENTITY',
-    event: 'Awaiting identity delta...',
-    result: '✗ No response — cascade stalled. Record remains: DoB NULL',
+    label: 'DIGITAL IDENTITY  APP20586',
+    event: 'Awaiting EEDSP dispatch...',
+    result: '✗ No response from TMF layer — cascade stalled. Record remains: DoB NULL',
     status: 'idle',
     failure: true,
   },
@@ -35,8 +44,8 @@ const CASCADE_STEPS = [
     id: 'hub',
     system: 'Customer Hub',
     label: 'PROFILE (MONGODB)',
-    event: 'Awaiting identity delta...',
-    result: '✗ Not reached — stale record persists: DoB NULL',
+    event: 'Awaiting SQS/SNS event (IndividualAttributeValueChangeEvent)...',
+    result: '✗ SQS event not dispatched — stale record persists: DoB NULL',
     status: 'idle',
     failure: true,
   },
@@ -46,36 +55,36 @@ const AI_STEPS = [
   {
     agent: 'Observability Agent',
     alias: 'The Interceptor',
-    event: 'Cascade stall detected — SAF + Customer Hub have not received delta within 30s window',
-    action: 'Capturing data delta: { field: "DoB", old: null, new: "10/9/1981", target: ["SAF", "Customer Hub"] }',
+    event: 'Monitoring EEDSP event bus — SAF + Customer Hub have not received delta within 30s window',
+    action: 'Capturing data delta: { field: "DoB", old: null, new: "10/9/1981", target: ["SAF", "Customer Hub"] } — queuing for Resolution Agent',
     color: 'var(--cyan)',
   },
   {
     agent: 'Resolution Agent',
     alias: 'The Precision Fixer',
     event: 'Received delta payload from Observability Agent',
-    action: 'Executing targeted fix → SAF: pushing DoB = 10/9/1981',
+    action: 'Executing targeted PATCH via On Prem API Gateway → SAF: PATCH /tmf/identity DoB = 10/9/1981',
     color: 'var(--green)',
   },
   {
     agent: 'Resolution Agent',
     alias: 'The Precision Fixer',
     event: 'SAF confirmed — DoB updated ✓',
-    action: 'Executing targeted fix → Customer Hub: pushing DoB = 10/9/1981',
+    action: 'Executing targeted PATCH → Customer Hub: PATCH /tmf/digitalIdentity/digital-permissions DoB = 10/9/1981',
     color: 'var(--green)',
   },
   {
     agent: 'Resolution Agent',
     alias: 'The Precision Fixer',
     event: 'Customer Hub confirmed — DoB updated ✓',
-    action: 'All downstream targets consistent — resolution complete. Logging to audit.',
+    action: 'All downstream targets consistent — resolution complete. Writing audit entry with SHA-256 hash.',
     color: 'var(--green)',
   },
   {
     agent: 'RPA Automation',
     alias: 'The User Advocate',
     event: 'Backend fix confirmed across all domains',
-    action: 'Clearing stale auth state for Buck Barrow (BB-0042) — login access restored ✓',
+    action: 'POST /v3/digital-identity/Assisted — clearing stale auth state, restoring login for Buck Barrow (BB-0042) ✓',
     color: 'var(--purple)',
   },
 ];
@@ -215,6 +224,17 @@ function animateStep(step, i) {
     badgeEl.textContent = 'STALLED';
     msgEl.textContent = step.result;
     msgEl.style.color = 'var(--red)';
+  } else if (step.partial) {
+    stepEl.style.borderColor = 'var(--amber)';
+    stepEl.style.background = 'rgba(245,158,11,0.08)';
+    dotEl.style.background = 'var(--amber)';
+    dotEl.style.borderColor = 'var(--amber)';
+    dotEl.style.color = '#fff';
+    dotEl.innerHTML = '⚠';
+    badgeEl.className = 'badge badge-amber';
+    badgeEl.textContent = 'PARTIAL';
+    msgEl.textContent = step.result;
+    msgEl.style.color = 'var(--amber)';
   } else {
     stepEl.style.borderColor = 'var(--green)';
     stepEl.style.background = 'var(--green-dim)';
