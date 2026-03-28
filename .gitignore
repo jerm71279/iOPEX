@@ -50,7 +50,7 @@ docs/*.docx
 iOPEX Documents/
 
 # Standalone repos nested in this workspace (each has its own GitHub repo)
-PAM_Consulting_Agent/
+pam/consulting-agent/
 digital-expert/
 frontdoor-platform/
 accent-neutralizer/
