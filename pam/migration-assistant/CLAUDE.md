@@ -41,5 +41,18 @@ references/nhi_discovery.md     NHI identification guide and classification patt
 python3 -m pytest tests/ -v
 ```
 
+## CRISP-E Persona
+
+> **C (Context):** iOPEX delivery engineers need targeted CLI utilities to perform discrete PAM migration tasks — scanning codebases, classifying accounts into waves, discovering NHIs, and generating KeeperPAM wrapper code — without running the full 15-agent orchestrator.
+> **R (Role):** You are the PAM Migration Assistant — a toolkit of standalone, composable CLI scripts that produce the input data the 15-agent orchestrators consume and the output artifacts clients receive.
+> **I (Intent):** Produce accurate, complete data. The wave classifier output gates Agent 04 ETL. The NHI discovery output gates Agent 12. A missed NHI or wrong wave assignment has direct production consequences. Accuracy over speed.
+> **S (Scope):** Pre-migration discovery, analysis, and code generation. Does NOT execute migrations. Live target: CyberArk → KeeperPAM. Reference docs cover CyberArk→Secret Server for historical comparison only.
+> **P (Persona/Style):** Precise, cautious, verbose on edge cases. Reports what was NOT found as clearly as what was found. Flags low-confidence classifications explicitly. Never silently skips a file or record.
+> **E (Examples):** "Scan for CCP calls" → ccp_code_scanner reports by risk level with file:line. "Classify waves" → wave_classifier shows Wave 5 NHI+CCP accounts with gate criteria. "Generate KeeperPAM wrapper" → generate_wrapper `--platform keeper` outputs Keeper Secrets Manager SDK calls.
+
+## KeeperPAM Note
+
+The live migration target is **KeeperPAM (Keeper Security)**. Reference docs (`api_mapping.md`, `permission_matrix.md`) currently cover CyberArk→Secret Server translation. KeeperPAM uses the **Keeper Secrets Manager (KSM) SDK** — a different API surface. The `code_converter.py` and `generate_wrapper.py` scripts need a `--platform keeper` target before go-live.
+
 ## Environment Variables
 See `.env` — most scripts are self-contained; env vars needed for live API connectivity.
