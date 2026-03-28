@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: Secret_Server_migration
+    env: static
+    staticPublishPath: ./frontend
+    buildCommand: ""
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
