@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pam-dx-portal
+    env: static
+    staticPublishPath: ./frontend
+    buildCommand: ""
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
