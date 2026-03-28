@@ -49,5 +49,11 @@ docs/*.docx
 # OneDrive sync folder — lives on OneDrive already, not for git
 iOPEX Documents/
 
+# Standalone repos nested in this workspace (each has its own GitHub repo)
+PAM_Consulting_Agent/
+digital-expert/
+frontdoor-platform/
+accent-neutralizer/
+
 # Scaffold checklist files — generated per-run, not tracked
 CHECKLIST.md
