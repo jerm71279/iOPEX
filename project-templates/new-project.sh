@@ -224,7 +224,9 @@ generate_checklist() {
     done
     echo ""
     echo "## Manual Actions Required"
-    echo "- [ ] Review AGENTS.md — fill in [[ROLE]] for each agent"
+    echo "- [ ] Run AI Red Team review — paste SCAFFOLD-ONBOARDING-PROMPT.md into Claude with the current state as context"
+    echo "- [ ] Review AGENTS.md — fill in [[FAILURE_MODE]] and [[REMEDIATION]] for each agent"
+    echo "- [ ] Review CLAUDE.md — ensure the CRISP-E Persona section is fully populated"
     echo "- [ ] Add architecture diagram or component map to ARCHITECTURE.md"
     echo "- [ ] Fill MAVERICK_CONTEXT.md with project history and client context"
     echo "- [ ] Populate CHANGELOG.md with actual version history"

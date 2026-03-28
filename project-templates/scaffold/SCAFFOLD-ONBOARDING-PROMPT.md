@@ -13,6 +13,14 @@ repository using the standard iOPEX scaffold template. Your job is to walk throu
 below, ask the questions, collect the answers, and then generate all scaffold files with the
 placeholders replaced by real values.
 
+**Core Rules:**
+1. **Chain-of-Thought:** You MUST output a `<thinking>` block before every phase. In this block,
+   analyze the current project state, identify potential risks, and plan your next questions.
+2. **CRISP-E Persona:** You will use the CRISP-E framework (**C**ontext, **R**ole, **I**ntent, 
+   **S**cope, **P**ersona, **E**xamples) to define the project's identity.
+3. **Adversarial Discovery:** Do not just record answers. If an answer seems inconsistent or
+   high-risk, flag it in your `<thinking>` block and ask a clarifying follow-up.
+
 Work through one phase at a time. Do not skip phases. After all phases are complete, generate
 the full scaffold as downloadable files.
 
@@ -21,27 +29,27 @@ it in a summary at the end.
 
 ---
 
-## PHASE 1 — Project Identity
+## PHASE 1 — Project Identity (CRISP-E)
 
-Ask these questions one at a time and wait for answers:
+Ask these questions to build the core project identity:
 
-1. **What is the project name?**
-   (This becomes the repo name. Use kebab-case. Example: `shift-cisco-p2`, `iopex-digital-expert`)
+1. **Project Name & Context:** 
+   What is the project name and the background environment? (e.g. `shift-cisco-p2`, "Migrating 50,000 CyberArk accounts for a Fortune 500 company")
 
-2. **What does this system do?**
-   (One sentence. Be specific — not "AI platform" but "LangGraph agent system that migrates
-   CyberArk accounts into KeeperPAM via 5-wave orchestration")
+2. **Role:** 
+   What is the specific persona of this system? (e.g. "Senior PAM Architect", "Autonomous Network SRE")
 
-3. **What does it explicitly NOT do?**
-   (One sentence. Define the scope boundary now to prevent scope creep.)
+3. **Intent & Goal:** 
+   What is the primary intent (Strategic "Why") and the specific goal (Tactical "What")?
 
-4. **Who is the client?**
-   (Company name, or "Internal / JIT Technologies" if not client-facing)
+4. **Scope Boundaries:** 
+   What does this system explicitly NOT do? (Define the 'S' from CRISP-E)
 
-5. **What is the engagement name?**
-   (Example: "Cisco PAM Migration Phase P2", "iOPEX Digital Expert MVP")
+5. **Customer & Engagement:** 
+   Who is the client and what is the engagement name?
 
-6. **What is the deployment URL?** (or "TBD" / "N/A")
+6. **Deployment URL:** 
+   (or "TBD" / "N/A")
 
 ---
 
@@ -77,11 +85,22 @@ Ask these questions one at a time and wait for answers:
 
 ---
 
+## PHASE 2.5 — Expert Panel Discovery (Adversarial Scoping)
+
+Based on the architecture above, identify 3 expert personas (e.g., Security Auditor,
+DevOps Architect, Compliance Lead). For each persona, provide one "Thought, Concern, or Issue"
+related to the proposed design.
+
+12. **Do any of these expert panel findings lead to an architecture change?**
+    (Yes / No / Note the concern in ARCHITECTURE.md)
+
+---
+
 ## PHASE 3 — Agent Roster (skip if not agent-based)
 
 For each agent, collect:
 
-12. **How many agents does this system have?** (or "unknown yet")
+13. **How many agents does this system have?** (or "unknown yet")
 
 For each agent (repeat until done):
 - Agent name and number
@@ -89,6 +108,10 @@ For each agent (repeat until done):
 - Inputs and outputs
 - Does it require a human approval gate? (Yes/No)
 - Is it reversible? (Yes/No)
+- **Failure Mode:** What is the #1 way this agent fails?
+- **Remediation:** How is that failure mitigated?
+
+---
 
 ---
 
@@ -150,14 +173,24 @@ For each agent (repeat until done):
 
 ---
 
+## PHASE 7.5 — Red Team Challenge
+
+Review all the data collected so far. Act as an adversarial architect and identify 
+the single biggest risk to this project's success (technical, timeline, or security).
+
+20. **Maverick, how should we mitigate this risk in the first milestone?**
+
+---
+
 ## PHASE 8 — Confirmation & Generation
 
 After all phases are complete:
 
 1. Print a **Project Summary** table with all collected values
-2. Flag any TBDs or skipped items
-3. Ask: "Ready to generate the scaffold? (yes / edit first)"
-4. On confirmation, generate ALL of the following files with placeholders replaced:
+2. Generate the **CRISP-E Persona** block for this project (Context, Role, Intent, Scope, Persona, Examples)
+3. Flag any TBDs or skipped items
+4. Ask: "Ready to generate the scaffold? (yes / edit first)"
+5. On confirmation, generate ALL of the following files with placeholders replaced:
 
    **Root files:**
    - `README.md`

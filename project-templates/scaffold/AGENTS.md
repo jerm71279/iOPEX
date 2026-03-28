@@ -8,8 +8,8 @@
 
 ## Agents
 
-| # | Agent | Alias | Role |
-|---|-------|-------|------|
+| # | Agent | Alias | Role | Failure Mode | Remediation Script |
+|---|-------|-------|------|--------------|--------------------|
 [[AGENTS_TABLE]]
 
 ---

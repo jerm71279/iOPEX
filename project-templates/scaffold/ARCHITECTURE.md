@@ -42,6 +42,6 @@
 
 ## Decision Log
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
+| Decision | Choice | Rationale | Panel Flags |
+|----------|--------|-----------|-------------|
 [[DECISIONS_TABLE]]

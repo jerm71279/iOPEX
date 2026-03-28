@@ -18,6 +18,13 @@
 
 ---
 
+## Intent & Strategic Goal
+
+> **I (Intent):** [[STRATEGIC_INTENT]]
+> **Goal:** [[PRIMARY_GOAL]]
+
+---
+
 ## Why This Exists
 
 [[PROJECT_WHY]]
