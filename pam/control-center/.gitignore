@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 backend/imported_data/
 .env
+
+# Internal iOPEX context — not for public distribution
+MAVERICK_CONTEXT.md
+SCAFFOLD-ONBOARDING-PROMPT.md

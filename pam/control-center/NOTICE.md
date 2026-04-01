@@ -18,20 +18,4 @@ is strictly prohibited.
 
 ## Third-Party Acknowledgements
 
-The following open-source packages are used in this project under their respective licenses.
-
-| Package | License | Use |
-|---------|---------|-----|
-| FastAPI | MIT | Backend API framework |
-| Uvicorn | BSD-3-Clause | ASGI server |
-| python-multipart | Apache-2.0 | File upload parsing |
-| scikit-learn | BSD-3-Clause | Isolation Forest anomaly detection |
-| lightgbm | MIT | NHI classification model |
-| numpy | BSD-3-Clause | Numerical computation |
-| joblib | BSD-3-Clause | Model serialization |
-| pydantic-settings | MIT | MCP server configuration |
-| mcp (FastMCP) | MIT | MCP server framework |
-| azure-identity | MIT | Azure Key Vault managed identity auth |
-| azure-keyvault-secrets | MIT | Azure Key Vault secrets client |
-
-Full license texts are available at each package's respective repository or PyPI page.
+[[THIRD_PARTY_NOTICES]]
