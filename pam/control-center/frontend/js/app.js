@@ -1,5 +1,6 @@
 /**
- * App core — page switching, option toggle, initialization.
+ * App core — page switching and initialization.
+ * KeeperPAM is the sole migration target — no option toggle.
  */
 
 let currentPage = 'mission';
@@ -20,40 +21,14 @@ function showPage(pageId, btn) {
     case 'accounts': renderAccountExplorer(); break;
     case 'gates': renderGateTracker(); break;
     case 'yellow': renderYellowCheckpoints(); break;
-    case 'compare': renderComparison(); break;
     case 'pamfile': break; // standalone iframe — no render needed
     case 'mcp': renderMcpDashboard(); break;
+    case 'pmo': renderPMODashboard(); break;
+    case 'securityqa': renderSecurityQA(); break;
     case 'guide': renderGuide(); break;
+    case 'lab': renderLabShowcase(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }
-}
-
-function switchOption(opt) {
-  API.setOption(opt);
-  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('opt-' + opt).classList.add('active');
-
-  const ind = document.getElementById('optionIndicator');
-  if (opt === 'a') {
-    ind.textContent = 'DELINEA: SECRET SERVER + STRONGDM';
-    ind.style.background = 'var(--blue-dim)';
-    ind.style.color = 'var(--blue)';
-  } else {
-    ind.textContent = 'KEEPERPAM — LIVE TARGET';
-    ind.style.background = 'var(--green-dim)';
-    ind.style.color = 'var(--green)';
-  }
-
-  // Update week plan labels
-  const weekLabel = document.getElementById('weekPlanLabel');
-  const missionSub = document.getElementById('missionSubtitle');
-  if (weekLabel) weekLabel.textContent = opt === 'a' ? '80-WEEK PLAN' : '50-WEEK PLAN';
-  if (missionSub) missionSub.textContent = opt === 'a'
-    ? '80-Week PAM Migration — Real-Time Dashboard (Delinea Reference)'
-    : '50-Week PAM Migration — Real-Time Dashboard (KeeperPAM Live)';
-
-  // Re-render current page with new option
-  showPage(currentPage, document.querySelector('.nav-link.active'));
 }
 
 function openDrill(title, content) {

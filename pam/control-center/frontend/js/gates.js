@@ -9,7 +9,7 @@ async function renderGateTracker() {
 
   document.getElementById('gateTimeline').innerHTML = gates.map(g => {
     const contextText = option === 'b' ? g.context_b : g.context_a;
-    const contextLabel = option === 'b' ? 'CyberArk Cloud Context' : 'Delinea Context';
+    const contextLabel = 'KeeperPAM Context';
     const inputs = g.inputs || [];
     const unlocks = g.unlocks || '';
 
@@ -59,8 +59,28 @@ async function renderGateTracker() {
         </div>
       ` : ''}
 
+      ${g.sod ? `
+        <div style="margin-top:12px;padding:12px 14px;background:var(--bg-surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:4px;">
+          <div class="gate-context-label" style="color:var(--purple);margin-bottom:8px;letter-spacing:.05em;">&#x1F512; SEPARATION OF DUTIES</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.67rem;line-height:1.7;margin-bottom:10px;">
+            <div>
+              <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--cyan);font-weight:700;margin-bottom:3px;">iOPEX — PERFORMS</div>
+              <div style="color:var(--text-standard)">${g.sod.iOPEX}</div>
+            </div>
+            <div>
+              <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--green);font-weight:700;margin-bottom:3px;">CISCO — APPROVES INDEPENDENTLY</div>
+              <div style="color:var(--text-standard)">${g.sod.cisco}</div>
+            </div>
+          </div>
+          <div style="padding:7px 10px;background:var(--red-dim);border:1px solid var(--red);border-radius:3px;font-size:0.65rem;color:var(--red);line-height:1.6;">
+            <strong>&#x26D4; Cannot:</strong> ${g.sod.blocker}
+          </div>
+          <div style="margin-top:7px;font-size:0.64rem;color:var(--text-muted);font-style:italic;line-height:1.5;">Rule: ${g.sod.rule}</div>
+        </div>
+      ` : ''}
+
       ${contextText ? `
-        <div class="callout amber" style="margin-bottom:0">
+        <div class="callout amber" style="margin-bottom:0;margin-top:12px;">
           <div class="callout-title" style="color:var(--amber)">${contextLabel}</div>
           <p>${contextText}</p>
         </div>

@@ -15,13 +15,9 @@
   <div class="sidebar-logo">SHIFT</div>
   <div class="sidebar-sub">Secure Hybrid Identity & Function Transfer</div>
 
-  <div class="option-switch">
-    <button class="option-btn" id="opt-a" onclick="switchOption('a')">Delinea</button>
-    <button class="option-btn active" id="opt-b" onclick="switchOption('b')">KeeperPAM</button>
-  </div>
   <div class="option-indicator" id="optionIndicator"
        style="background:var(--green-dim);color:var(--green);">
-    KEEPERPAM — LIVE TARGET
+    KEEPERPAM — LIVE MIGRATION TARGET
   </div>
 
   <button class="nav-link active" onclick="showPage('mission',this)">
@@ -45,9 +41,6 @@
   <button class="nav-link" onclick="showPage('yellow',this)">
     <span class="nav-icon">&#x26A0;</span> Yellow Checkpoints
   </button>
-  <button class="nav-link" onclick="showPage('compare',this)">
-    <span class="nav-icon">&#x2194;</span> Comparison
-  </button>
   <button class="nav-link" onclick="showPage('pamfile',this)">
     <span class="nav-icon">&#x25B7;</span> Life of a PAM File
   </button>
@@ -57,13 +50,22 @@
   <button class="nav-link" onclick="showPage('guide',this)">
     <span class="nav-icon">&#x2753;</span> Guide & FAQ
   </button>
+  <button class="nav-link" onclick="showPage('lab',this)">
+    <span class="nav-icon">&#x1F9EA;</span> Lab Showcase
+  </button>
+  <button class="nav-link" onclick="showPage('pmo',this)">
+    <span class="nav-icon">&#x1F4CA;</span> PMO Intelligence
+  </button>
+  <button class="nav-link" onclick="showPage('securityqa',this)">
+    <span class="nav-icon">&#x1F512;</span> Security Q&amp;A
+  </button>
   <button class="nav-link" onclick="showPage('disclaimer',this)">
     <span class="nav-icon">&#x26A0;</span> Status & Info
   </button>
 
   <div class="sidebar-footer">
-    iOPEX SHIFT v2.0<br>
-    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+2 AGENTS<br>
+    iOPEX SHIFT v2.1<br>
+    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+3 AGENTS<br>
     FastAPI + Vanilla JS
   </div>
 </nav>
@@ -75,7 +77,7 @@
   <div class="page active" id="page-mission">
     <div class="page-header">
       <div class="page-title">Mission Control</div>
-      <div class="page-subtitle" id="missionSubtitle">80-Week PAM Migration — Real-Time Dashboard</div>
+      <div class="page-subtitle" id="missionSubtitle">80-Week CyberArk → KeeperPAM Migration — Real-Time Dashboard</div>
     </div>
     <!-- Life of a PAM File Banner -->
     <div class="pam-life-banner" onclick="showPage('pamfile',document.querySelector('[onclick*=pamfile]'))">
@@ -147,6 +149,20 @@
       </div>
       <div id="predictionsPanel"></div>
     </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Circuit Breaker Status</div>
+        <span class="badge badge-cyan" id="cbStatusBadge"></span>
+      </div>
+      <div id="circuitBreakerPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Schema Drift Monitor</div>
+        <span class="badge badge-amber" id="driftEventCount"></span>
+      </div>
+      <div id="schemaDriftPanel"></div>
+    </div>
   </div>
 
   <!-- ──── PHASE EXPLORER ──── -->
@@ -183,7 +199,7 @@
       <div class="panel-header">
         <div class="panel-title">ETL Pipeline Simulation</div>
         <div>
-          <select id="waveSelect" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
+          <select id="waveSelect" onchange="renderIntegrityReport(this.value)" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
             <option value="1">Wave 1</option>
             <option value="2">Wave 2</option>
             <option value="3">Wave 3</option>
@@ -198,9 +214,19 @@
     </div>
     <div class="panel" style="margin-top:16px;">
       <div class="panel-header">
-        <div class="panel-title">Heartbeat Validation (10 Checks)</div>
+        <div class="panel-title">Heartbeat Validation — Agent 05 (10 Checks)</div>
       </div>
       <div class="health-grid" id="heartbeatChecks"></div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div class="panel-title">Integrity Validation — Agent 18 (12 IC Checks)</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge badge-purple" id="integrityAccBadge"></span>
+          <span style="font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">INDEPENDENT SESSION</span>
+        </div>
+      </div>
+      <div id="integrityChecksPanel"></div>
     </div>
   </div>
 
@@ -246,15 +272,6 @@
     <div id="yellowCheckpoints"></div>
   </div>
 
-  <!-- ──── COMPARISON ──── -->
-  <div class="page" id="page-compare">
-    <div class="page-header">
-      <div class="page-title">Option Comparison</div>
-      <div class="page-subtitle" id="compareSubtitle">Delinea (Secret Server + StrongDM) vs KeeperPAM (Live Target)</div>
-    </div>
-    <div id="comparisonContent"></div>
-  </div>
-
   <!-- ──── LIFE OF A PAM FILE ──── -->
   <div class="page" id="page-pamfile">
     <div class="page-header">
@@ -273,6 +290,15 @@
     <div id="mcpContent"></div>
   </div>
 
+  <!-- ──── PMO INTELLIGENCE ──── -->
+  <div class="page" id="page-pmo">
+    <div class="page-header">
+      <div class="page-title">PMO Intelligence</div>
+      <div class="page-subtitle">Layer 0 — AI-Native Project Management &bull; iOPEX PMO Engine + Execution Engine + RAG Dashboard</div>
+    </div>
+    <div id="shift-pmo-dashboard"></div>
+  </div>
+
   <!-- ──── GUIDE & FAQ ──── -->
   <div class="page" id="page-guide">
     <div class="page-header">
@@ -280,6 +306,24 @@
       <div class="page-subtitle">Comprehensive Reference — Architecture, Agents, Predictions, Glossary</div>
     </div>
     <div id="guideContent"></div>
+  </div>
+
+  <!-- ──── SECURITY Q&A ──── -->
+  <div class="page" id="page-securityqa">
+    <div class="page-header">
+      <div class="page-title">Security Q&amp;A</div>
+      <div class="page-subtitle">Deep Dive — Enterprise Security Architect Review &bull; Encryption &bull; Compliance &bull; NHI &bull; Pentest</div>
+    </div>
+    <div id="securityQAContent"></div>
+  </div>
+
+  <!-- ──── LAB SHOWCASE ──── -->
+  <div class="page" id="page-lab">
+    <div class="page-header">
+      <div class="page-title">Lab Showcase</div>
+      <div class="page-subtitle">Interactive PAM capability demonstrations</div>
+    </div>
+    <div id="labContent"></div>
   </div>
 
   <!-- ──── DISCLAIMER ──── -->
@@ -313,11 +357,13 @@
 <script src="/js/agents.js"></script>
 <script src="/js/waves.js"></script>
 <script src="/js/gates.js"></script>
-<script src="/js/compare.js"></script>
 <script src="/js/yellow.js"></script>
 <script src="/js/accounts.js"></script>
 <script src="/js/guide.js"></script>
 <script src="/js/mcp.js"></script>
+<script src="/js/lab.js"></script>
+<script src="/js/pmo.js"></script>
+<script src="/js/securityqa.js"></script>
 <script src="/js/app.js"></script>
 
 </body>

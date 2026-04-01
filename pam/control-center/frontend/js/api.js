@@ -1,6 +1,6 @@
 /**
  * API client — fetch wrapper for all backend calls.
- * When stubs are wired to real agents, no changes needed here.
+ * KeeperPAM is the sole target — option is fixed to 'b'.
  */
 const API = {
   option: 'b',
@@ -21,9 +21,5 @@ const API = {
       body: JSON.stringify(body),
     });
     return res.json();
-  },
-
-  setOption(opt) {
-    this.option = opt;
   },
 };

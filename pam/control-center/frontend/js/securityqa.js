@@ -1,5 +1,5 @@
 /**
- * Security Q&A page — deep dive for Cisco Security Architect
+ * Security Q&A page — deep dive for Enterprise Security Architect
  */
 function renderSecurityQA() {
   const el = document.getElementById('securityQAContent');
@@ -20,7 +20,7 @@ function renderSecurityQA() {
       ['How does it authenticate to Keeper?',
         'OAuth2 client credentials grant via Keeper PAM API. Client ID and secret are environment variables. Token is refreshed proactively before expiry (within 60 seconds) — no silent token failures during a live migration run.'],
       ['What happens to the 22 CyberArk permissions during migration to Keeper?',
-        'Keeper uses a Vault role model — not a 1:1 map. Agent 03 translates the 22 permissions and flags two critical risks:<br><br><strong>Permission loss</strong> — 9 permissions have no Keeper equivalent and are permanently dropped.<br><strong>Escalation</strong> — some members may receive <em>more</em> access than intended due to role rounding.<br><br>Agent 03 produces a full escalation and loss report. <strong>iOPEX cannot approve this output.</strong> Cisco Security Architect must independently review every escalation flag before Phase 3 proceeds. This is a PCI-DSS Requirement 7.1 dual-control — the team that performs a control cannot also approve it.'],
+        'Keeper uses a Vault role model — not a 1:1 map. Agent 03 translates the 22 permissions and flags two critical risks:<br><br><strong>Permission loss</strong> — 9 permissions have no Keeper equivalent and are permanently dropped.<br><strong>Escalation</strong> — some members may receive <em>more</em> access than intended due to role rounding.<br><br>Agent 03 produces a full escalation and loss report. <strong>iOPEX cannot approve this output.</strong> Enterprise Security Architect must independently review every escalation flag before Phase 3 proceeds. This is a PCI-DSS Requirement 7.1 dual-control — the team that performs a control cannot also approve it.'],
       ['Which 9 permissions are lost with no equivalent in any target?',
         '<code>AccessWithoutConfirmation</code>, <code>SpecifyNextAccountContent</code>, <code>BackupSafe</code>, <code>CreateFolders</code>, <code>DeleteFolders</code>, <code>MoveAccountsAndFolders</code>, <code>RequestsAuthorizationLevel1</code>, <code>RequestsAuthorizationLevel2</code>, <code>InitiateCPMAccountManagementOperations</code>.<br><br>All must be reviewed for compliance impact before migration proceeds.'],
       ['Is MFA enforced for privileged access in the target architecture?',
@@ -28,25 +28,25 @@ function renderSecurityQA() {
     ]],
     ['Network Security', [
       ['What network exposure does the Keeper Gateway require?',
-        'The KSM gateway runs as a Docker container (minimum 4 CPU / 16 GB) and requires line-of-sight to all managed target systems. It sits inside Cisco\'s network perimeter — it does NOT require inbound internet exposure. Outbound HTTPS to Keeper cloud for command polling only. No inbound firewall rules needed for the gateway itself.'],
+        'The KSM gateway runs as a Docker container (minimum 4 CPU / 16 GB) and requires line-of-sight to all managed target systems. It sits inside the Enterprise network perimeter — it does NOT require inbound internet exposure. Outbound HTTPS to Keeper cloud for command polling only. No inbound firewall rules needed for the gateway itself.'],
       ['What about Cisco-specific network device coverage — IOS, NX-OS, ASA?',
         'All three are included. CyberArk\'s existing platform plugins for Cisco IOS/NX-OS/ASA carry forward. The Ansible-based automation layer consumes Keeper-managed credentials via the native KSM SDK — no plaintext credentials in Ansible playbooks or inventory files.'],
       ['Can the CI/CD pipeline run on public cloud runners?',
-        'No. CI/CD runners must be self-hosted inside Cisco\'s network. They need reachable paths to CyberArk PVWA (source), Keeper Gateway (target), and Devolutions (session layer). Public runners have no network path and would be blocked at the firewall. This is enforced by network topology, not just policy.'],
+        'No. CI/CD runners must be self-hosted inside the Enterprise network. They need reachable paths to CyberArk PVWA (source), Keeper Gateway (target), and KCM (session layer). Public runners have no network path and would be blocked at the firewall. This is enforced by network topology, not just policy.'],
       ['How are secrets injected into the CI/CD pipeline without hardcoding?',
         'Secrets are injected at runtime from the chosen secret store (Keeper KSM). They are never in YAML, never in environment variable blocks in pipeline config files, never in logs. <code>trufflehog</code> and <code>detect-secrets</code> scan every commit and every file before merge — the pipeline hard-fails on any credential pattern detected.'],
     ]],
     ['Audit, Compliance & Governance', [
       ['What happens to the CyberArk audit trail when we migrate?',
-        '<strong style="color:var(--red)">This is the most critical compliance risk in the program.</strong> CyberArk audit history does NOT migrate to any target platform. The audit trail restarts at the migration date. Agent 07 automatically exports and archives all CyberArk audit logs before decommission in P7. Archived logs must be retained per Cisco\'s compliance retention policy (7 years for SOX, 1 year for PCI-DSS minimum).'],
+        '<strong style="color:var(--red)">This is the most critical compliance risk in the program.</strong> CyberArk audit history does NOT migrate to any target platform. The audit trail restarts at the migration date. Agent 07 automatically exports and archives all CyberArk audit logs before decommission in P7. Archived logs must be retained per the Enterprise compliance retention policy (7 years for SOX, 1 year for PCI-DSS minimum).'],
       ['How do we maintain PCI-DSS compliance through the migration window?',
-        'Three controls:<br><br><strong>1. Dual-control at gate g3</strong> — Agent 03 permission mapping output reviewed by Cisco Security Architect, not iOPEX.<br><strong>2. Parallel running (P6)</strong> — both CyberArk and the target are live simultaneously; no single point of failure.<br><strong>3. Read-only gate (g13)</strong> — CyberArk is set to read-only until all three independent Cisco approvers (CAB, Exec Sponsor, Compliance) authorize.'],
+        'Three controls:<br><br><strong>1. Dual-control at gate g3</strong> — Agent 03 permission mapping output reviewed by Enterprise Security Architect, not iOPEX.<br><strong>2. Parallel running (P6)</strong> — both CyberArk and the target are live simultaneously; no single point of failure.<br><strong>3. Read-only gate (g13)</strong> — CyberArk is set to read-only until all three independent Enterprise approvers (CAB, Exec Sponsor, Compliance) authorize.'],
       ['What does SOX Section 404 require from us specifically?',
-        'Gate g9 requires Compliance sign-off in addition to App Owner confirmation before production waves proceed. SOX 404 mandates dual-control for credential management operations — iOPEX cannot satisfy both the executor and approver roles. Cisco Compliance must be an independent approver at this gate.'],
+        'Gate g9 requires Compliance sign-off in addition to App Owner confirmation before production waves proceed. SOX 404 mandates dual-control for credential management operations — iOPEX cannot satisfy both the executor and approver roles. Enterprise Compliance must be an independent approver at this gate.'],
       ['What is the highest-authority gate and what can block it?',
-        'Gate g13 — Cutover Approval. Sets the source CyberArk vault to read-only — the last reversible action before decommission. All three Cisco approvers must authorize. If any approver is unavailable or withholds approval, the migration pauses indefinitely. iOPEX cannot proceed on partial or verbal authorization.'],
+        'Gate g13 — Cutover Approval. Sets the source CyberArk vault to read-only — the last reversible action before decommission. All three Enterprise approvers must authorize. If any approver is unavailable or withholds approval, the migration pauses indefinitely. iOPEX cannot proceed on partial or verbal authorization.'],
       ['How is the audit log itself protected against tampering?',
-        'The orchestrator writes audit logs in JSONL format with a SHA-256 hash chain — each entry includes the hash of the previous entry. Any tampering with a log entry breaks the chain and is immediately detectable. SIEM-ready format for ingestion into Cisco\'s existing SIEM infrastructure.'],
+        'The orchestrator writes audit logs in JSONL format with a SHA-256 hash chain — each entry includes the hash of the previous entry. Any tampering with a log entry breaks the chain and is immediately detectable. SIEM-ready format for ingestion into the Enterprise SIEM infrastructure.'],
     ]],
     ['Non-Human Identities (NHI) & DevOps Secrets', [
       ['How are service accounts and machine identities handled differently from human accounts?',
@@ -75,13 +75,13 @@ function renderSecurityQA() {
   ];
 
   const risks = [
-    ['Audit log discontinuity',           'HIGH',   'Cisco Compliance',         'Agent 07 archives pre-migration; retain per policy'],
-    ['Permission model loss (9 perms)',   'HIGH',   'Cisco Security Architect', 'Agent 03 report — mandatory review at gate g3'],
-    ['Permission escalation on mapping',  'HIGH',   'Cisco Security Architect', 'Dual-control review — iOPEX cannot self-approve'],
+    ['Audit log discontinuity',           'HIGH',   'Enterprise Compliance',         'Agent 07 archives pre-migration; retain per policy'],
+    ['Permission model loss (9 perms)',   'HIGH',   'Enterprise Security Architect', 'Agent 03 report — mandatory review at gate g3'],
+    ['Permission escalation on mapping',  'HIGH',   'Enterprise Security Architect', 'Dual-control review — iOPEX cannot self-approve'],
     ['Conjur/Kubernetes re-architecture', 'HIGH',   'App Teams',                'PENDING_EXTERNAL_TEAM — outside automated scope'],
-    ['PSM session recording loss',        'MEDIUM', 'Cisco Compliance',         'Archive recordings before P7 decommission'],
+    ['PSM session recording loss',        'MEDIUM', 'Enterprise Compliance',         'Archive recordings before P7 decommission'],
     ['CCP/AAM re-point failures',         'MEDIUM', 'IOPEX_DELIVERY',           'Agent 06 code scan; app team sign-off per wave'],
-    ['Keeper Gateway network exposure',   'LOW',    'Cisco NOC/Infra',          'No inbound rules required; outbound HTTPS only'],
+    ['Keeper Gateway network exposure',   'LOW',    'Enterprise NOC/Infra',          'No inbound rules required; outbound HTTPS only'],
     ['TLS misconfiguration',              'LOW',    'IOPEX_DELIVERY',           'Pre-P1 cert validation; pentest pre-P5'],
   ];
 
@@ -93,11 +93,11 @@ function renderSecurityQA() {
       <!-- Header -->
       <div class="panel" style="margin-bottom:20px;padding:20px 24px;">
         <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">SHIFT Engagement — Security Review</div>
-        <div style="font-size:1.1rem;font-weight:700;color:var(--text-bright);margin-bottom:8px;">Security Deep Dive — Cisco Security Architect Q&amp;A</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-bright);margin-bottom:8px;">Security Deep Dive — Enterprise Security Architect Q&amp;A</div>
         <div style="font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
           Security-focused questions and answers covering the full SHIFT platform deployment — encryption,
           authentication, network security, compliance (PCI-DSS, SOX), NHI/DevOps secrets, penetration testing,
-          and operational security controls. Prepared for Cisco Security Architect review.
+          and operational security controls. Prepared for Enterprise Security Architect review.
         </div>
       </div>
 
