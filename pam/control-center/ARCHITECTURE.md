@@ -151,13 +151,15 @@ DUAL-REPO PUSH (always required)
 
 ## Security Notes
 
-- **No authentication (demo)**: All API endpoints are currently open. Add middleware before exposing to a real client environment.
+- **No authentication (demo — P0 blocker)**: All API endpoints are currently open. `DASHBOARD_SECRET_KEY` is defined in `.env` but middleware is not yet wired. Add before live client engagement.
 - **Gate approval endpoint**: `POST /api/gates/{id}/approve` has no auth — anyone with network access can approve a gate. Add operator auth before production.
 - **Import endpoint**: Accepts arbitrary JSON — add schema validation to prevent state corruption via malformed imports.
-- **MCP transport**: HTTP/Streamable (not STDIO) — avoids NeighborJack vulnerability per mcp-servers/pam-migration-mcp/server.py comment.
-- **Credentials (MCP)**: CyberArk PVWA credentials loaded via env vars or Azure Key Vault. Never hardcoded. See `shared/credential_loader.py`.
+- **MCP transport**: HTTP/Streamable (not STDIO) — avoids NeighborJack vulnerability. Ports 8100/8101 are plain HTTP; place behind a TLS-terminating reverse proxy or restrict via NSG in Azure environments.
+- **Credentials (MCP)**: CyberArk PVWA credentials loaded via env vars or Azure Key Vault (`shared/credential_loader.py`). In non-dev environments with `PAM_MCP_KEY_VAULT_URI` set, the MCP server will refuse to start if `CYBERARK_USERNAME`/`CYBERARK_PASSWORD` fail to load — intentional fail-fast gate.
+- **ML mock fallback**: If `LiveMLProvider` fails to load, `/api/ml/status` returns `mock_fallback: true` and `inference: "mock"`. The dashboard ML badge shows amber **MOCK** instead of green **ACTIVE**, with a tooltip showing the failure reason.
 - **Public repo**: `jerm71279/pam-control-center` is public — ensure no credentials, internal hostnames, or client data are committed.
-- **ML models**: Not sensitive, but model files should not be committed to public repo — load from mounted volume.
+- **ML models**: Not sensitive, but model files (`.pkl`) should not be committed to the public repo — load from a mounted volume.
+- **Azure pre-checks**: Gates g5 (Structure Approval) and g6 (Pilot Results Approval) now include `azure_checks` arrays covering Key Vault credential verification, managed identity role assignment, CA policy exemption, SOC notification, SIEM handoff, and break-glass account sequencing. Items are conditional on the client environment — verify which apply before P4.
 
 ---
 

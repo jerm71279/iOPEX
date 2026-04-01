@@ -2,7 +2,9 @@
 PAM Migration Control Center — FastAPI Application
 Serves the frontend SPA and REST API with mock/importable data.
 """
+import copy
 import json
+import logging
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +12,8 @@ from fastapi.responses import FileResponse
 from backend.routers import dashboard, phases, agents, waves, gates, deliverables, accounts, checkpoints, mcp, ml
 from backend.routers import state as state_router
 from backend.mock_data import PHASES, AGENTS, WAVES, GATES, OPTIONS, DELIVERABLES
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="PAM Migration Control Center",
@@ -20,6 +24,16 @@ app = FastAPI(
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 DATA_DIR = Path(__file__).parent / "imported_data"
 DATA_DIR.mkdir(exist_ok=True)
+
+# Deep-copy original mock data before any imports can mutate it
+import backend.mock_data.data as _mock_store
+_MOCK_DEFAULTS = {
+    "phases":      copy.deepcopy(_mock_store.PHASES),
+    "agents":      copy.deepcopy(_mock_store.AGENTS),
+    "waves":       copy.deepcopy(_mock_store.WAVES),
+    "gates":       copy.deepcopy(_mock_store.GATES),
+    "deliverables": copy.deepcopy(_mock_store.DELIVERABLES),
+}
 
 # ── API Routers ──────────────────────────────────────────────────────
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
@@ -69,10 +83,11 @@ async def import_status():
 
 @app.delete("/api/import/{data_type}", tags=["Import"])
 async def clear_import(data_type: str):
-    """Remove imported data and revert to mock data."""
+    """Remove imported data and revert in-memory store to original mock data."""
     path = DATA_DIR / f"{data_type}.json"
     if path.exists():
         path.unlink()
+    _reset_to_mock(data_type)
     return {"status": "cleared", "data_type": data_type, "reverted_to": "mock_data"}
 
 
@@ -92,6 +107,22 @@ def _apply_import(data_type: str, data):
         store.DELIVERABLES.update(data)
 
 
+def _reset_to_mock(data_type: str):
+    """Revert an in-memory data store to its original mock values."""
+    import backend.mock_data.data as store
+    defaults = _MOCK_DEFAULTS.get(data_type)
+    if defaults is None:
+        return
+    if data_type == "gates":
+        store.GATES.clear()
+        store.GATES.extend(copy.deepcopy(defaults))
+    elif isinstance(defaults, dict):
+        target = getattr(store, data_type.upper(), None)
+        if target is not None:
+            target.clear()
+            target.update(copy.deepcopy(defaults))
+
+
 def _load_imports_on_startup():
     """Load any previously imported data files on startup."""
     for f in DATA_DIR.glob("*.json"):
@@ -99,8 +130,8 @@ def _load_imports_on_startup():
         try:
             data = json.loads(f.read_text())
             _apply_import(data_type, data)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to load import file %s: %s", f.name, e)
 
 
 _load_imports_on_startup()

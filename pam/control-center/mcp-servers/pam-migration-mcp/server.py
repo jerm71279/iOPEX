@@ -84,6 +84,18 @@ async def lifespan(server):
     cred_status = load_credentials(settings.key_vault_uri)
     logger.info("Credentials loaded: %s", {k: v for k, v in cred_status.items() if v})
 
+    # Fail fast in non-dev environments if Key Vault was configured but
+    # the minimum required credentials didn't load. Prevents the server
+    # from starting in a credential-less state against a live PVWA.
+    if settings.environment != "dev" and settings.key_vault_uri:
+        required = {"CYBERARK_USERNAME", "CYBERARK_PASSWORD"}
+        missing = [k for k in required if not cred_status.get(k)]
+        if missing:
+            raise RuntimeError(
+                f"Key Vault credential load failed — missing: {missing}. "
+                "Set PAM_MCP_ENVIRONMENT=dev to override (local only)."
+            )
+
     # 2. Initialize state + audit
     _state = get_migration_state(
         orchestrator_path=settings.orchestrator_path,

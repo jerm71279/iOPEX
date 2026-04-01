@@ -31,8 +31,14 @@ async function renderMLStatus() {
     return;
   }
 
-  badge.textContent = 'ACTIVE';
-  badge.className = 'badge badge-green';
+  if (ml.mock_fallback) {
+    badge.textContent = 'MOCK';
+    badge.className = 'badge badge-amber';
+    badge.title = ml.mock_reason || 'ML models unavailable — showing synthetic data';
+  } else {
+    badge.textContent = 'ACTIVE';
+    badge.className = 'badge badge-green';
+  }
 
   const etl = ml.etl_detector;
   const nhi = ml.nhi_classifier;

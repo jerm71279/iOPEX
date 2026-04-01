@@ -71,6 +71,8 @@ iOPEX clients need a single PMO dashboard to track a PAM migration that runs for
 - **Dual-repo path changed:** `pam-migration-control-center/` was renamed to `pam/control-center/`. The `sync-repos.sh` script and `render.yaml` rootDir option reference the old path. Update before next push to the public repo.
 - **ML mock fallback is silent:** If models fail to load, `/api/ml/status` returns mock data without a clear visual indicator in the dashboard. Operators may not notice they're looking at synthetic data.
 - **MCP server KeeperPAM path:** `PAM_MCP_MIGRATION_OPTION` currently supports `a` or `b`. Needs a `keeper` option with the KeeperPAM orchestrator path once that orchestrator is built.
+- **KeeperPAM audit log continuity (undocumented):** CyberArk audit logs do NOT automatically transfer to KeeperPAM. This is documented for Option B (Secret Server) but not for the KeeperPAM live path. Before P5, confirm compliance retention requirements and keep CyberArk read-only for the required retention period. Add to Agent 07 compliance report scope.
+- **Azure security pre-checks (gates g5 + g6):** Added `azure_checks` arrays to g5 (Structure Approval) and g6 (Pilot Results Approval) covering Key Vault credential verification, managed identity role assignment, Conditional Access exemption (if applicable), SOC notification window, SIEM connector handoff, and break-glass account sequencing. These are conditional — only enforce items that apply to the client's Azure environment. See pre-engagement questionnaire.
 
 ---
 

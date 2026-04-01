@@ -22,19 +22,19 @@ OPTIONS = {
         "risk_profile": "Higher integration risk, more modular architecture",
     },
     "b": {
-        "name": "CyberArk Privilege Cloud",
-        "short": "CyberArk Cloud",
+        "name": "KeeperPAM",
+        "short": "KeeperPAM",
         "color": "green",
-        "target": "Privilege Cloud",
-        "auth": "ISPSS Identity / OAuth2 platformtoken",
-        "perm_model": "22 → 22 (1:1 parity)",
-        "data_structure": "Safe → Account → Platform (same model)",
-        "containers": "Safes",
-        "sessions": "Cloud PSM (same vendor, session recording in cloud)",
-        "connectors": "Connector Server (MQTT TCP 443/8883)",
-        "integration_path": "API URL change mostly (same REST surface)",
-        "audit_retention": "Preserved — audit logs migrate to Privilege Cloud",
-        "risk_profile": "Lower risk, same vendor ecosystem, less modular",
+        "target": "KeeperPAM",
+        "auth": "OAuth2 client_credentials (KeeperPAM Identity)",
+        "perm_model": "22 → 22 (1:1 parity — no permission loss)",
+        "data_structure": "Vault (Shared Folder) → Record → Record Type (same logical model)",
+        "containers": "Vaults (Shared Folders)",
+        "sessions": "KCM (Keeper Connection Manager — session recording + video)",
+        "connectors": "KeeperPAM Gateway (HTTPS outbound, cloud-managed)",
+        "integration_path": "KSM SDK replacement (Python/Java/C#/.NET — similar effort to CyberArk REST)",
+        "audit_retention": "KeeperPAM audit log native. CyberArk logs retained read-only for compliance period.",
+        "risk_profile": "Low risk — 1:1 permission parity, cloud-native, KSM SDK integration",
     },
 }
 
@@ -71,8 +71,8 @@ PHASES = {
                 "Provision StrongDM tenant + deploy gateway(s)",
             ],
             "b": [
-                "Configure Privilege Cloud credentials (PCLOUD_CLIENT_ID, PCLOUD_CLIENT_SECRET)",
-                "Deploy Connector Server(s) for target network segments",
+                "Configure KeeperPAM credentials (KEEPERPAM_CLIENT_ID, KEEPERPAM_CLIENT_SECRET)",
+                "Deploy KeeperPAM Gateway node(s) for target network segments",
             ],
         },
         "deliverables": [
@@ -111,8 +111,8 @@ PHASES = {
                 "Agent 03 maps 22 CyberArk permissions → 4 SS roles (flags escalation risk)",
             ],
             "b": [
-                "Agent 02 identifies Cloud CPM connectivity per network segment",
-                "Agent 03 verifies 22 → 22 permission parity with Privilege Cloud",
+                "Agent 02 identifies KeeperPAM rotation engine connectivity per network segment",
+                "Agent 03 verifies 22 → 22 permission parity with KeeperPAM (identical model)",
             ],
         },
         "deliverables": [
@@ -151,10 +151,10 @@ PHASES = {
                 "Configure RPC connection components per template",
             ],
             "b": [
-                "Configure ISPSS Identity / OAuth2 authentication",
-                "Verify Connector Server connectivity to all target networks",
-                "Configure Cloud CPM policies per platform",
-                "Deploy custom connection components for non-standard platforms",
+                "Configure KeeperPAM Identity OAuth2 authentication (KEEPERPAM_CLIENT_ID/SECRET)",
+                "Verify KeeperPAM Gateway connectivity to all target network segments",
+                "Configure Keeper rotation engine policies per record type",
+                "Deploy custom KeeperPAM plugins for non-standard record types",
             ],
         },
         "deliverables": [
@@ -191,9 +191,9 @@ PHASES = {
                 "Flag escalation cases for human review",
             ],
             "b": [
-                "Create safes in Privilege Cloud (same names as source)",
-                "Map platform policies via Platforms/Targets API",
-                "Apply permissions via Safe Members API (22→22 parity)",
+                "Create Vaults in KeeperPAM (matching source safe names)",
+                "Map record types via KeeperPAM Record Type API",
+                "Apply permissions via KeeperPAM Vault Members API (22→22 parity)",
             ],
         },
         "deliverables": [
@@ -229,8 +229,8 @@ PHASES = {
                 "Transform includes: Safe→Folder, Platform→Template mapping",
             ],
             "b": [
-                "6-step pipeline: Freeze→Export→Transform→Create Safes→Import→Unfreeze",
-                "Transform includes: URL rewrite for Privilege Cloud endpoints",
+                "7-step pipeline: Freeze→Export→Transform→Create Vaults→Import→Heartbeat→Unfreeze",
+                "Transform includes: field mapping to KeeperPAM Record schema, KSM SDK endpoint config",
             ],
         },
         "deliverables": [
@@ -269,8 +269,8 @@ PHASES = {
                 "Wave 5: Agent 07 compliance report includes SS-specific risks (audit discontinuity, permission loss)",
             ],
             "b": [
-                "Wave 4: Agent 06 updates CCP/AAM endpoints (mostly URL change, same API surface)",
-                "Wave 5: Agent 07 compliance report — audit logs preserved in Privilege Cloud",
+                "Wave 4: Agent 06 replaces CCP/AAM calls with KSM SDK (Python/Java/C#/PowerShell)",
+                "Wave 5: Agent 07 compliance report — KeeperPAM audit log native, CyberArk logs retained for compliance period",
             ],
         },
         "deliverables": [
@@ -309,8 +309,8 @@ PHASES = {
                 "Configure StrongDM JIT access policies for session management",
             ],
             "b": [
-                "Agent 06: update CCP/AAM endpoints to Privilege Cloud URLs",
-                "Configure cert auth → ISPSS OAuth2 where needed",
+                "Agent 06: replace CCP/AAM calls with KSM SDK — all apps updated to KeeperPAM REST/KSM",
+                "Configure OAuth2 client_credentials (KeeperPAM Identity) for all KSM SDK consumers",
             ],
         },
         "deliverables": [
@@ -348,8 +348,8 @@ PHASES = {
                 "Decommission: PSM → CPM → PVWA → Vault (ordered, approval each step)",
             ],
             "b": [
-                "Migrate audit logs to Privilege Cloud",
-                "Transfer PSM recordings to cloud storage",
+                "KeeperPAM audit logs native — CyberArk logs archived read-only for compliance retention period",
+                "KCM session recordings stored natively in KeeperPAM cloud storage",
                 "Decommission: PSM → CPM → PVWA → Vault (ordered, approval each step)",
             ],
         },
@@ -538,7 +538,7 @@ WAVES = {
         "gate": "g7",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
     },
     "2": {
         "name": "Infrastructure Accounts",
@@ -553,7 +553,7 @@ WAVES = {
         "gate": "g8",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
     },
     "3": {
         "name": "NHIs (No CCP/AAM)",
@@ -568,7 +568,7 @@ WAVES = {
         "gate": "g9",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
     },
     "4": {
         "name": "NHIs With CCP/AAM",
@@ -583,7 +583,7 @@ WAVES = {
         "gate": "g10",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "RECODE INTEGRATIONS", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "UPDATE ENDPOINTS", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "RECODE KSM SDK", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
     },
     "5": {
         "name": "Final Cleanup",
@@ -598,7 +598,7 @@ WAVES = {
         "gate": "g11",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
     },
 }
 
@@ -614,7 +614,7 @@ GATES = [
         "inputs": ["vm_provisioning", "connectivity_check", "preflight_results"],
         "unlocks": "Phase 1: Discovery & Analysis \u2014 Enables 6 AI agents to scan the source CyberArk vault and map all accounts, permissions, integrations, and non-human identities.",
         "context_a": "Delinea: Must also provision Secret Server and StrongDM environments. Two separate vendor relationships to establish.",
-        "context_b": "CyberArk Cloud: Single vendor relationship. Privilege Cloud tenant provisioning is faster since CyberArk manages the infrastructure.",
+        "context_b": "KeeperPAM: Provision KeeperPAM tenant via Keeper Admin Console. Deploy KeeperPAM Gateway node(s) in target network segments. Single-vendor relationship with Keeper Security.",
     },
     {
         "id": "g2", "name": "NHI Classification Review", "phase": "p1", "week": 15, "week_b": 10,
@@ -625,7 +625,7 @@ GATES = [
         "inputs": ["nhi_classification", "dependency_graph"],
         "unlocks": "Remainder of Phase 1 discovery. Validated NHI data feeds into wave planning \u2014 NHIs go in Wave 3 (dedicated wave with coordinated rotation).",
         "context_a": "Delinea: NHI rotation must be re-implemented using Secret Server RPC. Coordinated rotation requires custom scheduling per NHI type.",
-        "context_b": "CyberArk Cloud: CPM rotation policies transfer directly. Cloud CPM handles rotation with same configuration \u2014 lower risk to NHI availability.",
+        "context_b": "KeeperPAM: Keeper rotation engine handles NHI rotation via KSM SDK. Rotation policies configure per record type — lower risk since 22-permission model is preserved 1:1.",
     },
     {
         "id": "g3", "name": "Discovery Sign-off", "phase": "p1", "week": 18, "week_b": 12,
@@ -636,7 +636,7 @@ GATES = [
         "inputs": ["discovery_manifest", "dependency_graph", "nhi_classification", "gap_analysis", "permission_audit"],
         "unlocks": "Phase 2: Infrastructure & Staging \u2014 Enables provisioning of the target environment and Agent 10 staging validation with 100 sample accounts.",
         "context_a": "Delinea: SMEs must review the 22\u21924 permission mapping loss. Agent 02 flags 9 CyberArk permissions that cannot translate to Secret Server roles. Business owners must sign off on accepted risk.",
-        "context_b": "CyberArk Cloud: 22\u219222 permission parity means the gap analysis is cleaner. Focus shifts to verifying cloud CPM network connectivity per network segment.",
+        "context_b": "KeeperPAM: 22\u219222 permission parity means the gap analysis is clean — no permission loss risk. Focus shifts to verifying KeeperPAM Gateway network connectivity per network segment.",
     },
     {
         "id": "g4", "name": "Staging Approval", "phase": "p2", "week": 28, "week_b": 18,
@@ -647,29 +647,41 @@ GATES = [
         "inputs": ["staging_validation", "platform_validation"],
         "unlocks": "Phase 3: Structure Migration \u2014 Enables creation of the organizational structure (safes/folders, permissions, platform assignments) in the target.",
         "context_a": "Delinea: Staging validates Secret Server folder hierarchy creation and 22\u21924 role mapping. Custom templates for 3 non-standard platforms must be verified.",
-        "context_b": "CyberArk Cloud: Staging validates Privilege Cloud safe creation and direct permission transfer. Same platform model means fewer custom configurations.",
+        "context_b": "KeeperPAM: Staging validates KeeperPAM Vault creation and direct permission transfer. 1:1 permission parity means fewer custom configurations than Option A.",
     },
     {
         "id": "g5", "name": "Structure Approval", "phase": "p3", "week": 38, "week_b": 22,
         "approvers": ["PAM Engineer", "App Owners", "CAB"],
         "status": "passed",
-        "requirements": "Organizational structure verified in target. Permission mappings confirmed correct. CAB approves pilot migration change request.",
+        "requirements": "Organizational structure verified in target. Permission mappings confirmed correct. CAB approves pilot migration change request. Azure pre-checks complete (see azure_checks).",
         "description": "Verifies that the target environment's organizational structure matches the source. Change Advisory Board (CAB) must approve the pilot migration change request before any production accounts move.",
         "inputs": ["structure_migration", "permission_verification", "onboarding_results"],
         "unlocks": "Phase 4: Pilot Migration \u2014 Enables a 50-account pilot migration to validate the full ETL pipeline end-to-end with real production accounts.",
         "context_a": "Delinea: 12 permission escalation flags require individual review. The 22\u21924 role mapping means some members gain unintended permissions via broader roles.",
-        "context_b": "CyberArk Cloud: Permission escalation flags are minimal since the permission model is 1:1. CAB review focuses on cloud network connectivity.",
+        "context_b": "KeeperPAM: Permission escalation flags are minimal — 1:1 parity preserved. CAB review focuses on KeeperPAM Gateway connectivity and KSM SDK auth configuration.",
+        "azure_checks": [
+            "Azure Key Vault URI set and PAM_MCP_KEY_VAULT_URI resolves — run load_credentials() and confirm all required credentials return True",
+            "Orchestrator VM managed identity assigned Key Vault Secrets User role",
+            "Orchestrator service account confirmed exempt from Conditional Access policies that would block non-interactive auth (if CA is deployed)",
+            "Break-glass (emergency access) accounts identified and marked last-to-migrate",
+        ],
     },
     {
         "id": "g6", "name": "Pilot Results Approval", "phase": "p4", "week": 46, "week_b": 28,
         "approvers": ["PAM Engineer", "App Owners", "Exec Sponsor"],
         "status": "passed",
-        "requirements": "Heartbeat success >95%. Rollback procedure tested. Application owners confirm access works in target. BLOCKS ALL PRODUCTION WAVES.",
+        "requirements": "Heartbeat success >95%. Rollback procedure tested. Application owners confirm access works in target. BLOCKS ALL PRODUCTION WAVES. Azure security pre-checks complete (see azure_checks).",
         "description": "CRITICAL GATE \u2014 blocks all production migration. The pilot migration of 50 accounts must succeed with >95% heartbeat verification and a tested rollback. Application owners must physically confirm they can access their credentials in the target. No production waves begin until this gate passes.",
         "inputs": ["pilot_report", "pilot_validation"],
         "unlocks": "Phase 5: Production Waves \u2014 Enables the 5-wave migration of all 2,847 accounts. This is the point of no return for the migration strategy.",
         "context_a": "Delinea: Pilot validates the Secret Server + StrongDM integration under real conditions. App owners confirm the new credential retrieval workflow (different API, different SDK).",
-        "context_b": "CyberArk Cloud: Pilot validates cloud CPM rotation and Privilege Cloud API connectivity. App owners confirm the same CyberArk API works with cloud URLs.",
+        "context_b": "KeeperPAM: Pilot validates Keeper rotation engine and KeeperPAM Vault API connectivity. App owners confirm KSM SDK credential retrieval works for their applications.",
+        "azure_checks": [
+            "SOC team notified of production migration window — if MDI is deployed, svc-migration account whitelisted for P5 duration",
+            "If Sentinel/SIEM has a CyberArk connector: KeeperPAM log connector configured and sending test events before Wave 1",
+            "Audit log continuity plan confirmed: CyberArk logs retained read-only for compliance retention period post-migration",
+            "Break-glass accounts confirmed NOT in Wave 1\u20135 scope — migrate last, after full validation",
+        ],
     },
     {
         "id": "g7", "name": "Wave 1 Approval", "phase": "p5", "week": 50, "week_b": 32,
@@ -680,7 +692,7 @@ GATES = [
         "inputs": ["wave1_report", "wave1_validation"],
         "unlocks": "Wave 2 \u2014 Infrastructure accounts (domain admins, service controllers) can proceed.",
         "context_a": "Delinea: Validates folder creation and Secret Server template mapping at scale for the first time.",
-        "context_b": "CyberArk Cloud: Validates safe creation and direct account import at production scale.",
+        "context_b": "KeeperPAM: Validates Vault creation and direct record import at production scale. Keeper rotation engine confirms active on all migrated records.",
     },
     {
         "id": "g8", "name": "Wave 2 Approval", "phase": "p5", "week": 53, "week_b": 34,
@@ -691,7 +703,7 @@ GATES = [
         "inputs": ["wave2_report", "wave2_validation"],
         "unlocks": "Wave 3 \u2014 Non-Human Identity (NHI) accounts, the highest-risk wave, can proceed.",
         "context_a": "Delinea: Domain admin account rotation verified through Secret Server RPC. Active Directory integration confirmed working.",
-        "context_b": "CyberArk Cloud: Domain admin rotation handled by cloud CPM. Same CyberArk PSM gateway proxies access.",
+        "context_b": "KeeperPAM: Domain admin rotation handled by Keeper rotation engine. KCM (Keeper Connection Manager) proxies privileged access sessions.",
     },
     {
         "id": "g9", "name": "Wave 3 Approval", "phase": "p5", "week": 56, "week_b": 36,
@@ -702,7 +714,7 @@ GATES = [
         "inputs": ["wave3_report", "wave3_validation"],
         "unlocks": "Wave 4 \u2014 CCP/AAM integration accounts (accounts used by applications via API) can proceed.",
         "context_a": "Delinea: NHI rotation strategies must be reimplemented using Secret Server SDK. Coordinated rotation requires custom scheduling scripts.",
-        "context_b": "CyberArk Cloud: CPM rotation policies transfer directly to cloud. Same rotation strategies, same intervals, managed infrastructure.",
+        "context_b": "KeeperPAM: Keeper rotation engine handles NHI rotation via KSM SDK. Same rotation intervals, cloud-managed. Rotation policies configured per KeeperPAM record type.",
     },
     {
         "id": "g10", "name": "Wave 4 Approval", "phase": "p5", "week": 59, "week_b": 38,
@@ -713,7 +725,7 @@ GATES = [
         "inputs": ["wave4_report", "wave4_validation"],
         "unlocks": "Wave 5 \u2014 Remaining accounts (cloud credentials, misc) and final reconciliation.",
         "context_a": "Delinea: Full application re-architecture required. CCP/AAM calls replaced with Secret Server REST API. Agent 06 generates replacement code in Python, Java, C#, PowerShell.",
-        "context_b": "CyberArk Cloud: Applications update CCP/AAM endpoint URLs from on-prem to cloud. Same API contract, same SDK \u2014 minimal code change.",
+        "context_b": "KeeperPAM: Applications replace CCP/AAM calls with KSM SDK (Python/Java/C#/.NET). Agent 06 generates replacement code packages per application.",
     },
     {
         "id": "g11", "name": "Production Complete", "phase": "p5", "week": 62, "week_b": 40,
@@ -724,7 +736,7 @@ GATES = [
         "inputs": ["wave5_report", "wave5_validation", "compliance_report", "integration_registry", "nhi_rotation_confirmation"],
         "unlocks": "Phase 6: Parallel Running & Cutover \u2014 Enables dual-backend operation where traffic gradually shifts from source to target.",
         "context_a": "Delinea: Compliance evidence includes documentation of 9 lost permissions and risk acceptances. Integration registry shows 34 repointed CCP/AAM applications.",
-        "context_b": "CyberArk Cloud: Compliance evidence is cleaner with 1:1 permission parity. Integration changes are URL-only, reducing risk acceptance documentation.",
+        "context_b": "KeeperPAM: Compliance evidence is clean — 1:1 permission parity eliminates permission-loss risk acceptances. KSM SDK integration changes require developer sign-off per application.",
     },
     {
         "id": "g12", "name": "Integration Cutover", "phase": "p6", "week": 69, "week_b": 44,
@@ -735,7 +747,7 @@ GATES = [
         "inputs": ["integration_cutover_registry"],
         "unlocks": "Cutover Approval (G13) \u2014 Enables the final source-to-target cutover decision.",
         "context_a": "Delinea: 34 integration packages must be individually verified. Each uses a different Secret Server API pattern replacing the original CyberArk CCP/AAM call.",
-        "context_b": "CyberArk Cloud: Integration cutover is primarily URL changes. Feature flags toggle between on-prem and cloud endpoints with same API contracts.",
+        "context_b": "KeeperPAM: Integration cutover deploys KSM SDK replacement code per application. Feature flags toggle between CyberArk CCP/AAM and KeeperPAM KSM for safe rollback.",
     },
     {
         "id": "g13", "name": "Cutover Approval", "phase": "p6", "week": 76, "week_b": 48,
@@ -746,7 +758,7 @@ GATES = [
         "inputs": ["parallel_run_metrics", "final_validation", "final_compliance", "integration_cutover_registry"],
         "unlocks": "Phase 7: Decommission \u2014 Enables shutdown of source infrastructure and project close-out.",
         "context_a": "Delinea: Parallel-run validated traffic shifting from CyberArk to Secret Server + StrongDM over 14 weeks. 7 discrepancies detected and resolved.",
-        "context_b": "CyberArk Cloud: Parallel-run validated traffic shifting from on-prem to cloud over 8 weeks. Same API surface means fewer integration discrepancies.",
+        "context_b": "KeeperPAM: Parallel-run validated traffic shifting from CyberArk on-prem to KeeperPAM over 8 weeks. KSM SDK integration discrepancies monitored per application.",
     },
     {
         "id": "g14", "name": "Final Sign-off", "phase": "p7", "week": 80, "week_b": 50,
@@ -757,7 +769,7 @@ GATES = [
         "inputs": ["decommission_log", "archived_audit_logs", "close_out_report", "ops_handoff"],
         "unlocks": "Project Complete \u2014 Migration is finished. Operations team takes ownership of the target PAM platform.",
         "context_a": "Delinea: CyberArk vault retained read-only for audit. 8 servers decommissioned ($184K/year savings). Operations trained on Secret Server + StrongDM administration.",
-        "context_b": "CyberArk Cloud: On-prem vault retained read-only for audit. 8 servers decommissioned ($184K/year savings). Operations trained on Privilege Cloud console.",
+        "context_b": "KeeperPAM: On-prem vault retained read-only for compliance audit period. 8 servers decommissioned ($184K/year savings). Operations trained on KeeperPAM Admin Console and KCM session management.",
     },
     {
         "id": "g15", "name": "SHIFT Architecture Review", "phase": "shift", "week": 20, "week_b": 12,
@@ -768,7 +780,7 @@ GATES = [
         "inputs": [],
         "unlocks": "SHIFT Portal Development \u2014 Enables building the Spring Boot developer portal with vendor-agnostic adapter layer.",
         "context_a": "Delinea: Adapter maps to Secret Server REST API + StrongDM SDK for session proxy.",
-        "context_b": "CyberArk Cloud: Adapter maps to Privilege Cloud REST API + PSM for session proxy.",
+        "context_b": "KeeperPAM: Adapter maps to KeeperPAM REST API + KCM for session proxy. PamVendorAdapter interface requires no portal changes.",
     },
     {
         "id": "g16", "name": "SHIFT MVP Walkthrough", "phase": "shift", "week": 34, "week_b": 22,
@@ -779,7 +791,7 @@ GATES = [
         "inputs": [],
         "unlocks": "SHIFT Production Deployment \u2014 Enables hardening, load testing, and production deployment of the developer portal.",
         "context_a": "Delinea: MVP demonstrates Secret Server credential checkout and StrongDM session recording.",
-        "context_b": "CyberArk Cloud: MVP demonstrates Privilege Cloud credential checkout and PSM session recording.",
+        "context_b": "KeeperPAM: MVP demonstrates KeeperPAM Vault credential checkout via KSM SDK and KCM session recording.",
     },
     {
         "id": "g17", "name": "SHIFT Production Cutover", "phase": "shift", "week": 74, "week_b": 46,
@@ -790,7 +802,7 @@ GATES = [
         "inputs": [],
         "unlocks": "SHIFT Portal Live \u2014 Developers can use the self-service portal for credential management.",
         "context_a": "Delinea: Portal connects to Secret Server + StrongDM in production. Load tested with 500 concurrent developer sessions.",
-        "context_b": "CyberArk Cloud: Portal connects to Privilege Cloud in production. Load tested with 500 concurrent developer sessions.",
+        "context_b": "KeeperPAM: Portal connects to KeeperPAM in production via PamVendorAdapter. Load tested with 500 concurrent developer sessions.",
     },
 ]
 
@@ -821,7 +833,7 @@ DELIVERABLES = {
                 "checks": [
                     {"target": "CyberArk PVWA", "url": "https://pvwa.corp.local/PasswordVault", "status": "pass", "latency_ms": 12},
                     {"target": "Secret Server", "url": "https://ss.corp.local/SecretServer", "status": "pass", "latency_ms": 18},
-                    {"target": "Privilege Cloud", "url": "https://company.privilegecloud.cyberark.cloud", "status": "pass", "latency_ms": 45},
+                    {"target": "KeeperPAM", "url": "https://company.keepersecurity.com", "status": "pass", "latency_ms": 45},
                     {"target": "SIEM (Splunk)", "url": "syslog-tls://siem.corp.local:6514", "status": "pass", "latency_ms": 8},
                     {"target": "ServiceNow", "url": "https://company.service-now.com/api", "status": "pass", "latency_ms": 67},
                 ],
@@ -1724,7 +1736,7 @@ DELIVERABLES = {
                 "project_status": "COMPLETE",
                 "migration_summary": {
                     "source": "CyberArk PAS v12.6 (on-prem)",
-                    "target": "Delinea Secret Server (Option A) / CyberArk Privilege Cloud (Option B)",
+                    "target": "Delinea Secret Server (Option A) / KeeperPAM (Option B — Live Target)",
                     "total_accounts": 2847,
                     "migrated": 2834,
                     "excluded": 13,
@@ -1809,37 +1821,37 @@ COMPARISON_ROWS = [
     {
         "category": "Data Structure",
         "a": {"value": "Safe → Folder (hierarchical). Platform → Secret Template. Account → Secret.", "risk": "medium"},
-        "b": {"value": "Safe → Safe. Platform → Platform. Account → Account. Same model.", "risk": "low"},
+        "b": {"value": "Safe → Vault (Shared Folder). Platform → Record Type. Account → Record. Same logical model.", "risk": "low"},
     },
     {
         "category": "Integration Path",
         "a": {"value": "Full re-architecture. Different auth (OAuth2), endpoints (/api/v1/), data format. Code regeneration required.", "risk": "high"},
-        "b": {"value": "API URL change mostly. Same REST surface. Cert auth → ISPSS OAuth2 where needed.", "risk": "low"},
+        "b": {"value": "KSM SDK replacement (Python/Java/C#/.NET). Similar REST surface. OAuth2 client_credentials auth.", "risk": "low"},
     },
     {
         "category": "Audit Retention",
         "a": {"value": "Manual export. CyberArk audit logs do NOT transfer to SS. Keep CyberArk read-only 1-7 years.", "risk": "high"},
-        "b": {"value": "Audit logs migrate to Privilege Cloud. Continuous audit trail.", "risk": "low"},
+        "b": {"value": "KeeperPAM audit log native. CyberArk logs retained read-only for compliance retention period.", "risk": "low"},
     },
     {
         "category": "Session Management",
         "a": {"value": "StrongDM replaces PSM. Cedar policies, 100+ protocols, session recording.", "risk": "medium"},
-        "b": {"value": "Cloud PSM. Same vendor, same session recording in cloud.", "risk": "low"},
+        "b": {"value": "KCM (Keeper Connection Manager). Session recording + video in KeeperPAM cloud.", "risk": "low"},
     },
     {
         "category": "Connectors",
         "a": {"value": "Distributed Engine + RPC plugins (rebuild per template) + StrongDM Relay.", "risk": "medium"},
-        "b": {"value": "Connector Server (MQTT TCP 443/8883). Cloud CPM manages rotation.", "risk": "low"},
+        "b": {"value": "KeeperPAM Gateway (HTTPS outbound). Keeper rotation engine manages credential rotation.", "risk": "low"},
     },
     {
         "category": "Password Rotation",
         "a": {"value": "RPC plugins + Distributed Engine. Must rebuild per Secret Template.", "risk": "medium"},
-        "b": {"value": "Cloud CPM. Same CPM plugin architecture, cloud-managed.", "risk": "low"},
+        "b": {"value": "Keeper rotation engine. Cloud-managed, native KeeperPAM rotation per record type.", "risk": "low"},
     },
     {
         "category": "PSM Recordings",
         "a": {"value": "Cannot migrate to SS. StrongDM replaces going forward. Archive CyberArk recordings.", "risk": "high"},
-        "b": {"value": "Transfer to Privilege Cloud storage. Continuous availability.", "risk": "low"},
+        "b": {"value": "KCM session recordings stored natively in KeeperPAM cloud storage. Continuous availability.", "risk": "low"},
     },
     {
         "category": "Custom Platforms",
@@ -1881,23 +1893,23 @@ PERMISSION_MAPPING = {
         ],
     },
     "option_b": {
-        "description": "22 CyberArk permissions → 22 Privilege Cloud permissions (1:1 parity)",
-        "note": "Same Safe Members API. All 22 permissions map directly.",
+        "description": "22 CyberArk permissions → 22 KeeperPAM permissions (1:1 parity)",
+        "note": "KeeperPAM uses an identical 22-permission model. All permissions map directly with zero loss.",
     },
 }
 
 PLATFORM_TEMPLATE_MAP = [
-    {"cyberark": "WinServerLocal", "option_a": "Windows Account", "option_b": "WinServerLocal (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "WinDomain", "option_a": "Active Directory Account", "option_b": "WinDomain (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "UnixSSH", "option_a": "Unix Account (SSH)", "option_b": "UnixSSH (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "UnixSSHKeys", "option_a": "Unix Account (SSH Key Rotation)", "option_b": "UnixSSHKeys (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "Oracle", "option_a": "Oracle Account", "option_b": "Oracle (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "MSSql", "option_a": "SQL Server Account", "option_b": "MSSql (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "MySQL", "option_a": "MySQL Account", "option_b": "MySQL (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "AWSAccessKeys", "option_a": "Amazon IAM Key", "option_b": "AWSAccessKeys (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "AzureServicePrincipal", "option_a": "Azure Service Principal", "option_b": "AzureServicePrincipal (same)", "risk_a": "low", "risk_b": "low"},
-    {"cyberark": "CustomWebApp", "option_a": "Custom template required", "option_b": "CustomWebApp (same)", "risk_a": "high", "risk_b": "low"},
-    {"cyberark": "CiscoDevice", "option_a": "Custom template required", "option_b": "CiscoDevice (same)", "risk_a": "high", "risk_b": "low"},
+    {"cyberark": "WinServerLocal", "option_a": "Windows Account", "option_b": "KeeperPAM: Login (Windows)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "WinDomain", "option_a": "Active Directory Account", "option_b": "KeeperPAM: Login (Active Directory)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "UnixSSH", "option_a": "Unix Account (SSH)", "option_b": "KeeperPAM: Login (SSH)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "UnixSSHKeys", "option_a": "Unix Account (SSH Key Rotation)", "option_b": "KeeperPAM: SSH Key (Rotation)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "Oracle", "option_a": "Oracle Account", "option_b": "KeeperPAM: Database (Oracle)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "MSSql", "option_a": "SQL Server Account", "option_b": "KeeperPAM: Database (MSSQL)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "MySQL", "option_a": "MySQL Account", "option_b": "KeeperPAM: Database (MySQL)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "AWSAccessKeys", "option_a": "Amazon IAM Key", "option_b": "KeeperPAM: Access Key (AWS IAM)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "AzureServicePrincipal", "option_a": "Azure Service Principal", "option_b": "KeeperPAM: Login (Azure SP)", "risk_a": "low", "risk_b": "low"},
+    {"cyberark": "CustomWebApp", "option_a": "Custom template required", "option_b": "KeeperPAM: Custom record type required", "risk_a": "high", "risk_b": "medium"},
+    {"cyberark": "CiscoDevice", "option_a": "Custom template required", "option_b": "KeeperPAM: Login (Network Device)", "risk_a": "high", "risk_b": "low"},
 ]
 
 YELLOW_CHECKPOINTS = [
@@ -2131,7 +2143,7 @@ YELLOW_CHECKPOINTS = [
         "resolved_by": None,
         "resolution_note": None,
     },
-    # ── Option B (CyberArk Privilege Cloud) checkpoints ──────────────────
+    # ── Option B (KeeperPAM — Live Target) checkpoints ───────────────────
     {
         "id": "yc-b01",
         "phase": "p1",
@@ -2144,16 +2156,16 @@ YELLOW_CHECKPOINTS = [
         "resolved_at": "2025-05-12T15:00:00Z",
         "sla_hours": 24,
         "snow_ticket": "INC0012310",
-        "condition": "Privilege Cloud API rate limiting during bulk safe enumeration — 429 responses on 18% of calls",
+        "condition": "KeeperPAM API rate limiting during bulk vault enumeration — 429 responses on 18% of calls",
         "ai_rationale": {
-            "what_fired": "Agent 11 triggered a yellow checkpoint when 18% of API calls to the Privilege Cloud REST API returned HTTP 429 (Too Many Requests) during bulk safe enumeration. The extraction batch was processing 1,247 safes and their associated account metadata when throttling began at minute 8 of the run. Over the next 22 minutes, 224 of 1,247 requests were rejected, causing the enumeration to stall and requiring retry logic that extended the total extraction window by 45 minutes.",
+            "what_fired": "Agent 11 triggered a yellow checkpoint when 18% of API calls to the KeeperPAM REST API returned HTTP 429 (Too Many Requests) during bulk vault enumeration. The extraction batch was processing 1,247 vaults and their associated record metadata when throttling began at minute 8 of the run. Over the next 22 minutes, 224 of 1,247 requests were rejected, causing the enumeration to stall and requiring retry logic that extended the total extraction window by 45 minutes.",
             "root_cause": "The extraction was initiated at 10:30 UTC, which falls within US East business hours (06:00–18:00 ET). CyberArk Identity platform enforces a tenant-level rate limit of 100 requests per minute during business hours, dropping to 50 req/min during declared maintenance windows. Agent 11's bulk enumeration was configured with a concurrency of 20 parallel requests and no rate-limiting backoff, producing bursts of 180–220 req/min that exceeded the tenant ceiling by nearly 2x. On-prem PVWA had no hard rate limit — only connection pool exhaustion — so the Agent 11 extraction logic was never designed for explicit throttling.",
-            "cross_system_context": "Agent 10 staging validation depends on the same Privilege Cloud API endpoints (GET /api/Safes and GET /api/Accounts) and will encounter identical throttling if run during business hours. Agent 04 wave migration ETL processes also call these endpoints during credential extraction phases — at the current 100 req/min ceiling, a wave of 5,000 accounts would take 50+ minutes for enumeration alone. Agent 05 heartbeat validation adds periodic load (approximately 50 req/min every 4 hours), which would compound with any concurrent extraction. The tenant rate limit is shared across all API consumers including the CyberArk Connector and any ITSM integrations using the same OAuth2 client credentials.",
-            "risk_assessment": "Immediate risk is low since the extraction completed with retries, but the 45-minute overrun compressed the available window for Agent 10 staging validation. If left unaddressed, concurrent API usage from Agents 04, 05, 10, and 11 during production waves could cause cascading 429 errors and SLA breaches on wave migration timelines. The retry storm also generates excessive audit log entries in Privilege Cloud, which could trigger false-positive security alerts from the SOC monitoring integration.",
+            "cross_system_context": "Agent 10 staging validation depends on the same KeeperPAM API endpoints (GET /api/rest/vaults and GET /api/rest/records) and will encounter identical throttling if run during business hours. Agent 04 wave migration ETL processes also call these endpoints during credential extraction phases — at the current 100 req/min ceiling, a wave of 5,000 records would take 50+ minutes for enumeration alone. Agent 05 heartbeat validation adds periodic load (approximately 50 req/min every 4 hours), which would compound with any concurrent extraction. The tenant rate limit is shared across all API consumers including the KeeperPAM Gateway and any ITSM integrations using the same OAuth2 client credentials.",
+            "risk_assessment": "Immediate risk is low since the extraction completed with retries, but the 45-minute overrun compressed the available window for Agent 10 staging validation. If left unaddressed, concurrent API usage from Agents 04, 05, 10, and 11 during production waves could cause cascading 429 errors and SLA breaches on wave migration timelines. The retry storm also generates excessive audit log entries in KeeperPAM, which could trigger false-positive security alerts from the SOC monitoring integration.",
             "recommended_action": "Reschedule all bulk extraction operations to the 0200–0600 UTC maintenance window when API usage is minimal. Implement adaptive rate limiting in Agent 11 with exponential backoff starting at the 80 req/min mark. Coordinate with Agent 04 and Agent 10 teams to establish a shared API budget allocation that reserves capacity for Agent 05 heartbeat checks. File a request with CyberArk support to confirm the tenant's rate limit tier and explore Enterprise tier upgrade if sustained throughput above 100 req/min is required during production waves.",
         },
         "resolved_by": "Agent 11 operator + PAM Platform Team",
-        "resolution_note": "Rescheduled bulk safe enumeration to 0200–0600 UTC window. Added adaptive rate limiter to Agent 11 extraction module capping at 80 req/min with exponential backoff on 429 responses. Re-ran extraction at 0300 UTC on 2025-05-12 — completed in 14 minutes with zero throttled requests. Updated Agent 11 runbook with Privilege Cloud rate limit guidance. Notified Agents 04, 10, and 15 teams of the 100 req/min tenant ceiling.",
+        "resolution_note": "Rescheduled bulk vault enumeration to 0200–0600 UTC window. Added adaptive rate limiter to Agent 11 extraction module capping at 80 req/min with exponential backoff on 429 responses. Re-ran extraction at 0300 UTC on 2025-05-12 — completed in 14 minutes with zero throttled requests. Updated Agent 11 runbook with KeeperPAM API rate limit guidance. Notified Agents 04, 10, and 15 teams of the 100 req/min tenant ceiling.",
     },
     {
         "id": "yc-b02",
@@ -2171,7 +2183,7 @@ YELLOW_CHECKPOINTS = [
         "ai_rationale": {
             "what_fired": "Agent 10 Staging Validation failed at assertion 7 (safe membership permission verification) when the OAuth2 bearer token issued by the CyberArk Identity platform expired mid-operation. The validation sequence had completed assertions 1–6 successfully over 28 minutes, then received HTTP 401 Unauthorized on the GET /api/Safes/{safeId}/Members call at minute 34. The remaining assertions 7–10 were skipped, leaving the staging environment in an unvalidated state for 87 safes that had not yet been checked.",
             "root_cause": "The CyberArk Identity platform issues OAuth2 access tokens with a fixed 30-minute lifetime that is not configurable at the tenant level — it is a platform-wide setting enforced by CyberArk's Identity Security Platform. Agent 10's token management logic was originally designed for on-prem PVWA session tokens, which have a 20-minute idle timeout but are refreshable via the POST /api/Auth/Logon keepalive mechanism. The Identity platform OAuth2 flow uses a different grant type (client_credentials) with a hard 30-minute expiry and no refresh token — the token simply becomes invalid. The 10-assertion validation sequence takes 32–38 minutes depending on safe count, consistently exceeding the token lifetime.",
-            "cross_system_context": "Agents 04, 05, 06, and 15 all authenticate through the same CyberArk Identity OAuth2 client (client_id: pam-migration-svc). Any operation exceeding 30 minutes will encounter the same token expiry — Agent 04's wave migration ETL runs for 45–90 minutes per wave, Agent 15's parallel-run watchdog has a 120-minute timer, and Agent 06's rollback procedures can take 60+ minutes for large safe groups. Agent 05's heartbeat checks are short (8–12 minutes) and are not affected, but the compounding effect of multiple agents requesting new tokens simultaneously could trigger rate limiting on the Identity platform's /oauth2/token endpoint (separate from the Privilege Cloud API rate limit identified in yc-b01).",
+            "cross_system_context": "Agents 04, 05, 06, and 15 all authenticate through the same KeeperPAM Identity OAuth2 client (client_id: pam-migration-svc). Any operation exceeding 30 minutes will encounter the same token expiry — Agent 04's wave migration ETL runs for 45–90 minutes per wave, Agent 15's parallel-run watchdog has a 120-minute timer, and Agent 06's rollback procedures can take 60+ minutes for large vault groups. Agent 05's heartbeat checks are short (8–12 minutes) and are not affected, but the compounding effect of multiple agents requesting new tokens simultaneously could trigger rate limiting on the Identity platform's /oauth2/token endpoint (separate from the KeeperPAM API rate limit identified in yc-b01).",
             "risk_assessment": "High risk to migration timeline if unaddressed — every agent operation longer than 30 minutes will fail unpredictably. Agent 04 wave migrations are the most critical: a token expiry mid-wave could leave accounts in a partially migrated state requiring manual intervention and potentially triggering Agent 06 rollback. The lack of a refresh token mechanism means agents cannot silently extend sessions — they must obtain entirely new tokens, which resets any server-side session context. SOX audit trail continuity (Section 404) requires uninterrupted operation logging, and token-expiry-induced restarts create gaps in the audit sequence.",
             "recommended_action": "Implement proactive token refresh at the 25-minute mark across all agents using the shared OAuth2 client. The refresh should obtain a new token before the current one expires and seamlessly swap it into the active HTTP session without interrupting in-flight operations. Add a token lifecycle manager as a shared library component that all agents import, ensuring consistent behavior. For Agent 10 specifically, checkpoint the validation state after each assertion so that a token refresh mid-sequence does not require restarting from assertion 1. File INC0012342 with CyberArk to request configurable token lifetime or refresh token support for service accounts.",
         },
@@ -2190,12 +2202,12 @@ YELLOW_CHECKPOINTS = [
         "resolved_at": "2025-05-20T11:30:00Z",
         "sla_hours": 72,
         "snow_ticket": "CHG0008891",
-        "condition": "Privilege Cloud Connector server deployed in restricted DMZ network zone — requires additional change approval",
+        "condition": "KeeperPAM Gateway deployed in restricted DMZ network zone — requires additional change approval",
         "ai_rationale": {
-            "what_fired": "Agent 13 Platform Plugin Validator required deployment of a CyberArk Privilege Cloud Connector server in the DMZ-PROD-02 network zone to validate CPM (Central Policy Manager) plugins against production-equivalent target systems. During the deployment attempt, the network automation pipeline rejected the request because DMZ-PROD-02 is classified as a 'restricted' zone under the organization's network segmentation policy (NSP-2024-017). The deployment was blocked pending Network Security (NSEC) team approval, which is a separate approval workflow from the standard PAM team change process.",
-            "root_cause": "The Privilege Cloud Connector establishes a persistent outbound HTTPS connection (port 443) to the CyberArk Privilege Cloud tenant (*.privilegecloud.cyberark.cloud) using a WebSocket upgrade for bidirectional communication. The organization's network segmentation policy requires explicit NSEC approval for any new persistent outbound connections from restricted zones, as these connections bypass the standard proxy inspection chain. The original migration plan assumed the Connector would be deployed in the application zone (APP-PROD-01), but the target systems for CPM plugin validation (database servers, Unix hosts) are only reachable from DMZ-PROD-02 due to existing firewall rules that predate the migration project.",
-            "cross_system_context": "Agent 04 ETL wave migrations require the same Connector server to perform credential verification against target systems during and after each wave — without it, post-migration validation cannot confirm that rotated credentials actually work. Agent 15 Hybrid Fleet Manager needs Connector access during the parallel-run phase to route credential retrievals to Privilege Cloud for the shifted traffic percentage. Agent 06 rollback procedures assume Connector availability to re-sync credentials back to the source if a wave fails. The Connector is a single point of dependency for all production-phase agents — any delay in its deployment cascades to the entire wave migration timeline.",
-            "risk_assessment": "The NSEC approval process has a documented SLA of 5 business days, which would push the Connector deployment past the Phase 2 deadline and delay the start of Phase 3 wave migrations by at least one week. SOX Section 404 requires documented network change approval for persistent connections in restricted zones — deploying without NSEC sign-off would be a compliance violation discoverable in the next IT audit. The Connector also requires a dedicated service account in CyberArk Identity with 'Privilege Cloud Connector' role, which must be provisioned through a separate IAM request (tracked in INC0012355). Both approvals must complete before Agent 13 can proceed with plugin validation.",
+            "what_fired": "Agent 13 Platform Plugin Validator required deployment of a KeeperPAM Gateway node in the DMZ-PROD-02 network zone to validate rotation plugins against production-equivalent target systems. During the deployment attempt, the network automation pipeline rejected the request because DMZ-PROD-02 is classified as a 'restricted' zone under the organization's network segmentation policy (NSP-2024-017). The deployment was blocked pending Network Security (NSEC) team approval, which is a separate approval workflow from the standard PAM team change process.",
+            "root_cause": "The KeeperPAM Gateway establishes a persistent outbound HTTPS connection (port 443) to the KeeperPAM tenant (*.keepersecurity.com). The organization's network segmentation policy requires explicit NSEC approval for any new persistent outbound connections from restricted zones, as these connections bypass the standard proxy inspection chain. The original migration plan assumed the Gateway would be deployed in the application zone (APP-PROD-01), but the target systems for rotation plugin validation (database servers, Unix hosts) are only reachable from DMZ-PROD-02 due to existing firewall rules that predate the migration project.",
+            "cross_system_context": "Agent 04 ETL wave migrations require the same KeeperPAM Gateway to perform credential verification against target systems during and after each wave — without it, post-migration validation cannot confirm that rotated credentials actually work. Agent 15 Hybrid Fleet Manager needs Gateway access during the parallel-run phase to route credential retrievals to KeeperPAM for the shifted traffic percentage. Agent 06 rollback procedures assume Gateway availability to re-sync credentials back to the source if a wave fails. The Gateway is a single point of dependency for all production-phase agents — any delay in its deployment cascades to the entire wave migration timeline.",
+            "risk_assessment": "The NSEC approval process has a documented SLA of 5 business days, which would push the Gateway deployment past the Phase 2 deadline and delay the start of Phase 3 wave migrations by at least one week. SOX Section 404 requires documented network change approval for persistent connections in restricted zones — deploying without NSEC sign-off would be a compliance violation discoverable in the next IT audit. The Gateway also requires a dedicated service account in KeeperPAM Identity with 'Gateway Admin' role, which must be provisioned through a separate IAM request (tracked in INC0012355). Both approvals must complete before Agent 13 can proceed with plugin validation.",
             "recommended_action": "Submit CHG0008891 immediately with NSEC approval request, including the Connector's network flow diagram (outbound 443 to *.privilegecloud.cyberark.cloud, no inbound), the CyberArk Connector security whitepaper, and the SOX compliance justification. Request expedited review given migration timeline impact. In parallel, provision the Connector service account via IAM request INC0012355. Schedule the Connector installation for the next approved maintenance window after NSEC approval. Notify Agents 04, 06, and 15 teams of the potential timeline shift and prepare a revised Phase 3 start date contingency.",
         },
         "resolved_by": "Network Security Team + PAM Platform Team + Change Advisory Board",
@@ -2213,10 +2225,10 @@ YELLOW_CHECKPOINTS = [
         "resolved_at": "2025-06-30T09:00:00Z",
         "sla_hours": 48,
         "snow_ticket": "INC0012987",
-        "condition": "Parallel-run — Privilege Cloud API throttling at 90% traffic shift, 412 requests got 429 Too Many Requests",
+        "condition": "Parallel-run — KeeperPAM API throttling at 90% traffic shift, 412 requests got 429 Too Many Requests",
         "ai_rationale": {
-            "what_fired": "Agent 15 Hybrid Fleet Manager detected sustained API throttling at the 90% traffic shift milestone, where approximately 2,560 concurrent credential retrievals were routed to Privilege Cloud. Over an 18-minute window (16:45–17:03 UTC), 412 requests received HTTP 429 Too Many Requests responses from the Privilege Cloud API. The throttling caused 412 credential retrievals to be delayed by 2–8 seconds each due to retry backoff, triggering SLA warnings in 3 downstream application teams whose credential retrieval latency thresholds are set at 5 seconds.",
-            "root_cause": "The Privilege Cloud tenant was provisioned on the Standard tier, which enforces a rate limit of 200 requests per minute at the tenant level. At 90% traffic shift, Agent 15 was routing 2,560 concurrent sessions that generated approximately 340 req/min in sustained load — 70% above the tenant ceiling. This is fundamentally different from the on-prem PVWA throttling observed in Option A (yc-a04), where the bottleneck was connection pool exhaustion on the load balancer. Privilege Cloud rate limiting is enforced at the platform level by CyberArk's infrastructure, meaning no local configuration change can increase throughput. The rate limiter set during yc-b01 (80 req/min for Agent 11 extraction) was specific to batch operations and did not account for the sustained concurrent load pattern of parallel-run traffic.",
+            "what_fired": "Agent 15 Hybrid Fleet Manager detected sustained API throttling at the 90% traffic shift milestone, where approximately 2,560 concurrent credential retrievals were routed to KeeperPAM. Over an 18-minute window (16:45–17:03 UTC), 412 requests received HTTP 429 Too Many Requests responses from the KeeperPAM API. The throttling caused 412 credential retrievals to be delayed by 2–8 seconds each due to retry backoff, triggering SLA warnings in 3 downstream application teams whose credential retrieval latency thresholds are set at 5 seconds.",
+            "root_cause": "The KeeperPAM tenant was provisioned on the Business tier, which enforces a rate limit of 200 requests per minute at the tenant level. At 90% traffic shift, Agent 15 was routing 2,560 concurrent sessions that generated approximately 340 req/min in sustained load — 70% above the tenant ceiling. This is fundamentally different from the on-prem PVWA throttling observed in Option A (yc-a04), where the bottleneck was connection pool exhaustion on the load balancer. KeeperPAM rate limiting is enforced at the platform level by Keeper Security's infrastructure, meaning no local configuration change can increase throughput. The rate limiter set during yc-b01 (80 req/min for Agent 11 extraction) was specific to batch operations and did not account for the sustained concurrent load pattern of parallel-run traffic.",
             "cross_system_context": "Agent 04's rate limiter was configured at 100 req/min based on the yc-b01 findings, but parallel-run traffic is qualitatively different — it is sustained concurrent load rather than batch sequential load. Agent 05 heartbeat checks add 50 req/min during their 4-hour validation windows, which compounded the throttling during the 16:45 UTC incident (Agent 05 was mid-heartbeat). The TokenLifecycleManager deployed after yc-b02 is functioning correctly — no token expiry issues — but the volume of token refresh requests from 2,560 concurrent sessions adds load to the Identity platform's /oauth2/token endpoint. Agent 06 rollback was placed on standby during the throttling event but was not triggered because credential retrieval failures were transient (retries succeeded within 8 seconds).",
             "risk_assessment": "At 90% traffic shift, the system is one step from full cutover — reverting to a lower traffic percentage would delay the migration timeline by 1–2 weeks and require re-validation of all checkpoints from 75% onward. The 412 failed requests represent 16% of concurrent sessions, which exceeds the acceptable error threshold of 5% defined in the parallel-run acceptance criteria (DOC-MIG-042). If the tenant rate limit is not increased before 100% cutover, the throttling will worsen proportionally — projected 450+ req/min at full load against a 200 req/min ceiling would result in 55%+ rejection rate, making the system unusable. Three application teams have escalated the latency impact, and continued throttling risks loss of stakeholder confidence in the migration.",
             "recommended_action": "Submit an urgent request to CyberArk support (case priority P1) to upgrade the tenant from Standard tier (200 req/min) to Enterprise tier (1,000 req/min), or negotiate an interim increase to 500 req/min. Implement request queuing with priority lanes in Agent 15: P1 lane for interactive credential retrievals (application runtime), P2 lane for batch operations (Agent 04 ETL, Agent 11 extraction), P3 lane for monitoring (Agent 05 heartbeat). Add client-side request coalescing for duplicate credential lookups within a 5-second window — analysis of the 18-minute throttling period shows 23% of requests were duplicate lookups for the same credential. Hold at 90% traffic shift until the rate limit upgrade is confirmed and tested.",
@@ -2236,10 +2248,10 @@ YELLOW_CHECKPOINTS = [
         "resolved_at": None,
         "sla_hours": 72,
         "snow_ticket": "INC0013102",
-        "condition": "Account 'jsmith-prod-01' matches employee who was rehired — Privilege Cloud safe membership from 2019 still active",
+        "condition": "Account 'jsmith-prod-01' matches employee who was rehired — KeeperPAM vault membership from 2019 still active",
         "ai_rationale": {
-            "what_fired": "During parallel-run at 100% traffic shift, Agent 15 detected a credential mismatch for account 'jsmith-prod-01' — the password hash in the source CyberArk vault does not match the password stored in the Privilege Cloud target after the last CPM rotation cycle at 06:00 UTC. Agent 15's credential reconciliation check (run every 6 hours) flagged the divergence at 08:22 UTC. The account is associated with a Windows domain service account used by a production batch processing application, and the mismatch means the source and target PAM systems would return different credentials for the same retrieval request.",
-            "root_cause": "HRMS records show two entries for 'John Smith': EMP-2019-4521 (original hire, terminated 2024-06-15) and EMP-2025-0089 (rehired 2025-11-01 into a different role — now Junior Operations Analyst instead of the original Senior Infrastructure Engineer). The Privilege Cloud safe membership was migrated with the original 22 granular permissions maintained in 1:1 parity from the 2019 CyberArk on-prem configuration. When John Smith was rehired, IT provisioning created a new AD account but the old service account 'jsmith-prod-01' was never deprovisioned in CyberArk because it was classified as a shared service account, not a personal account. The CPM rotation on the target side rotated the password, but the source side's CPM had already been disabled for this account during the 90% traffic shift phase, causing the credential divergence.",
+            "what_fired": "During parallel-run at 100% traffic shift, Agent 15 detected a credential mismatch for account 'jsmith-prod-01' — the password hash in the source CyberArk vault does not match the password stored in the KeeperPAM target after the last Keeper rotation cycle at 06:00 UTC. Agent 15's credential reconciliation check (run every 6 hours) flagged the divergence at 08:22 UTC. The account is associated with a Windows domain service account used by a production batch processing application, and the mismatch means the source and target PAM systems would return different credentials for the same retrieval request.",
+            "root_cause": "HRMS records show two entries for 'John Smith': EMP-2019-4521 (original hire, terminated 2024-06-15) and EMP-2025-0089 (rehired 2025-11-01 into a different role — now Junior Operations Analyst instead of the original Senior Infrastructure Engineer). The KeeperPAM vault membership was migrated with the original 22 granular permissions maintained in 1:1 parity from the 2019 CyberArk on-prem configuration. When John Smith was rehired, IT provisioning created a new AD account but the old service account 'jsmith-prod-01' was never deprovisioned in CyberArk because it was classified as a shared service account, not a personal account. The Keeper rotation engine on the target side rotated the password, but the source side's CPM had already been disabled for this account during the 90% traffic shift phase, causing the credential divergence.",
             "cross_system_context": "Agent 01 Discovery originally mapped 'jsmith-prod-01' to EMP-2019-4521 during Phase 1 — the HRMS correlation was correct at that time because EMP-2025-0089 did not exist yet. Agent 03 Permission Mapper preserved all 22 permissions in Option B's 1:1 parity model, which is technically correct from a migration fidelity standpoint but means the rehired employee's safe membership reflects Senior Infrastructure Engineer privileges, not Junior Operations Analyst. In Option A, the 22-permission-to-4-role LOSSY mapping would have triggered a mandatory review during permission assignment, likely catching the over-provisioning. Agent 04 ETL processed this account in Wave 2 without flagging it because the migration criteria only checked account validity, not employment status correlation.",
             "risk_assessment": "This is a dual-risk finding: the credential mismatch is an operational risk (application using 'jsmith-prod-01' could fail if it retrieves from the wrong PAM source), and the over-provisioned safe membership is a compliance risk (SOX Section 404, SOD violation — Junior Operations Analyst with Senior Infrastructure Engineer PAM access). The credential mismatch affects one production batch application (APP-BATCH-017) that runs nightly at 02:00 UTC. The over-provisioning risk is more systemic — if one rehired employee's permissions were silently carried forward, there may be others in the 20,247-account population that Agent 01 correlated to since-terminated employees who were later rehired. A full HRMS re-correlation scan is needed to identify all affected accounts.",
             "recommended_action": "Immediately verify with HR which employee record (EMP-2019-4521 or EMP-2025-0089) is authoritative for 'jsmith-prod-01' access. If the account should be owned by the rehired employee, review safe membership against the Junior Operations Analyst role requirements and remove any permissions not justified by the new role. Force a credential sync between source and target to resolve the password mismatch — determine which side has the correct password by checking APP-BATCH-017's last successful authentication. Initiate a full HRMS re-correlation scan across all 20,247 migrated accounts to identify other rehired employees whose permissions may have been silently carried forward. This pattern represents a systemic gap in the Option B migration — 1:1 parity preserves over-provisioning that would have been caught by Option A's lossy mapping review process. Do NOT resolve this checkpoint until the full HRMS scan is complete and all affected accounts are remediated.",
@@ -2374,7 +2386,7 @@ PREDICTIONS_B = [
         "source_checkpoints": ["yc-b05"],
         "affected_agents": [3, 7],
         "affected_phases": ["p6", "p7"],
-        "predicted_impact": "~30 accounts carry stale over-provisioned permissions into Privilege Cloud. SOX/PCI-DSS audit finding if discovered post-migration.",
+        "predicted_impact": "~30 accounts carry stale over-provisioned permissions into KeeperPAM. SOX/PCI-DSS audit finding if discovered post-migration.",
         "recommendation": "Run full HRMS re-correlation scan before P7 cutover. Flag all accounts where the employee\u2019s current role does not match the safe membership permissions. Require human review for any account with >10 permissions that has not been reviewed in the last 12 months. Generate a permission attestation report for compliance evidence.",
     },
 ]

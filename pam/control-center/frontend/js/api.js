@@ -3,7 +3,7 @@
  * When stubs are wired to real agents, no changes needed here.
  */
 const API = {
-  option: 'a',
+  option: 'b',
 
   async get(path) {
     const sep = path.includes('?') ? '&' : '?';

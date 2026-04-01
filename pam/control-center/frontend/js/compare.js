@@ -19,7 +19,7 @@ async function renderComparison() {
             <tr>
               <th style="width:160px">Category</th>
               <th>Delinea — Secret Server + StrongDM</th>
-              <th>CyberArk Cloud — Privilege Cloud</th>
+              <th>KeeperPAM — Live Target</th>
             </tr>
           </thead>
           <tbody>
@@ -55,7 +55,7 @@ async function renderComparison() {
             </div>
           </div>
           <div>
-            <div class="section-label" style="color:var(--green)">CyberArk Cloud: ${permMap.option_b?.description || ''}</div>
+            <div class="section-label" style="color:var(--green)">KeeperPAM: ${permMap.option_b?.description || ''}</div>
             <div class="callout teal">
               <div class="callout-title" style="color:var(--green)">1:1 Parity</div>
               <p>${permMap.option_b?.note || 'All 22 permissions map directly.'}</p>
@@ -75,7 +75,7 @@ async function renderComparison() {
             <tr>
               <th>CyberArk Platform</th>
               <th>Delinea (SS Template)</th>
-              <th>CyberArk Cloud (PC Platform)</th>
+              <th>KeeperPAM (Record Type)</th>
             </tr>
           </thead>
           <tbody>

@@ -39,7 +39,7 @@ function switchOption(opt) {
     ind.style.background = 'var(--blue-dim)';
     ind.style.color = 'var(--blue)';
   } else {
-    ind.textContent = 'CYBERARK CLOUD: PRIVILEGE CLOUD';
+    ind.textContent = 'KEEPERPAM — LIVE TARGET';
     ind.style.background = 'var(--green-dim)';
     ind.style.color = 'var(--green)';
   }
@@ -49,8 +49,8 @@ function switchOption(opt) {
   const missionSub = document.getElementById('missionSubtitle');
   if (weekLabel) weekLabel.textContent = opt === 'a' ? '80-WEEK PLAN' : '50-WEEK PLAN';
   if (missionSub) missionSub.textContent = opt === 'a'
-    ? '80-Week PAM Migration — Real-Time Dashboard'
-    : '50-Week PAM Migration — Real-Time Dashboard';
+    ? '80-Week PAM Migration — Real-Time Dashboard (Delinea Reference)'
+    : '50-Week PAM Migration — Real-Time Dashboard (KeeperPAM Live)';
 
   // Re-render current page with new option
   showPage(currentPage, document.querySelector('.nav-link.active'));

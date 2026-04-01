@@ -10,11 +10,14 @@ router = APIRouter()
 
 # Try live ML provider; fall back to static mock data
 _provider = None
+_provider_error: str | None = None
 try:
     from backend.ml_provider import LiveMLProvider
     _provider = LiveMLProvider()
-except Exception:
-    pass
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("ML provider failed to load, using mock data: %s", e)
+    _provider_error = str(e)
 
 if _provider is None:
     from backend.mock_data.ml_data import (
@@ -27,7 +30,7 @@ async def ml_status():
     """ML model states — ETL anomaly detector + NHI classifier."""
     if _provider:
         return _provider.get_status()
-    return ML_STATUS
+    return {**ML_STATUS, "inference": "mock", "mock_fallback": True, "mock_reason": _provider_error}
 
 
 @router.get("/anomalies")
