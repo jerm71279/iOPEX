@@ -57,3 +57,6 @@ accent-neutralizer/
 
 # Scaffold checklist files — generated per-run, not tracked
 CHECKLIST.md
+
+# ── Git artifacts ─────────────────────────────────────────────────────────────
+.git.bak/
