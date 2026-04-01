@@ -1,0 +1,43 @@
+# iOPEX PAM Migration — Docker build exclusions
+# Security by Design: never include credentials or runtime data in the image
+
+# Credentials and environment files
+config.json
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.pfx
+
+# Runtime output — mounted as Azure Files volume at /app/output
+output/
+
+# Development artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation sources (not needed in image)
+runbooks/*.md
+runbooks/build_docx.py
+*.docx
+*.md
+README*
+
+# Azure IaC — not part of the runtime image
+azure/

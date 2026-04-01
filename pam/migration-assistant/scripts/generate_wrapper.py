@@ -1,0 +1,1 @@
+../../common/scripts/generate_wrapper.py

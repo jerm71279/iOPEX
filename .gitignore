@@ -1,10 +1,62 @@
+# ── Credentials & secrets ─────────────────────────────────────────────────────
 config.json
 *.pem
 *.key
 .env
+.env.*
+
+# ── Runtime output ─────────────────────────────────────────────────────────────
 output/
+imported_data/
+*.log
+
+# ── Python ─────────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
+*.pyo
 venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# ── Node ───────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+.npm/
+
+# ── Java ───────────────────────────────────────────────────────────────────────
+target/
+*.class
+*.jar
+
+# ── Claude Code ────────────────────────────────────────────────────────────────
 .claude/
-imported_data/
+
+# ── OS artifacts ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+# ── Binary / large files ───────────────────────────────────────────────────────
+*.zip
+docs/*.docx
+# reference-docs are intentionally tracked (see reference-docs/)
+!reference-docs/*.docx
+!reference-docs/*.pptx
+
+# ── iOPEX repo-specific ────────────────────────────────────────────────────────
+# OneDrive sync folder — lives on OneDrive already, not for git
+iOPEX Documents/
+
+# Standalone repos nested in this workspace (each has its own GitHub repo)
+pam/consulting-agent/
+digital-expert/
+frontdoor-platform/
+accent-neutralizer/
+
+# Scaffold checklist files — generated per-run, not tracked
+CHECKLIST.md
+
+# ── Git artifacts ─────────────────────────────────────────────────────────────
+.git.bak/

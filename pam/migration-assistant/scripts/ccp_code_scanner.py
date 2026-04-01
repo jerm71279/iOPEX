@@ -1,0 +1,1 @@
+../../common/scripts/ccp_code_scanner.py

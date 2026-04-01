@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIFT — Migration Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">SHIFT</div>
+  <div class="sidebar-sub">Secure Hybrid Identity & Function Transfer</div>
+
+  <div class="option-indicator" id="optionIndicator"
+       style="background:var(--green-dim);color:var(--green);">
+    KEEPERPAM — LIVE MIGRATION TARGET
+  </div>
+
+  <button class="nav-link active" onclick="showPage('mission',this)">
+    <span class="nav-icon">&#x25A3;</span> Mission Control
+  </button>
+  <button class="nav-link" onclick="showPage('phases',this)">
+    <span class="nav-icon">&#x25B6;</span> Phase Explorer
+  </button>
+  <button class="nav-link" onclick="showPage('agents',this)">
+    <span class="nav-icon">&#x25C8;</span> Agents
+  </button>
+  <button class="nav-link" onclick="showPage('waves',this)">
+    <span class="nav-icon">&#x25E7;</span> Wave Execution
+  </button>
+  <button class="nav-link" onclick="showPage('accounts',this)">
+    <span class="nav-icon">&#x25A8;</span> Account Explorer
+  </button>
+  <button class="nav-link" onclick="showPage('gates',this)">
+    <span class="nav-icon">&#x25CF;</span> Gate Tracker
+  </button>
+  <button class="nav-link" onclick="showPage('yellow',this)">
+    <span class="nav-icon">&#x26A0;</span> Yellow Checkpoints
+  </button>
+  <button class="nav-link" onclick="showPage('pamfile',this)">
+    <span class="nav-icon">&#x25B7;</span> Life of a PAM File
+  </button>
+  <button class="nav-link" onclick="showPage('mcp',this)">
+    <span class="nav-icon">&#x2B21;</span> MCP Servers
+  </button>
+  <button class="nav-link" onclick="showPage('guide',this)">
+    <span class="nav-icon">&#x2753;</span> Guide & FAQ
+  </button>
+  <button class="nav-link" onclick="showPage('lab',this)">
+    <span class="nav-icon">&#x1F9EA;</span> Lab Showcase
+  </button>
+  <button class="nav-link" onclick="showPage('pmo',this)">
+    <span class="nav-icon">&#x1F4CA;</span> PMO Intelligence
+  </button>
+  <button class="nav-link" onclick="showPage('securityqa',this)">
+    <span class="nav-icon">&#x1F512;</span> Security Q&amp;A
+  </button>
+  <button class="nav-link" onclick="showPage('disclaimer',this)">
+    <span class="nav-icon">&#x26A0;</span> Status & Info
+  </button>
+
+  <div class="sidebar-footer">
+    iOPEX SHIFT v2.1<br>
+    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+3 AGENTS<br>
+    FastAPI + Vanilla JS
+  </div>
+</nav>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<main class="main">
+
+  <!-- ──── MISSION CONTROL ──── -->
+  <div class="page active" id="page-mission">
+    <div class="page-header">
+      <div class="page-title">Mission Control</div>
+      <div class="page-subtitle" id="missionSubtitle">80-Week CyberArk → KeeperPAM Migration — Real-Time Dashboard</div>
+    </div>
+    <!-- Life of a PAM File Banner -->
+    <div class="pam-life-banner" onclick="showPage('pamfile',document.querySelector('[onclick*=pamfile]'))">
+      <div class="pam-life-banner-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect x="4" y="2" width="18" height="24" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <path d="M9 8h8M9 12h6M9 16h8M9 20h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="24" cy="22" r="7" stroke="var(--teal)" stroke-width="1.5" fill="var(--bg-card)"/>
+          <path d="M21.5 22l2 2 3-3.5" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="pam-life-banner-text">
+        <div class="pam-life-banner-title">Life of a PAM File</div>
+        <div class="pam-life-banner-sub">Watch a credential flow through the 6-step SHIFT ETL pipeline — from source vault to validated target</div>
+      </div>
+      <div class="pam-life-banner-badge">
+        <span class="badge badge-teal">ANIMATED</span>
+        <span style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-mono);">6 STEPS &bull; BOTH OPTIONS</span>
+      </div>
+      <div class="pam-life-banner-arrow">&#x25B6;</div>
+    </div>
+
+    <div id="missionStats" class="stats-grid"></div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Phase Timeline</div>
+        <span class="badge badge-teal" id="currentPhaseBadge">P2</span>
+      </div>
+      <div class="phase-timeline" id="phaseTimeline"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Agent Status</div>
+        <span class="badge badge-amber" id="activeAgentCount"></span>
+      </div>
+      <div class="health-grid" id="agentStatusGrid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Risk Profile</div>
+      </div>
+      <div id="riskDashboard" class="stats-grid" style="padding:14px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Gate Status</div>
+        <span class="badge badge-green" id="gatePassCount"></span>
+      </div>
+      <div id="gateStatusList" style="max-height:280px;overflow-y:auto;padding:10px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Yellow Checkpoints</div>
+        <span class="badge badge-amber" id="yellowOpenCount"></span>
+      </div>
+      <div id="yellowStatusPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">ML Model Status</div>
+        <span class="badge badge-purple" id="mlStatusBadge"></span>
+      </div>
+      <div id="mlStatusPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">AI Predictive Insights</div>
+        <span class="badge badge-purple" id="predictionCount"></span>
+      </div>
+      <div id="predictionsPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Circuit Breaker Status</div>
+        <span class="badge badge-cyan" id="cbStatusBadge"></span>
+      </div>
+      <div id="circuitBreakerPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Schema Drift Monitor</div>
+        <span class="badge badge-amber" id="driftEventCount"></span>
+      </div>
+      <div id="schemaDriftPanel"></div>
+    </div>
+  </div>
+
+  <!-- ──── PHASE EXPLORER ──── -->
+  <div class="page" id="page-phases">
+    <div class="page-header">
+      <div class="page-title">Phase Explorer</div>
+      <div class="page-subtitle">8-Phase Migration Lifecycle — P0 through P7</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <button class="btn btn-sm btn-teal" onclick="expandAllPhases()">Expand All</button>
+      <button class="btn btn-sm" style="background:var(--bg-surface);color:var(--text-muted);border:1px solid var(--border);" onclick="collapseAllPhases()">Collapse All</button>
+    </div>
+    <div id="phaseCards"></div>
+  </div>
+
+  <!-- ──── AGENTS ──── -->
+  <div class="page" id="page-agents">
+    <div class="page-header">
+      <div class="page-title">Agent Orchestration</div>
+      <div class="page-subtitle">15 Migration Agents + 2 SHIFT Agents</div>
+    </div>
+    <div id="agentDetail" style="display:none;"></div>
+    <div id="agentGrid" class="agent-grid"></div>
+  </div>
+
+  <!-- ──── WAVES ──── -->
+  <div class="page" id="page-waves">
+    <div class="page-header">
+      <div class="page-title">Wave Execution</div>
+      <div class="page-subtitle">5-Wave Production Migration — Phase 5</div>
+    </div>
+    <div id="waveCards"></div>
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-header">
+        <div class="panel-title">ETL Pipeline Simulation</div>
+        <div>
+          <select id="waveSelect" onchange="renderIntegrityReport(this.value)" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
+            <option value="1">Wave 1</option>
+            <option value="2">Wave 2</option>
+            <option value="3">Wave 3</option>
+            <option value="4">Wave 4</option>
+            <option value="5">Wave 5</option>
+          </select>
+          <button class="btn btn-sm btn-teal" id="runWaveBtn" onclick="runWaveSimulation()">Run Wave</button>
+        </div>
+      </div>
+      <div id="etlPipeline" class="etl-pipeline"></div>
+      <div id="etlResult" style="padding:0 18px 14px;display:none;"></div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div class="panel-title">Heartbeat Validation — Agent 05 (10 Checks)</div>
+      </div>
+      <div class="health-grid" id="heartbeatChecks"></div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div class="panel-title">Integrity Validation — Agent 18 (12 IC Checks)</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge badge-purple" id="integrityAccBadge"></span>
+          <span style="font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">INDEPENDENT SESSION</span>
+        </div>
+      </div>
+      <div id="integrityChecksPanel"></div>
+    </div>
+  </div>
+
+  <!-- ──── ACCOUNTS ──── -->
+  <div class="page" id="page-accounts"></div>
+
+  <!-- ──── GATES ──── -->
+  <div class="page" id="page-gates">
+    <div class="page-header">
+      <div class="page-title">Gate Tracker</div>
+      <div class="page-subtitle">17 Human Approval Gates — Critical Path</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <button class="reset-btn" onclick="resetGates()">Reset All Gates</button>
+    </div>
+    <div id="gateTimeline"></div>
+  </div>
+
+  <!-- ──── YELLOW CHECKPOINTS ──── -->
+  <div class="page" id="page-yellow">
+    <div class="page-header">
+      <div class="page-title">Yellow Checkpoints</div>
+      <div class="page-subtitle">AI Orchestrator — Cross-Phase Contextual Awareness</div>
+    </div>
+    <div id="yellowStats" class="stats-grid"></div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-header">
+        <div class="panel-title">Phase Accumulation Thresholds</div>
+      </div>
+      <div id="yellowAccumulation"></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-header">
+        <div class="panel-title">State Machine — FIRE &rarr; CLASSIFY &rarr; NOTIFY &rarr; WINDOW &rarr; BOUNDARY &rarr; RESOLVE</div>
+        <button class="btn btn-sm" style="background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber)33" onclick="toggleStateMachine()">Show / Hide</button>
+      </div>
+      <div id="yellowStateMachine" style="display:none"></div>
+    </div>
+    <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
+      <button class="reset-btn" onclick="resetYellowCheckpoints()">Reset All Checkpoints</button>
+      <span style="font-size:0.6rem;color:var(--text-muted)">&#x25CF; Procedural = mandatory phase gate checks &nbsp;&nbsp;&#x25CF; AI Detected = orchestrator-identified conflicts, decisions, or forecasted errors</span>
+    </div>
+    <div id="yellowCheckpoints"></div>
+  </div>
+
+  <!-- ──── LIFE OF A PAM FILE ──── -->
+  <div class="page" id="page-pamfile">
+    <div class="page-header">
+      <div class="page-title">Life of a PAM File</div>
+      <div class="page-subtitle">Animated ETL Pipeline — SHIFT Migration Workflow</div>
+    </div>
+    <iframe id="pamfileFrame" src="/life-of-pam" style="width:100%;border:none;border-radius:8px;min-height:750px;background:var(--bg-surface);"></iframe>
+  </div>
+
+  <!-- ──── MCP SERVERS ──── -->
+  <div class="page" id="page-mcp">
+    <div class="page-header">
+      <div class="page-title">MCP Servers</div>
+      <div class="page-subtitle">Model Context Protocol — AI Council Conditions 2, 3, 4</div>
+    </div>
+    <div id="mcpContent"></div>
+  </div>
+
+  <!-- ──── PMO INTELLIGENCE ──── -->
+  <div class="page" id="page-pmo">
+    <div class="page-header">
+      <div class="page-title">PMO Intelligence</div>
+      <div class="page-subtitle">Layer 0 — AI-Native Project Management &bull; iOPEX PMO Engine + Execution Engine + RAG Dashboard</div>
+    </div>
+    <div id="shift-pmo-dashboard"></div>
+  </div>
+
+  <!-- ──── GUIDE & FAQ ──── -->
+  <div class="page" id="page-guide">
+    <div class="page-header">
+      <div class="page-title">Guide & FAQ</div>
+      <div class="page-subtitle">Comprehensive Reference — Architecture, Agents, Predictions, Glossary</div>
+    </div>
+    <div id="guideContent"></div>
+  </div>
+
+  <!-- ──── SECURITY Q&A ──── -->
+  <div class="page" id="page-securityqa">
+    <div class="page-header">
+      <div class="page-title">Security Q&amp;A</div>
+      <div class="page-subtitle">Deep Dive — Enterprise Security Architect Review &bull; Encryption &bull; Compliance &bull; NHI &bull; Pentest</div>
+    </div>
+    <div id="securityQAContent"></div>
+  </div>
+
+  <!-- ──── LAB SHOWCASE ──── -->
+  <div class="page" id="page-lab">
+    <div class="page-header">
+      <div class="page-title">Lab Showcase</div>
+      <div class="page-subtitle">Interactive PAM capability demonstrations</div>
+    </div>
+    <div id="labContent"></div>
+  </div>
+
+  <!-- ──── DISCLAIMER ──── -->
+  <div class="page" id="page-disclaimer">
+    <div class="page-header">
+      <div class="page-title">Status & Information</div>
+      <div class="page-subtitle">What this control center is and what's needed for production</div>
+    </div>
+    <div id="disclaimerContent"></div>
+  </div>
+
+</main>
+
+<!-- ════════════ TOAST NOTIFICATIONS ════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ════════════ DRILL-DOWN OVERLAY ════════════ -->
+<div class="overlay" id="drillOverlay" onclick="if(event.target===this)closeDrill()">
+  <div class="overlay-panel">
+    <button class="overlay-close" onclick="closeDrill()">&times;</button>
+    <div id="drillTitle" style="font-size:1rem;font-weight:700;color:var(--text-bright);margin-bottom:12px;"></div>
+    <div id="drillContent"></div>
+  </div>
+</div>
+
+<script src="/js/renderers.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ml.js"></script>
+<script src="/js/mission.js"></script>
+<script src="/js/phases.js"></script>
+<script src="/js/agents.js"></script>
+<script src="/js/waves.js"></script>
+<script src="/js/gates.js"></script>
+<script src="/js/yellow.js"></script>
+<script src="/js/accounts.js"></script>
+<script src="/js/guide.js"></script>
+<script src="/js/mcp.js"></script>
+<script src="/js/lab.js"></script>
+<script src="/js/pmo.js"></script>
+<script src="/js/securityqa.js"></script>
+<script src="/js/app.js"></script>
+
+</body>
+</html>

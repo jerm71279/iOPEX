@@ -1,0 +1,34 @@
+{
+  "cyberark_on_prem": {
+    "base_url": "https://pvwa.company.com",
+    "username": "COMMENT: Set via CYBERARK_USERNAME env var instead",
+    "password": "COMMENT: Set via CYBERARK_PASSWORD env var instead",
+    "auth_type": "LDAP",
+    "verify_ssl": true,
+    "timeout": 30,
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "rate_limit": 0.1,
+    "batch_size": 1000
+  },
+  "keeperpam": {
+    "base_url": "https://keepersecurity.com",
+    "auth_method": "oauth2",
+    "client_id": "COMMENT: Set via KEEPERPAM_CLIENT_ID env var instead",
+    "client_secret": "COMMENT: Set via KEEPERPAM_CLIENT_SECRET env var instead",
+    "verify_ssl": true,
+    "timeout": 30,
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "rate_limit": 0.1,
+    "batch_size": 500
+  },
+  "servicenow": {
+    "instance_url": "",
+    "username": "",
+    "password": ""
+  },
+  "output_dir": "./output",
+  "log_level": "INFO",
+  "environment": "dev"
+}

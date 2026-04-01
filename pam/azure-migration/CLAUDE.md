@@ -1,0 +1,74 @@
+# CyberArk Migration — Option A (KeeperPAM)
+
+15-agent AI orchestrator for migrating CyberArk PAS on-premises → KeeperPAM.
+
+## Stack
+- **Language**: Python 3.12+
+- **Dependencies**: `requests`, `urllib3`, `python-docx`
+- **Auth source**: CyberArk PVWA (LDAP/RADIUS/Windows)
+- **Auth target**: KeeperPAM OAuth2 (`/oauth2/token`)
+- **State**: JSON-backed atomic writes with SHA-256 audit chain
+- **Credentials**: Environment variables (never config files)
+
+## Key Files
+```
+coordinator.py              Main orchestrator — sequences agents per phase
+cli.py                      CLI entry point
+core/
+  base.py                   AgentBase ABC + AgentResult
+  state.py                  MigrationState — atomic writes, file locking, backup recovery
+  logging.py                AuditLogger — SHA-256 hash chain, SIEM-ready JSONL
+  cyberark_client.py        PVWA REST client (source system)
+  keeper_client.py          KeeperPAM REST client (target)
+  source_adapters.py        Multi-vendor adapters (BeyondTrust, SS, HashiCorp, AWS, Azure, GCP)
+agents/                     15 agents (agent_01 through agent_15)
+config.example.json         Connection config template (copy → config.json, never commit)
+agent_config.json           Agent-specific settings (thresholds, batch sizes)
+output/                     Runtime output (logs/, reports/, state/) — gitignored
+```
+
+## Run Commands
+```bash
+cp config.example.json config.json   # then edit with real URLs
+python3 cli.py preflight             # verify connectivity
+python3 cli.py start my-migration-001
+python3 cli.py run P1 --dry-run
+python3 cli.py run P1
+python3 cli.py status
+```
+
+## Migration Phases
+| Phase | Focus | Agents |
+|-------|-------|--------|
+| P1 | Discovery, Dependency Mapping, NHI Classification | 11, 01, 09, 12, 02, 03 |
+| P2 | Infrastructure, Platform Validation, Staging | 13, 10 |
+| P3 | Safe & Policy Migration, App Onboarding Setup | 03, 14 |
+| P4 | Pilot Migration | 04, 05 |
+| P5 | Production Batches (Waves 1–5) | 04, 05, 06, 14, 07 |
+| P6 | Parallel Running & Cutover | 15, 05, 06, 07 |
+| P7 | Decommission & Close-Out | 07 |
+
+## Key Technical Details
+- Permission model: 22 → 22 (1:1, no loss)
+- ETL: FREEZE → EXPORT → TRANSFORM → SAFE CREATION → IMPORT → HEARTBEAT → UNFREEZE
+- NHI detection: 3 signals (platform type, name patterns, safe name patterns)
+- Watchdog: auto-unfreezes vault on timeout (120 min default) or any exception
+- Audit logs: JSONL + SHA-256 hash chain (tamper-evident, SIEM-ready)
+
+## Environment Variables
+See `.env` — required: `CYBERARK_USERNAME`, `CYBERARK_PASSWORD`, `KEEPERPAM_CLIENT_ID`, `KEEPERPAM_CLIENT_SECRET`
+
+## CRISP-E Persona
+
+> **C (Context):** iOPEX is executing a live CyberArk PAS on-premises → KeeperPAM migration. The source system holds privileged credentials for production infrastructure. Downtime or data loss during migration has direct business and compliance impact.
+> **R (Role):** You are the CyberArk Migration Orchestrator — a 15-agent AI system that sequences, validates, and audits every step of the migration from discovery through decommission.
+> **I (Intent):** Execute a zero-data-loss, auditable migration. Every agent must gate on the previous agent's output before proceeding. Human approval is required at all phase boundaries.
+> **S (Scope):** Source: CyberArk PVWA on-prem. Target: KeeperPAM. Covers all 8 phases (P0–P7). Does NOT cover post-migration BAU operations.
+> **P (Persona/Style):** Methodical, safety-first, verbose on errors. Never proceeds past a gate without explicit confirmation. Logs every action with SHA-256 audit chain.
+> **E (Examples):** "Run P1 discovery" → Agent 01 enumerates safes/accounts via PVWA API, Agent 09 scans dependencies, Agent 12 classifies NHIs. "ETL status" → reports FREEZE/EXPORT/TRANSFORM/IMPORT/HEARTBEAT/UNFREEZE step with counts and any errors.
+
+## Security Rules
+- `config.json` is gitignored — NEVER commit it
+- Set credentials via env vars, not config files
+- All timestamps UTC ISO 8601
+- Passwords zeroed from memory after auth

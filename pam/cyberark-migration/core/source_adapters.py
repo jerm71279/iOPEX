@@ -1,0 +1,1 @@
+../../common/core/source_adapters.py
