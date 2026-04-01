@@ -4,7 +4,7 @@
 
 All code in this repository is the exclusive property of **JIT Technologies LLC**.
 
-Clients and partners engage with iOPEX for service outcomes. Source code, agent logic,
+Clients and partners engage with JIT Technologies for service outcomes. Source code, agent logic,
 prompt libraries, and system architecture remain proprietary. White label rights require
 a separate White Label License Agreement.
 
@@ -12,10 +12,10 @@ a separate White Label License Agreement.
 
 ## Development Guidelines
 
-- All work is coordinated through Jeremy Smith (jerm712@icloud.com)
+- All work is coordinated through [[CONTACT_NAME]] ([[CONTACT_EMAIL]])
 - Branch naming: `feature/`, `fix/`, `refactor/`
 - Never commit credentials, `.env` files, or `config.json` with secrets
-- Follow the iOPEX scaffold structure for new projects
+- Follow the scaffold structure for new projects
 
 ---
 

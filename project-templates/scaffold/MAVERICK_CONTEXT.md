@@ -1,7 +1,7 @@
-# [[PROJECT_TITLE]] — Maverick Context
+# [[PROJECT_TITLE]] — Internal Context
 
 > Internal-only. Not for client distribution.
-> Provides Jeremy / Claude Code with full project context for AI-assisted development.
+> Provides full internal project context for AI-assisted development.
 
 ---
 
@@ -13,8 +13,8 @@
 | Customer | [[CUSTOMER]] |
 | Status | [[PROJECT_STATUS]] |
 | Started | [[DATE_CREATED]] |
-| Owner | JIT Technologies LLC |
-| Primary Contact | Jeremy Smith (jerm712@icloud.com) |
+| Owner | [[IP_OWNER]] |
+| Primary Contact | [[CONTACT_NAME]] ([[CONTACT_EMAIL]]) |
 
 ---
 
@@ -63,7 +63,7 @@
 
 ## IP Notes
 
-All code in this project is the exclusive property of JIT Technologies LLC.
+All code in this project is the exclusive property of [[IP_OWNER]].
 The client ([[CUSTOMER]]) has purchased the service outcome, not the code.
 Do not share source code, agent logic, or system architecture with the client
 beyond what is explicitly covered in the Statement of Work.

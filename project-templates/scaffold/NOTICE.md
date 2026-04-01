@@ -2,7 +2,7 @@
 
 **Copyright (c) [[DATE_CREATED]] JIT Technologies LLC. All rights reserved.**
 
-This project is proprietary software developed by iOPEX Technologies /
+This project is proprietary software developed by JIT Technologies LLC /
 JIT Technologies LLC. Unauthorized copying, distribution, or modification
 is strictly prohibited.
 

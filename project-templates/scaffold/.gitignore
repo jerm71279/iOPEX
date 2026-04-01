@@ -1,0 +1,30 @@
+# iOPEX Standard Ignore Patterns
+
+# SECURITY WARNING:
+# AGENTS.md contains Failure Mode analysis (Threat Models). 
+# If this repository is made PUBLIC, review AGENTS.md for sensitive data.
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+
+# AI / LangGraph
+output/
+state/
+*.log
+.langgraph/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Project Specific
+config.json
+credentials.json
+*.pem
+*.key
