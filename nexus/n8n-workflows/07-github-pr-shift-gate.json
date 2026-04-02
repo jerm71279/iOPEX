@@ -57,7 +57,7 @@
     },
     {
       "parameters": {
-        "command": "nexus-core run shift --subcommand preflight --dry-run 2>/dev/null"
+        "command": "/home/maverick/.local/bin/nexus-core run shift --subcommand preflight --dry-run 2>/dev/null"
       },
       "id": "run-preflight",
       "name": "Run SHIFT Preflight",

@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "command": "nexus-core doctor --format json 2>/dev/null"
+        "command": "/home/maverick/.local/bin/nexus-core doctor --format json 2>/dev/null"
       },
       "id": "run-doctor",
       "name": "Run Doctor",

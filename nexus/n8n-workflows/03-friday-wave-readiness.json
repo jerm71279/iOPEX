@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "command": "nexus-core run pmo --subcommand wave --wave 1 --phase P2 --dry-run 2>/dev/null"
+        "command": "/home/maverick/.local/bin/nexus-core run pmo --subcommand wave --wave 1 --phase P2 --dry-run 2>/dev/null"
       },
       "id": "run-wave",
       "name": "Run Wave Readiness",

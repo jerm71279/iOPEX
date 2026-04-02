@@ -68,7 +68,7 @@
     },
     {
       "parameters": {
-        "command": "nexus-core run nexus --subcommand brief --dry-run 2>/dev/null | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('brief','No brief available.'))\" 2>/dev/null || nexus-core run nexus --subcommand brief 2>/dev/null"
+        "command": "/home/maverick/.local/bin/nexus-core run nexus --subcommand brief --dry-run 2>/dev/null | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('brief','No brief available.'))\" 2>/dev/null || nexus-core run nexus --subcommand brief 2>/dev/null"
       },
       "id": "run-brief",
       "name": "Run nexus brief",
