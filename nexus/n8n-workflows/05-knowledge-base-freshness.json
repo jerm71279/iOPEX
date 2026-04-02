@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=⚠️ *Knowledge Base Stale*\n\nAge: {{ $json.age_hours ? Math.round($json.age_hours) + 'h' : 'unknown' }} (threshold: 168h)\nChunks: {{ $json.total_chunks || 0 }}\n\nTriggering re-ingest for all domains...",
         "additionalFields": { "parse_mode": "Markdown" }
       },
@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=✅ Re-ingest complete.\n\n```\n{{ $json.stdout.substring(0, 500) }}\n```",
         "additionalFields": { "parse_mode": "Markdown" }
       },

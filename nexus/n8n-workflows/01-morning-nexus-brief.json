@@ -48,7 +48,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=☀️ *Morning Brief*\n\n{{ $json.stdout.trim() }}",
         "additionalFields": { "parse_mode": "Markdown" }
       },
@@ -61,7 +61,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "⚠️ *Nexus API is down* — http://localhost:8001/health unreachable. Start with `./start.sh`",
         "additionalFields": { "parse_mode": "Markdown" }
       },

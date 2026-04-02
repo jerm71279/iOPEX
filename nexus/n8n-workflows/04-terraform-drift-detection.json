@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=🔴 *Terraform Drift Detected*\n\nEnvironment: `dev` / Composition: `shared`\n\n```\n{{ $json.output.substring(0, 2000) }}\n```\n\nRun: `terraform plan -var-file=environments/dev.tfvars` to review",
         "additionalFields": { "parse_mode": "Markdown" }
       },

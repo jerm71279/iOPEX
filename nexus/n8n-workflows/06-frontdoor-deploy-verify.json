@@ -48,8 +48,8 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
-        "text": "=✅ *FrontDoor Deployed*\n\nHealth: `{{ $json.status }}`\nURL: {{ $vars.FRONTDOOR_URL }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=✅ *FrontDoor Deployed*\n\nHealth: `{{ $json.status }}`\nURL: {{ $env.FRONTDOOR_URL }}",
         "additionalFields": { "parse_mode": "Markdown" }
       },
       "id": "alert-ok",
@@ -61,7 +61,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=🔴 *FrontDoor Deploy — Health Check FAILED*\n\nStatus: `{{ $json.status }}`\n\nCheck Render dashboard and logs.",
         "additionalFields": { "parse_mode": "Markdown" }
       },
