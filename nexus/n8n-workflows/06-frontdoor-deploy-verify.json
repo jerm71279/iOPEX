@@ -33,7 +33,7 @@
     },
     {
       "parameters": {
-        "command": "/home/maverick/.local/bin/nexus-core run frontdoor --subcommand health --dry-run 2>/dev/null"
+        "command": "bash -lc '/home/maverick/.local/bin/nexus-core run frontdoor --subcommand health --dry-run 2>/dev/null'"
       },
       "id": "run-health",
       "name": "Check FrontDoor Health",

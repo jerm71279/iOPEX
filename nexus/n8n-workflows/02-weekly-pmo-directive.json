@@ -36,7 +36,7 @@
     },
     {
       "parameters": {
-        "command": "=/home/maverick/.local/bin/nexus-core run pmo --subcommand directive --phase {{ $json.phase }} --week {{ $json.week }} --dry-run 2>/dev/null"
+        "command": "bash -lc '=/home/maverick/.local/bin/nexus-core run pmo --subcommand directive --phase {{ $json.phase }} --week {{ $json.week }} --dry-run 2>/dev/null'"
       },
       "id": "run-directive",
       "name": "Run PMO Directive",

@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "command": "/home/maverick/.local/bin/nexus-core run ingest --subcommand status 2>/dev/null"
+        "command": "bash -lc '/home/maverick/.local/bin/nexus-core run ingest --subcommand status 2>/dev/null'"
       },
       "id": "run-status",
       "name": "Get Ingest Status",
@@ -104,7 +104,7 @@
     },
     {
       "parameters": {
-        "command": "/home/maverick/.local/bin/nexus-core run ingest --subcommand all 2>&1 | tail -5"
+        "command": "bash -lc '/home/maverick/.local/bin/nexus-core run ingest --subcommand all 2>&1 | tail -5'"
       },
       "id": "trigger-ingest",
       "name": "Trigger Re-Ingest",

@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "command": "cd ~/projects/iOPEX && bash terraform/scripts/drift-check.sh shared dev 2>&1; echo \"EXIT:$?\""
+        "command": "bash -lc 'cd ~/projects/iOPEX && bash terraform/scripts/drift-check.sh shared dev 2>&1; echo \"EXIT:$?\"'"
       },
       "id": "run-drift",
       "name": "Run Drift Check",
