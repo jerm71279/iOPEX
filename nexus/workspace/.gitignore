@@ -1,0 +1,5 @@
+# OpenClaw runtime state — not tracked
+.openclaw/
+
+# Daily memory notes — high-churn, not tracked
+memory/????-??-??.md
