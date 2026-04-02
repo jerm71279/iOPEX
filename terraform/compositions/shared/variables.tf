@@ -115,7 +115,19 @@ variable "data_disk_size_gb" {
 variable "cloud_init_script" {
   type        = string
   default     = ""
-  description = "Cloud-init script to bootstrap the VM (Python 3.12, Docker, pip deps)"
+  description = "Cloud-init script to bootstrap the VM (Python 3.12, Docker, pip deps). If empty, cloud-init-nexus-core.yaml is rendered via templatefile()."
+}
+
+variable "nexus_wheel_storage_account" {
+  type        = string
+  default     = "stpamtfstate"
+  description = "Storage account containing the nexus-core wheel for VM cloud-init download"
+}
+
+variable "nexus_wheel_version" {
+  type        = string
+  default     = "0.1.0"
+  description = "nexus-core wheel version to install on the orchestrator VM (must match wheel in blob storage)"
 }
 
 ## ─── Key Vault ────────────────────────────────────────────────────────────────

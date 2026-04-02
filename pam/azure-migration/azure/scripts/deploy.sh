@@ -6,6 +6,9 @@
 #   az login
 #   az account set --subscription <subscription-id>
 #
+# Step 0 (nexus-core wheel) runs automatically if NEXUS_CORE_DIR is set
+# or ~/projects/nexus-core exists. Skip with: SKIP_NEXUS_WHEEL=1 ./deploy.sh ...
+#
 # Security by Design:
 #   [HIGH] Image digest captured and logged after push — immutable reference
 #   [MEDIUM] Input validation on resource group name — prevent injection via $RG
@@ -38,6 +41,25 @@ DEPLOY_LOG="$ROOT_DIR/output/deploy_$(date +%Y%m%d_%H%M%S).log"
 mkdir -p "$ROOT_DIR/output"
 
 echo "=== iOPEX PAM Migration — Azure Deploy ===" | tee -a "$DEPLOY_LOG"
+
+# Step 0: Build + upload nexus-core wheel (prerequisite for cloud-init on VM)
+NEXUS_CORE_DIR="${NEXUS_CORE_DIR:-$HOME/projects/nexus-core}"
+TERRAFORM_SCRIPTS="$(cd "$(dirname "$0")/../../../terraform/scripts" 2>/dev/null && pwd || echo "")"
+
+if [ "${SKIP_NEXUS_WHEEL:-0}" = "1" ]; then
+    echo "[0/4] Skipping nexus-core wheel (SKIP_NEXUS_WHEEL=1)" | tee -a "$DEPLOY_LOG"
+elif [ ! -d "$NEXUS_CORE_DIR" ]; then
+    echo "[0/4] WARN: nexus-core not found at $NEXUS_CORE_DIR — skipping wheel upload" | tee -a "$DEPLOY_LOG"
+    echo "       Set NEXUS_CORE_DIR or run terraform/scripts/upload-nexus-wheel.sh manually" | tee -a "$DEPLOY_LOG"
+elif [ -n "$TERRAFORM_SCRIPTS" ] && [ -f "$TERRAFORM_SCRIPTS/upload-nexus-wheel.sh" ]; then
+    echo "[0/4] Building and uploading nexus-core wheel..." | tee -a "$DEPLOY_LOG"
+    NEXUS_CORE_DIR="$NEXUS_CORE_DIR" \
+    NEXUS_WHEEL_STORAGE_ACCOUNT="${NEXUS_WHEEL_STORAGE_ACCOUNT:-stpamtfstate}" \
+      bash "$TERRAFORM_SCRIPTS/upload-nexus-wheel.sh" 2>&1 | tee -a "$DEPLOY_LOG"
+else
+    echo "[0/4] WARN: upload-nexus-wheel.sh not found — skipping. Run manually from terraform/scripts/" | tee -a "$DEPLOY_LOG"
+fi
+echo "" | tee -a "$DEPLOY_LOG"
 echo "Resource Group : $RG"                        | tee -a "$DEPLOY_LOG"
 echo "Image Tag      : $TAG"                        | tee -a "$DEPLOY_LOG"
 echo "Deploy Log     : $DEPLOY_LOG"                 | tee -a "$DEPLOY_LOG"

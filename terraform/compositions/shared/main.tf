@@ -54,7 +54,14 @@ module "orchestrator_vm" {
   ssh_public_key      = var.ssh_public_key
   subnet_id           = module.networking.subnet_orchestrator_id
   data_disk_size_gb   = var.data_disk_size_gb
-  cloud_init_script   = var.cloud_init_script
+  cloud_init_script   = var.cloud_init_script != "" ? var.cloud_init_script : templatefile(
+    "${path.module}/../../scripts/cloud-init-nexus-core.yaml",
+    {
+      nexus_wheel_storage_account = var.nexus_wheel_storage_account
+      key_vault_name              = local.kv_name
+      nexus_wheel_version         = var.nexus_wheel_version
+    }
+  )
   tags                = local.tags
 }
 

@@ -1,0 +1,155 @@
+#cloud-config
+# nexus-core VM Bootstrap
+# Rendered by Terraform templatefile() — do not edit values directly.
+#
+# Terraform variables injected at provision time:
+#   nexus_wheel_storage_account = ${nexus_wheel_storage_account}
+#   key_vault_name              = ${key_vault_name}
+#   nexus_wheel_version         = ${nexus_wheel_version}
+#
+# What this does (runs once on first boot as root):
+#   1. Install Python 3.12 via deadsnakes PPA
+#   2. Create nexus service user
+#   3. Download nexus-core wheel from Blob Storage using VM managed identity
+#   4. Install nexus-core system-wide
+#   5. Fetch secrets from Key Vault and write /home/nexus/.env
+#   6. Install + start nexus-core as a systemd user service (port 7799)
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - software-properties-common
+
+write_files:
+  # ── systemd user service unit ──────────────────────────────────────────────
+  - path: /etc/nexus-core.service.template
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=nexus-core MCP Server
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/nexus-core serve --host 127.0.0.1 --port 7799
+      EnvironmentFile=/home/nexus/.env
+      Restart=on-failure
+      RestartSec=5s
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=nexus-core
+
+      [Install]
+      WantedBy=default.target
+
+runcmd:
+  # ── Python 3.12 (Ubuntu 22.04 ships 3.10) ─────────────────────────────────
+  - add-apt-repository -y ppa:deadsnakes/ppa
+  - apt-get update -qq
+  - apt-get install -y python3.12 python3.12-venv python3.12-distutils
+
+  # Make python3.12 the default python3 for nexus-core
+  - update-alternatives --install /usr/bin/python3.12 python3.12 /usr/bin/python3.12 1
+
+  # ── pip for Python 3.12 ────────────────────────────────────────────────────
+  - curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+
+  # ── nexus service user ─────────────────────────────────────────────────────
+  - useradd -m -s /bin/bash -G systemd-journal nexus
+  - loginctl enable-linger nexus
+
+  # ── Download nexus-core wheel from Blob Storage (managed identity) ─────────
+  - mkdir -p /home/nexus/packages
+  - >-
+    az storage blob download
+    --account-name ${nexus_wheel_storage_account}
+    --container-name nexus-core-packages
+    --name nexus_core-${nexus_wheel_version}-py3-none-any.whl
+    --file /home/nexus/packages/nexus_core.whl
+    --auth-mode login
+    --output none
+
+  # ── Install nexus-core system-wide ────────────────────────────────────────
+  - python3.12 -m pip install /home/nexus/packages/nexus_core.whl
+
+  # ── Fetch secrets from Key Vault and write .env ────────────────────────────
+  # get() retrieves a KV secret or returns empty string on failure
+  - |
+    KV="${key_vault_name}"
+    ENV_FILE="/home/nexus/.env"
+    get() { az keyvault secret show --vault-name "$KV" --name "$1" --query value -o tsv 2>/dev/null || echo ""; }
+
+    cat > "$ENV_FILE" << 'ENVEOF'
+    NEXUS_ENV=prod
+    NEXUS_MODEL=claude-sonnet-4-6
+    NEXUS_COST_LIMIT=5.00
+    NEXUS_SHIFT_DIR=/home/nexus/projects/iOPEX/pam/azure-migration
+    NEXUS_AZURE_MIGRATION_DIR=/home/nexus/projects/iOPEX/pam/azure-migration
+    NEXUS_WORKSPACE_DIR=/home/nexus/.openclaw/workspace
+    NEXUS_PROJECTS_DIR=/home/nexus/projects/iOPEX
+    ENVEOF
+
+    # Append secrets fetched from Key Vault
+    echo "ANTHROPIC_API_KEY=$(get ANTHROPIC-API-KEY)"          >> "$ENV_FILE"
+    echo "CYBERARK_USERNAME=$(get CYBERARK-USERNAME)"          >> "$ENV_FILE"
+    echo "CYBERARK_PASSWORD=$(get CYBERARK-PASSWORD)"          >> "$ENV_FILE"
+    echo "KEEPERPAM_CLIENT_ID=$(get KEEPERPAM-CLIENT-ID)"      >> "$ENV_FILE"
+    echo "KEEPERPAM_CLIENT_SECRET=$(get KEEPERPAM-CLIENT-SECRET)" >> "$ENV_FILE"
+    echo "AZURE_CLIENT_ID=$(get AZURE-CLIENT-ID)"              >> "$ENV_FILE"
+    echo "AZURE_CLIENT_SECRET=$(get AZURE-CLIENT-SECRET)"      >> "$ENV_FILE"
+    echo "AZURE_TENANT_ID=$(get AZURE-TENANT-ID)"              >> "$ENV_FILE"
+    echo "RENDER_API_KEY=$(get RENDER-API-KEY)"                >> "$ENV_FILE"
+    echo "RENDER_SERVICE_ID=$(get RENDER-SERVICE-ID)"          >> "$ENV_FILE"
+    echo "FRONTDOOR_URL=$(get FRONTDOOR-URL)"                  >> "$ENV_FILE"
+    echo "DATABASE_URL=$(get DATABASE-URL)"                    >> "$ENV_FILE"
+
+    chmod 600 "$ENV_FILE"
+    chown nexus:nexus "$ENV_FILE"
+
+  # ── Install systemd user service ───────────────────────────────────────────
+  - mkdir -p /home/nexus/.config/systemd/user
+  - cp /etc/nexus-core.service.template /home/nexus/.config/systemd/user/nexus-core.service
+  - chown -R nexus:nexus /home/nexus/.config
+
+  # ── Start user manager and enable service ──────────────────────────────────
+  - |
+    NEXUS_UID=$(id -u nexus)
+    # Start the user@UID systemd manager (loginctl enable-linger ensures it persists)
+    systemctl start user@$NEXUS_UID
+    sleep 3
+
+    export XDG_RUNTIME_DIR=/run/user/$NEXUS_UID
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$NEXUS_UID/bus
+
+    sudo -u nexus \
+      XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+      DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+      systemctl --user daemon-reload
+
+    sudo -u nexus \
+      XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+      DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+      systemctl --user enable nexus-core
+
+    sudo -u nexus \
+      XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+      DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+      systemctl --user start nexus-core
+
+  # ── Verify ────────────────────────────────────────────────────────────────
+  - |
+    sleep 5
+    if nexus-core version > /dev/null 2>&1; then
+      echo "nexus-core: INSTALLED OK"
+    else
+      echo "nexus-core: INSTALL FAILED — check /var/log/cloud-init-output.log"
+    fi
+
+final_message: |
+  nexus-core bootstrap complete.
+  MCP server: http://127.0.0.1:7799 (internal only)
+  Service:    sudo -u nexus systemctl --user status nexus-core
+  Logs:       journalctl -u user@$(id -u nexus) --user -u nexus-core -f
+  Secrets:    /home/nexus/.env (chmod 600, Key Vault sourced)
