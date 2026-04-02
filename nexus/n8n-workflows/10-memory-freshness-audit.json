@@ -1,0 +1,89 @@
+{
+  "name": "10 — Weekly Memory Freshness Audit",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * 0" }] }
+      },
+      "id": "cron-trigger",
+      "name": "Sunday 9:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "command": "bash -lc '\npython3 << EOF\nimport os, json, subprocess\nfrom pathlib import Path\nfrom datetime import datetime, timezone\n\nmemory_dir = Path(os.path.expanduser(\"~/.claude/projects/-home-maverick-projects-iOPEX/memory\"))\nnexus_core = Path(os.path.expanduser(\"~/projects/nexus-core\"))\n\nresults = []\n\n# Check nexus-core memory vs last git commit\ntry:\n    commit_ts = subprocess.check_output(\n        [\"git\", \"-C\", str(nexus_core), \"log\", \"-1\", \"--format=%ct\"],\n        text=True\n    ).strip()\n    commit_dt = datetime.fromtimestamp(int(commit_ts), tz=timezone.utc)\n    mem_file = memory_dir / \"project_nexus_core.md\"\n    if mem_file.exists():\n        mem_dt = datetime.fromtimestamp(mem_file.stat().st_mtime, tz=timezone.utc)\n        age_hours = (commit_dt - mem_dt).total_seconds() / 3600\n        if age_hours > 0:\n            results.append({\"file\": \"project_nexus_core.md\", \"stale_hours\": round(age_hours, 1), \"last_commit\": commit_dt.strftime(\"%Y-%m-%d %H:%M UTC\")})\n    else:\n        results.append({\"file\": \"project_nexus_core.md\", \"stale_hours\": 9999, \"last_commit\": \"memory file missing\"})\nexcept Exception as e:\n    results.append({\"file\": \"project_nexus_core.md\", \"stale_hours\": -1, \"error\": str(e)})\n\n# Check TOOLS.md vs nexus-core last commit\ntry:\n    tools_file = Path(os.path.expanduser(\"~/.openclaw/workspace/TOOLS.md\"))\n    if tools_file.exists():\n        tools_dt = datetime.fromtimestamp(tools_file.stat().st_mtime, tz=timezone.utc)\n        age_hours = (commit_dt - tools_dt).total_seconds() / 3600\n        if age_hours > 24:\n            results.append({\"file\": \"TOOLS.md\", \"stale_hours\": round(age_hours, 1), \"last_commit\": commit_dt.strftime(\"%Y-%m-%d %H:%M UTC\")})\nexcept Exception as e:\n    results.append({\"file\": \"TOOLS.md\", \"stale_hours\": -1, \"error\": str(e)})\n\nprint(json.dumps({\"stale\": results, \"all_fresh\": len(results) == 0}))\nEOF\n'"
+      },
+      "id": "run-audit",
+      "name": "Run Memory Audit",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "continueOnFail": true,
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  if (d.all_fresh) {\n    return [{ json: { all_fresh: true, summary: null } }];\n  }\n  let msg = `📋 *Memory Freshness Alert*\\n\\n`;\n  msg += `${d.stale.length} doc(s) are stale vs last nexus-core commit:\\n\\n`;\n  for (const s of d.stale) {\n    if (s.stale_hours === 9999) {\n      msg += `✗ \\`${s.file}\\` — FILE MISSING\\n`;\n    } else if (s.error) {\n      msg += `✗ \\`${s.file}\\` — error: ${s.error}\\n`;\n    } else {\n      msg += `✗ \\`${s.file}\\` — ${s.stale_hours}h behind (last commit: ${s.last_commit})\\n`;\n    }\n  }\n  msg += `\\nRun session close checklist in AGENTS.md`;\n  return [{ json: { all_fresh: false, summary: msg } }];\n} catch (e) {\n  return [{ json: { all_fresh: false, summary: `📋 *Memory audit failed*\\n\\n${raw.substring(0, 300)}` } }];\n}"
+      },
+      "id": "parse-audit",
+      "name": "Parse Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "id": "stale-check", "leftValue": "={{ !$json.all_fresh }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
+        }
+      },
+      "id": "is-stale",
+      "name": "Stale Docs?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.summary }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "alert-stale",
+      "name": "Alert Stale Memory",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 240],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Sunday 9:00 AM": { "main": [[{ "node": "Run Memory Audit", "type": "main", "index": 0 }]] },
+    "Run Memory Audit": { "main": [[{ "node": "Parse Audit", "type": "main", "index": 0 }]] },
+    "Parse Audit": { "main": [[{ "node": "Stale Docs?", "type": "main", "index": 0 }]] },
+    "Stale Docs?": { "main": [[{ "node": "Alert Stale Memory", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nexus-core" }, { "name": "memory" }, { "name": "scheduled" }],
+  "_meta": {
+    "description": "Sunday 9AM — compares memory file timestamps to last nexus-core git commit. Alerts via Telegram if docs are stale. Silent if all fresh.",
+    "setup": [
+      "Set credential 'Nexus Telegram Bot'",
+      "Set env var TELEGRAM_CHAT_ID",
+      "SSH credential 'Maverick WSL Host' required",
+      "No other setup — self-contained audit"
+    ]
+  }
+}

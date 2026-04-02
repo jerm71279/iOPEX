@@ -35,6 +35,7 @@ n8n runs on `http://localhost:5678` — start with `docker compose up -d n8n` in
 | 07 | `07-github-pr-shift-gate.json` | GitHub PR webhook | SHIFT preflight → PR comment with agent results |
 | 08 | `08-ci-failure-alert.json` | GitHub Actions webhook | CI failure → Telegram alert with commit info |
 | 09 | `09-daily-doctor-health.json` | Daily 6:30 AM | nexus-core doctor → alert on failures only |
+| 10 | `10-memory-freshness-audit.json` | Sunday 9:00 AM | Compare memory file timestamps vs last git commit → alert if stale |
 
 ---
 
@@ -75,6 +76,7 @@ Repo Settings → Webhooks → Add webhook:
 08:00 AM  — PMO directive, Mondays only (workflow 02)
 16:00 PM  — Wave readiness, Fridays only (workflow 03)
 09:00 AM  — KB freshness, Sundays only (workflow 05)
+09:00 AM  — Memory freshness audit, Sundays only (workflow 10)
 ```
 
 ---
