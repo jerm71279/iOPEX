@@ -12,11 +12,24 @@ Note: @SHIFT_PMObot is dormant. Token preserved in openclaw.json but bot is not 
 PMO runs via `/pmo` command in @iOPEXpert_Bot → routed through `nexus-core run pmo`.
 shift-pmo.sh and wave-ready.sh are retired — nexus-core pmo.py runner replaces both.
 
-## nexus-core
+## nexus-core (V2)
 - Location: `~/projects/nexus-core`
-- PMO runner: `nexus-core run pmo --subcommand <directive|status|wave|escalate|ask>`
-- SHIFT runner: `nexus-core run pmo --subcommand shift --phase P1 --dry-run`
-- Output dir: `/tmp/shift-pmo/`
+- MCP server: `nexus-core serve` → port 7799 (14 tools exposed to Claude)
+- Runners: `shift`, `azure`, `pmo`, `ingest`, `nexus`, `frontdoor`, `report`
+
+| Runner | Subcommands | Notes |
+|--------|-------------|-------|
+| `shift` | `preflight \| status \| start \| run \| advance` | KeeperPAM target, direct import |
+| `azure` | `preflight \| status \| run \| advance \| report` | Subprocess → pam/azure-migration/cli.py |
+| `pmo` | `directive \| status \| wave \| escalate \| ask` | PMO Brain (replaces shift-pmo.sh) |
+| `ingest` | `run \| status \| validate \| domains \| purge` | Digital Expert knowledge pipeline |
+| `nexus` | `heartbeat \| status \| notes \| ask` | Session engine + workspace |
+| `frontdoor` | `status \| deploy \| build` | FrontDoor platform (Render) |
+| `report` | `generate \| list \| view` | Cross-runner report generation |
+
+- CLI: `nexus-core run <runner> --subcommand <cmd> [--dry-run]`
+- Azure VM: installed as wheel from `stpamtfstate/nexus-core-packages`, runs as `nexus` user service
+- Wheel upload: `bash terraform/scripts/upload-nexus-wheel.sh`
 
 ## Backend Services
 | Service | Location | Purpose |
