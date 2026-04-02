@@ -1,0 +1,106 @@
+{
+  "name": "06 — FrontDoor Deploy Verify",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "frontdoor-deploy",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Render Deploy Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "frontdoor-deploy-hook"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-30s",
+      "name": "Wait 30s (deploy settle)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "command": "nexus-core run frontdoor --subcommand health --dry-run 2>/dev/null"
+      },
+      "id": "run-health",
+      "name": "Check FrontDoor Health",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  const ok = d.status === 'OK' || d.health === 'healthy';\n  return [{ json: { ok, status: d.status || d.health || 'unknown', raw: d } }];\n} catch (e) {\n  return [{ json: { ok: false, status: 'ERROR', raw: raw } }];\n}"
+      },
+      "id": "parse-health",
+      "name": "Parse Health",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "text": "=✅ *FrontDoor Deployed*\n\nHealth: `{{ $json.status }}`\nURL: {{ $vars.FRONTDOOR_URL }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "alert-ok",
+      "name": "Notify Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 200],
+      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "text": "=🔴 *FrontDoor Deploy — Health Check FAILED*\n\nStatus: `{{ $json.status }}`\n\nCheck Render dashboard and logs.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "alert-fail",
+      "name": "Notify Failure",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 420],
+      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "id": "ok-check", "leftValue": "={{ $json.ok }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
+        }
+      },
+      "id": "is-healthy",
+      "name": "Healthy?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Render Deploy Webhook": { "main": [[{ "node": "Wait 30s (deploy settle)", "type": "main", "index": 0 }]] },
+    "Wait 30s (deploy settle)": { "main": [[{ "node": "Check FrontDoor Health", "type": "main", "index": 0 }]] },
+    "Check FrontDoor Health": { "main": [[{ "node": "Parse Health", "type": "main", "index": 0 }]] },
+    "Parse Health": { "main": [[{ "node": "Healthy?", "type": "main", "index": 0 }]] },
+    "Healthy?": { "main": [[{ "node": "Notify Success", "type": "main", "index": 0 }], [{ "node": "Notify Failure", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "frontdoor" }, { "name": "webhook" }, { "name": "deployment" }],
+  "_meta": {
+    "description": "Triggered by Render deploy webhook. Waits 30s then health-checks FrontDoor. Notifies pass/fail.",
+    "setup": [
+      "Set credential 'Nexus Telegram Bot'",
+      "Set variables: TELEGRAM_CHAT_ID, FRONTDOOR_URL",
+      "In Render dashboard: add deploy hook URL = http://<n8n-host>:5678/webhook/frontdoor-deploy",
+      "For production: expose n8n behind ngrok or public URL"
+    ]
+  }
+}

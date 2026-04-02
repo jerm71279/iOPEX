@@ -1,0 +1,77 @@
+{
+  "name": "04 — Terraform Drift Detection",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }] }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 6:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "command": "cd ~/projects/iOPEX && bash terraform/scripts/drift-check.sh shared dev 2>&1; echo \"EXIT:$?\""
+      },
+      "id": "run-drift",
+      "name": "Run Drift Check",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.item.json.stdout || '';\nconst exitMatch = output.match(/EXIT:(\\d+)/);\nconst exitCode = exitMatch ? parseInt(exitMatch[1]) : 1;\nconst clean = output.replace(/EXIT:\\d+/, '').trim();\nreturn [{ json: { exit_code: exitCode, output: clean, has_drift: exitCode === 2, has_error: exitCode === 1 } }];"
+      },
+      "id": "parse-exit",
+      "name": "Parse Exit Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "id": "drift-check", "leftValue": "={{ $json.has_drift || $json.has_error }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
+        }
+      },
+      "id": "drift-found",
+      "name": "Drift or Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "text": "=🔴 *Terraform Drift Detected*\n\nEnvironment: `dev` / Composition: `shared`\n\n```\n{{ $json.output.substring(0, 2000) }}\n```\n\nRun: `terraform plan -var-file=environments/dev.tfvars` to review",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "alert-drift",
+      "name": "Alert Drift",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 200],
+      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+    }
+  ],
+  "connections": {
+    "Daily 6:00 AM": { "main": [[{ "node": "Run Drift Check", "type": "main", "index": 0 }]] },
+    "Run Drift Check": { "main": [[{ "node": "Parse Exit Code", "type": "main", "index": 0 }]] },
+    "Parse Exit Code": { "main": [[{ "node": "Drift or Error?", "type": "main", "index": 0 }]] },
+    "Drift or Error?": { "main": [[{ "node": "Alert Drift", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "terraform" }, { "name": "scheduled" }, { "name": "infrastructure" }],
+  "_meta": {
+    "description": "Daily 6AM — runs drift-check.sh. Alerts Telegram only on drift (exit 2) or error (exit 1). Silent on clean (exit 0).",
+    "setup": [
+      "Set credential 'Nexus Telegram Bot'",
+      "Set variable TELEGRAM_CHAT_ID",
+      "Requires az login on the host machine — consider managed identity in prod"
+    ]
+  }
+}

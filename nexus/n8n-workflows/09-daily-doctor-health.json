@@ -1,0 +1,78 @@
+{
+  "name": "09 — Daily Doctor Health Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "30 6 * * *" }] }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 6:30 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "command": "nexus-core doctor --format json 2>/dev/null"
+      },
+      "id": "run-doctor",
+      "name": "Run Doctor",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  const checks = d.checks || [];\n  const failed = checks.filter(c => c.status === 'FAIL');\n  const passed = checks.filter(c => c.status === 'PASS');\n  \n  if (d.all_pass) {\n    return [{ json: { all_pass: true, summary: null } }];\n  }\n  \n  // Group failures by category\n  const byCat = {};\n  for (const f of failed) {\n    if (!byCat[f.category]) byCat[f.category] = [];\n    byCat[f.category].push(f);\n  }\n  \n  let msg = `⚠️ *nexus-core Doctor — ${failed.length} issue(s)*\\n`;\n  msg += `✓ ${passed.length} passed  ✗ ${failed.length} failed\\n`;\n  \n  for (const [cat, items] of Object.entries(byCat)) {\n    msg += `\\n*${cat.toUpperCase()}*\\n`;\n    for (const item of items) {\n      msg += `✗ \\`${item.check}\\``;\n      if (item.detail) msg += ` — ${item.detail.substring(0, 100)}`;\n      msg += '\\n';\n    }\n  }\n  \n  msg += `\\nFix: \\`nexus-core doctor\\` for full details`;\n  return [{ json: { all_pass: false, summary: msg } }];\n} catch (e) {\n  return [{ json: { all_pass: false, summary: `⚠️ *Doctor command failed*\\n\\n${raw.substring(0, 500)}` } }];\n}"
+      },
+      "id": "parse-doctor",
+      "name": "Parse Doctor Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "id": "fail-check", "leftValue": "={{ !$json.all_pass }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
+        }
+      },
+      "id": "has-issues",
+      "name": "Has Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $vars.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.summary }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "alert-issues",
+      "name": "Alert Issues",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 240],
+      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+    }
+  ],
+  "connections": {
+    "Daily 6:30 AM": { "main": [[{ "node": "Run Doctor", "type": "main", "index": 0 }]] },
+    "Run Doctor": { "main": [[{ "node": "Parse Doctor Output", "type": "main", "index": 0 }]] },
+    "Parse Doctor Output": { "main": [[{ "node": "Has Issues?", "type": "main", "index": 0 }]] },
+    "Has Issues?": { "main": [[{ "node": "Alert Issues", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nexus-core" }, { "name": "doctor" }, { "name": "scheduled" }],
+  "_meta": {
+    "description": "Daily 6:30AM (after drift check) — runs nexus-core doctor. Silent if all pass. Alerts only on failures.",
+    "setup": [
+      "Set credential 'Nexus Telegram Bot'",
+      "Set variable TELEGRAM_CHAT_ID",
+      "No other setup needed — doctor self-discovers runners and checks",
+      "Expected failures in dev: missing secrets, services not running. Only alerts on unexpected failures."
+    ]
+  }
+}

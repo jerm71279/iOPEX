@@ -1,0 +1,102 @@
+{
+  "name": "07 — GitHub PR SHIFT Preflight Gate",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-pr",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "GitHub PR Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "github-pr-hook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "action-check",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "opened",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "pr-opened",
+      "name": "PR Opened?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if PR touches pam/azure-migration files\nconst files = $input.item.json.body?.pull_request?.changed_files || 0;\nconst branch = $input.item.json.body?.pull_request?.head?.ref || '';\nconst title = $input.item.json.body?.pull_request?.title || '';\nconst pr_number = $input.item.json.body?.number;\nconst repo = $input.item.json.body?.repository?.full_name || '';\nreturn [{ json: { pr_number, repo, branch, title, changed_files: files } }];"
+      },
+      "id": "extract-pr",
+      "name": "Extract PR Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 240]
+    },
+    {
+      "parameters": {
+        "command": "nexus-core run shift --subcommand preflight --dry-run 2>/dev/null"
+      },
+      "id": "run-preflight",
+      "name": "Run SHIFT Preflight",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [900, 240],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.stdout || '';\nconst pr = $('Extract PR Details').item.json;\ntry {\n  const d = JSON.parse(raw);\n  const agents = d.agents || {};\n  const passed = Object.values(agents).filter(v => v === true || v?.status === 'PASS').length;\n  const failed = Object.values(agents).filter(v => v === false || v?.status === 'FAIL').length;\n  const total = Object.keys(agents).length;\n  let body = `## SHIFT Preflight Gate\\n\\n`;\n  body += `**${passed}/${total} agents ready**`;\n  if (failed > 0) body += ` — ⚠️ ${failed} agent(s) failing`;\n  body += `\\n\\n`;\n  for (const [name, result] of Object.entries(agents)) {\n    const icon = (result === true || result?.status === 'PASS') ? '✅' : '❌';\n    body += `${icon} Agent ${name}\\n`;\n  }\n  body += `\\n_nexus-core preflight (dry-run)_`;\n  return [{ json: { ...pr, comment_body: body, all_pass: failed === 0 } }];\n} catch (e) {\n  return [{ json: { ...pr, comment_body: `## SHIFT Preflight\\n\\n⚠️ Could not parse preflight output.\\n\\n\`\`\`\\n${raw.substring(0, 500)}\\n\`\`\``, all_pass: false } }];\n}"
+      },
+      "id": "format-result",
+      "name": "Format PR Comment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 240]
+    },
+    {
+      "parameters": {
+        "resource": "issue",
+        "operation": "createComment",
+        "owner": "={{ $json.repo.split('/')[0] }}",
+        "repository": "={{ $json.repo.split('/')[1] }}",
+        "issueNumber": "={{ $json.pr_number }}",
+        "body": "={{ $json.comment_body }}"
+      },
+      "id": "post-github-comment",
+      "name": "Post PR Comment",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [1340, 240],
+      "credentials": { "githubApi": { "id": "github-jit", "name": "GitHub jerm71279" } }
+    }
+  ],
+  "connections": {
+    "GitHub PR Webhook": { "main": [[{ "node": "PR Opened?", "type": "main", "index": 0 }]] },
+    "PR Opened?": { "main": [[{ "node": "Extract PR Details", "type": "main", "index": 0 }], []] },
+    "Extract PR Details": { "main": [[{ "node": "Run SHIFT Preflight", "type": "main", "index": 0 }]] },
+    "Run SHIFT Preflight": { "main": [[{ "node": "Format PR Comment", "type": "main", "index": 0 }]] },
+    "Format PR Comment": { "main": [[{ "node": "Post PR Comment", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "github" }, { "name": "shift" }, { "name": "webhook" }],
+  "_meta": {
+    "description": "GitHub webhook on PR open — runs SHIFT preflight, posts per-agent pass/fail as PR comment.",
+    "setup": [
+      "Set credential 'GitHub jerm71279' with Personal Access Token (repo scope)",
+      "In GitHub repo settings: add webhook → URL = http://<n8n-host>:5678/webhook/github-pr",
+      "Events: Pull requests",
+      "Optional: add branch filter to only run on pam/azure-migration PRs"
+    ]
+  }
+}
