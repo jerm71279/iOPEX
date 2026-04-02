@@ -1,40 +1,70 @@
 {
-  "name": "01 — Morning Nexus Brief",
+  "name": "01 \u2014 Morning Nexus Brief",
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 7 * * 1-5" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1-5"
+            }
+          ]
+        }
       },
       "id": "cron-trigger",
       "name": "Weekdays 7:00 AM",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
         "url": "http://host.docker.internal:8001/health",
-        "options": { "timeout": 5000 }
+        "options": {
+          "timeout": 5000
+        }
       },
       "id": "health-check",
       "name": "Check FastAPI Health",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "continueOnFail": true
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true },
-          "conditions": [{ "id": "status-ok", "leftValue": "={{ $json.status }}", "rightValue": "ok", "operator": { "type": "string", "operation": "equals" } }]
+          "options": {
+            "caseSensitive": true
+          },
+          "conditions": [
+            {
+              "id": "status-ok",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
         }
       },
       "id": "api-up-check",
       "name": "API Up?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -42,52 +72,132 @@
       },
       "id": "run-brief",
       "name": "Run nexus brief",
-      "type": "n8n-nodes-base.executeCommand",
+      "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [900, 200]
+      "position": [
+        900,
+        200
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=☀️ *Morning Brief*\n\n{{ $json.stdout.trim() }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "text": "=\u2600\ufe0f *Morning Brief*\n\n{{ $json.stdout.trim() }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
       "id": "send-brief",
       "name": "Send Brief to Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1120, 200],
-      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+      "position": [
+        1120,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "⚠️ *Nexus API is down* — http://localhost:8001/health unreachable. Start with `./start.sh`",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "text": "\u26a0\ufe0f *Nexus API is down* \u2014 http://localhost:8001/health unreachable. Start with `./start.sh`",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
       "id": "alert-api-down",
       "name": "Alert API Down",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [900, 420],
-      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+      "position": [
+        900,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
     }
   ],
   "connections": {
-    "Weekdays 7:00 AM": { "main": [[{ "node": "Check FastAPI Health", "type": "main", "index": 0 }]] },
-    "Check FastAPI Health": { "main": [[{ "node": "API Up?", "type": "main", "index": 0 }]] },
-    "API Up?": {
+    "Weekdays 7:00 AM": {
       "main": [
-        [{ "node": "Run nexus brief", "type": "main", "index": 0 }],
-        [{ "node": "Alert API Down", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Check FastAPI Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Run nexus brief": { "main": [[{ "node": "Send Brief to Telegram", "type": "main", "index": 0 }]] }
+    "Check FastAPI Health": {
+      "main": [
+        [
+          {
+            "node": "API Up?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Up?": {
+      "main": [
+        [
+          {
+            "node": "Run nexus brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert API Down",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run nexus brief": {
+      "main": [
+        [
+          {
+            "node": "Send Brief to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "nexus-core" }, { "name": "scheduled" }],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "nexus-core"
+    },
+    {
+      "name": "scheduled"
+    }
+  ],
   "_meta": {
-    "description": "Weekdays 7AM — health check then nexus brief → Telegram. Alerts if API is down.",
+    "description": "Weekdays 7AM \u2014 health check then nexus brief \u2192 Telegram. Alerts if API is down.",
     "setup": [
       "Set credential 'Nexus Telegram Bot' with TELEGRAM_BOT_TOKEN_IOPEX",
       "Set variable TELEGRAM_CHAT_ID to your Telegram chat ID"

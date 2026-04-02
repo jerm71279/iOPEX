@@ -1,15 +1,25 @@
 {
-  "name": "05 — Knowledge Base Freshness Check",
+  "name": "05 \u2014 Knowledge Base Freshness Check",
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * 0" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 0"
+            }
+          ]
+        }
       },
       "id": "cron-trigger",
       "name": "Sunday 9:00 AM",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -17,10 +27,19 @@
       },
       "id": "run-status",
       "name": "Get Ingest Status",
-      "type": "n8n-nodes-base.executeCommand",
+      "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [460, 300],
-      "continueOnFail": true
+      "position": [
+        460,
+        300
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
     },
     {
       "parameters": {
@@ -30,32 +49,58 @@
       "name": "Check Freshness",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "conditions": [{ "id": "stale-check", "leftValue": "={{ $json.needs_action }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
+          "conditions": [
+            {
+              "id": "stale-check",
+              "leftValue": "={{ $json.needs_action }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
         }
       },
       "id": "is-stale",
       "name": "Stale?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [900, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=⚠️ *Knowledge Base Stale*\n\nAge: {{ $json.age_hours ? Math.round($json.age_hours) + 'h' : 'unknown' }} (threshold: 168h)\nChunks: {{ $json.total_chunks || 0 }}\n\nTriggering re-ingest for all domains...",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "text": "=\u26a0\ufe0f *Knowledge Base Stale*\n\nAge: {{ $json.age_hours ? Math.round($json.age_hours) + 'h' : 'unknown' }} (threshold: 168h)\nChunks: {{ $json.total_chunks || 0 }}\n\nTriggering re-ingest for all domains...",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
       "id": "alert-stale",
       "name": "Alert Stale",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1120, 200],
-      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+      "position": [
+        1120,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
     },
     {
       "parameters": {
@@ -63,37 +108,129 @@
       },
       "id": "trigger-ingest",
       "name": "Trigger Re-Ingest",
-      "type": "n8n-nodes-base.executeCommand",
+      "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [1340, 200],
-      "continueOnFail": true
+      "position": [
+        1340,
+        200
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=✅ Re-ingest complete.\n\n```\n{{ $json.stdout.substring(0, 500) }}\n```",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "text": "=\u2705 Re-ingest complete.\n\n```\n{{ $json.stdout.substring(0, 500) }}\n```",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
       "id": "confirm-ingest",
       "name": "Confirm Ingest Done",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1560, 200],
-      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+      "position": [
+        1560,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
     }
   ],
   "connections": {
-    "Sunday 9:00 AM": { "main": [[{ "node": "Get Ingest Status", "type": "main", "index": 0 }]] },
-    "Get Ingest Status": { "main": [[{ "node": "Check Freshness", "type": "main", "index": 0 }]] },
-    "Check Freshness": { "main": [[{ "node": "Stale?", "type": "main", "index": 0 }]] },
-    "Stale?": { "main": [[{ "node": "Alert Stale", "type": "main", "index": 0 }], []] },
-    "Alert Stale": { "main": [[{ "node": "Trigger Re-Ingest", "type": "main", "index": 0 }]] },
-    "Trigger Re-Ingest": { "main": [[{ "node": "Confirm Ingest Done", "type": "main", "index": 0 }]] }
+    "Sunday 9:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Ingest Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ingest Status": {
+      "main": [
+        [
+          {
+            "node": "Check Freshness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Freshness": {
+      "main": [
+        [
+          {
+            "node": "Stale?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stale?": {
+      "main": [
+        [
+          {
+            "node": "Alert Stale",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Alert Stale": {
+      "main": [
+        [
+          {
+            "node": "Trigger Re-Ingest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Re-Ingest": {
+      "main": [
+        [
+          {
+            "node": "Confirm Ingest Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "knowledge-base" }, { "name": "ingest" }, { "name": "scheduled" }],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "knowledge-base"
+    },
+    {
+      "name": "ingest"
+    },
+    {
+      "name": "scheduled"
+    }
+  ],
   "_meta": {
-    "description": "Sunday 9AM — checks ingest manifest age. If >7 days stale or missing, alerts and auto-triggers full re-ingest.",
+    "description": "Sunday 9AM \u2014 checks ingest manifest age. If >7 days stale or missing, alerts and auto-triggers full re-ingest.",
     "setup": [
       "Set credential 'Nexus Telegram Bot'",
       "Set variable TELEGRAM_CHAT_ID",

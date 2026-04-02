@@ -1,15 +1,25 @@
 {
-  "name": "03 — Friday Wave Readiness Check",
+  "name": "03 \u2014 Friday Wave Readiness Check",
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 16 * * 5" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * 5"
+            }
+          ]
+        }
       },
       "id": "cron-trigger",
       "name": "Friday 4:00 PM",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -17,44 +27,108 @@
       },
       "id": "run-wave",
       "name": "Run Wave Readiness",
-      "type": "n8n-nodes-base.executeCommand",
+      "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [460, 300],
-      "continueOnFail": true
+      "position": [
+        460,
+        300
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  const verdict = d.verdict || d.status || 'UNKNOWN';\n  const icon = verdict === 'GO' ? '✅' : verdict === 'NO-GO' ? '🔴' : '⚠️';\n  let msg = `${icon} *Wave ${d.wave || '1'} Readiness — ${verdict}*\\n`;\n  if (d.blockers && d.blockers.length) {\n    msg += `\\n*Blockers (${d.blockers.length}):*\\n`;\n    for (const b of d.blockers.slice(0, 5)) msg += `• ${b}\\n`;\n  }\n  if (d.ready_items && d.ready_items.length) {\n    msg += `\\n*Ready:* ${d.ready_items.length} items`;\n  }\n  return [{ json: { text: msg, verdict } }];\n} catch (e) {\n  return [{ json: { text: `⚠️ *Wave Readiness*\\n\\n${raw.substring(0, 2000) || 'No output.'}`, verdict: 'UNKNOWN' } }];\n}"
+        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  const verdict = d.verdict || d.status || 'UNKNOWN';\n  const icon = verdict === 'GO' ? '\u2705' : verdict === 'NO-GO' ? '\ud83d\udd34' : '\u26a0\ufe0f';\n  let msg = `${icon} *Wave ${d.wave || '1'} Readiness \u2014 ${verdict}*\\n`;\n  if (d.blockers && d.blockers.length) {\n    msg += `\\n*Blockers (${d.blockers.length}):*\\n`;\n    for (const b of d.blockers.slice(0, 5)) msg += `\u2022 ${b}\\n`;\n  }\n  if (d.ready_items && d.ready_items.length) {\n    msg += `\\n*Ready:* ${d.ready_items.length} items`;\n  }\n  return [{ json: { text: msg, verdict } }];\n} catch (e) {\n  return [{ json: { text: `\u26a0\ufe0f *Wave Readiness*\\n\\n${raw.substring(0, 2000) || 'No output.'}`, verdict: 'UNKNOWN' } }];\n}"
       },
       "id": "format-wave",
       "name": "Format Wave Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.text }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
       "id": "send-telegram",
       "name": "Send to Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [900, 300],
-      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
     }
   ],
   "connections": {
-    "Friday 4:00 PM": { "main": [[{ "node": "Run Wave Readiness", "type": "main", "index": 0 }]] },
-    "Run Wave Readiness": { "main": [[{ "node": "Format Wave Result", "type": "main", "index": 0 }]] },
-    "Format Wave Result": { "main": [[{ "node": "Send to Telegram", "type": "main", "index": 0 }]] }
+    "Friday 4:00 PM": {
+      "main": [
+        [
+          {
+            "node": "Run Wave Readiness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Wave Readiness": {
+      "main": [
+        [
+          {
+            "node": "Format Wave Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Wave Result": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "nexus-core" }, { "name": "pmo" }, { "name": "scheduled" }],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "nexus-core"
+    },
+    {
+      "name": "pmo"
+    },
+    {
+      "name": "scheduled"
+    }
+  ],
   "_meta": {
-    "description": "Friday 4PM — wave GO/NO-GO assessment sent to Telegram. Update wave number as migration progresses.",
+    "description": "Friday 4PM \u2014 wave GO/NO-GO assessment sent to Telegram. Update wave number as migration progresses.",
     "setup": [
       "Set credential 'Nexus Telegram Bot'",
       "Set variable TELEGRAM_CHAT_ID",

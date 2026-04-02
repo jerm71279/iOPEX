@@ -1,15 +1,25 @@
 {
-  "name": "02 — Weekly PMO Directive",
+  "name": "02 \u2014 Weekly PMO Directive",
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
       },
       "id": "cron-trigger",
       "name": "Monday 8:00 AM",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -19,7 +29,10 @@
       "name": "Calculate Current Week",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -27,45 +40,119 @@
       },
       "id": "run-directive",
       "name": "Run PMO Directive",
-      "type": "n8n-nodes-base.executeCommand",
+      "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [680, 300],
-      "continueOnFail": true
+      "position": [
+        680,
+        300
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  const sub = d.subcommand || 'directive';\n  const items = (d.action_items || []).slice(0, 10);\n  let msg = `📋 *PMO Directive ${d.phase || 'P2'} W${d.week || '?'}*\\n${items.length} action items\\n\\n`;\n  for (const item of items) {\n    const team = item.owner_team || '?';\n    const instr = (item.instruction || '').substring(0, 120);\n    msg += `• *${team}:* ${instr}\\n`;\n  }\n  if ((d.action_items || []).length > 10) msg += `\\n_…and ${d.action_items.length - 10} more_`;\n  return [{ json: { text: msg } }];\n} catch (e) {\n  return [{ json: { text: `📋 *PMO Directive*\\n\\n${raw.substring(0, 3000) || 'No output generated.'}` } }];\n}"
+        "jsCode": "const raw = $input.item.json.stdout || '';\ntry {\n  const d = JSON.parse(raw);\n  const sub = d.subcommand || 'directive';\n  const items = (d.action_items || []).slice(0, 10);\n  let msg = `\ud83d\udccb *PMO Directive ${d.phase || 'P2'} W${d.week || '?'}*\\n${items.length} action items\\n\\n`;\n  for (const item of items) {\n    const team = item.owner_team || '?';\n    const instr = (item.instruction || '').substring(0, 120);\n    msg += `\u2022 *${team}:* ${instr}\\n`;\n  }\n  if ((d.action_items || []).length > 10) msg += `\\n_\u2026and ${d.action_items.length - 10} more_`;\n  return [{ json: { text: msg } }];\n} catch (e) {\n  return [{ json: { text: `\ud83d\udccb *PMO Directive*\\n\\n${raw.substring(0, 3000) || 'No output generated.'}` } }];\n}"
       },
       "id": "format-directive",
       "name": "Format Directive",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.text }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
       "id": "send-telegram",
       "name": "Send to Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1120, 300],
-      "credentials": { "telegramApi": { "id": "telegram-nexus", "name": "Nexus Telegram Bot" } }
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
     }
   ],
   "connections": {
-    "Monday 8:00 AM": { "main": [[{ "node": "Calculate Current Week", "type": "main", "index": 0 }]] },
-    "Calculate Current Week": { "main": [[{ "node": "Run PMO Directive", "type": "main", "index": 0 }]] },
-    "Run PMO Directive": { "main": [[{ "node": "Format Directive", "type": "main", "index": 0 }]] },
-    "Format Directive": { "main": [[{ "node": "Send to Telegram", "type": "main", "index": 0 }]] }
+    "Monday 8:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Calculate Current Week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Current Week": {
+      "main": [
+        [
+          {
+            "node": "Run PMO Directive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run PMO Directive": {
+      "main": [
+        [
+          {
+            "node": "Format Directive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Directive": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "nexus-core" }, { "name": "pmo" }, { "name": "scheduled" }],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "nexus-core"
+    },
+    {
+      "name": "pmo"
+    },
+    {
+      "name": "scheduled"
+    }
+  ],
   "_meta": {
-    "description": "Monday 8AM — auto-calculates current SHIFT week, runs PMO directive, sends action items to Telegram.",
+    "description": "Monday 8AM \u2014 auto-calculates current SHIFT week, runs PMO directive, sends action items to Telegram.",
     "setup": [
       "Set credential 'Nexus Telegram Bot' with TELEGRAM_BOT_TOKEN_IOPEX",
       "Set variable TELEGRAM_CHAT_ID",
