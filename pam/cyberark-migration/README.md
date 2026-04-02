@@ -1,8 +1,18 @@
-# iOPEX PAM Migration Project
+# iOPEX PAM Migration — Option A (Privilege Cloud)
+
+> **REFERENCE IMPLEMENTATION ONLY — NOT the live migration path.**
+>
+> This directory targets **CyberArk Privilege Cloud** as the migration destination.
+> The active Cisco engagement uses **KeeperPAM** as the target.
+> For the live path, see: `pam/azure-migration/`
+
+---
 
 ## Overview
 
 CyberArk PAS (on-prem) to CyberArk Privilege Cloud migration project. Contains the operational runbook, a multi-agent AI orchestration system, a consulting assessment toolkit, and standalone migration scripts.
+
+This is the Option A reference implementation — kept as a valid path for future Privilege Cloud engagements. It is not the active production path.
 
 ## Project Structure
 

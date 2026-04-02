@@ -5,9 +5,19 @@ Authenticates via OAuth2 client_credentials grant.
 Provides vault creation, record import, permission management, platform
 operations, and post-migration validation.
 
-NOTE: Endpoint paths are marked [VERIFY ENDPOINT] — confirm against KeeperPAM
-API documentation before first live run. Auth flow and method interface are
-stable; the specific REST paths need validation with Keeper Security.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C-03 ACTION REQUIRED BEFORE P4 (Pilot)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+All KeeperPAM REST endpoint paths are defined in ENDPOINTS below.
+Confirm each path against Keeper Security API documentation, then set:
+
+    ENDPOINTS_VERIFIED = True
+
+Until that flag is True, live execution is blocked by preflight_check().
+
+Reference: https://docs.keeper.io/en/enterprise-guide/pam
+Contact:   Keeper Security TAM or support@keepersecurity.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
 import os
@@ -22,6 +32,47 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
+
+# ── C-03: KeeperPAM Endpoint Registry ────────────────────────────────────────
+# All REST paths in one place. Verify each against Keeper Security API docs,
+# then set ENDPOINTS_VERIFIED = True to unlock live execution.
+#
+# Keeper Security docs: https://docs.keeper.io/en/enterprise-guide/pam
+#
+# Status key:
+#   UNVERIFIED — path is a reasonable guess, needs confirmation with Keeper Security
+#   VERIFIED   — confirmed against API docs or live tenant
+# ─────────────────────────────────────────────────────────────────────────────
+
+ENDPOINTS_VERIFIED = False  # Flip to True after confirming all paths below
+
+ENDPOINTS = {
+    # Authentication
+    "token":                "/oauth/token",                        # UNVERIFIED
+
+    # Vault operations (CyberArk "Safe" → KeeperPAM "Vault / Shared Folder")
+    "vaults_list":          "/vaults",                             # UNVERIFIED
+    "vault_get":            "/vaults/{vault_name}",                # UNVERIFIED
+    "vault_create":         "/vaults",                             # UNVERIFIED
+    "vault_member_add":     "/vaults/{vault_name}/members",        # UNVERIFIED
+    "vault_member_update":  "/vaults/{vault_name}/members/{member_name}",  # UNVERIFIED
+
+    # Record operations (CyberArk "Account" → KeeperPAM "Record")
+    "records_list":         "/records",                            # UNVERIFIED
+    "record_get":           "/records/{record_id}",                # UNVERIFIED
+    "record_create":        "/records",                            # UNVERIFIED
+    "record_delete":        "/records/{record_id}",                # UNVERIFIED
+    "record_password_get":  "/records/{record_id}/password",       # UNVERIFIED
+    "record_verify":        "/records/{record_id}/verify",         # UNVERIFIED
+    "record_link":          "/records/{record_id}/link",           # UNVERIFIED
+
+    # Record Type operations (CyberArk "Platform" → KeeperPAM "Record Type")
+    "record_types_list":    "/record-types",                       # UNVERIFIED
+    "record_types_import":  "/record-types/import",                # UNVERIFIED
+}
+
+# API base path — prepended to all ENDPOINTS entries above
+API_BASE = "/api/rest"  # UNVERIFIED — confirm with Keeper Security
 
 
 def _safe_error(resp: requests.Response, max_len: int = 200) -> str:
@@ -64,7 +115,7 @@ class KeeperClient:
             client.import_account({...})
     """
 
-    API_BASE = "/api/rest"  # [VERIFY ENDPOINT] — confirm base path with KeeperPAM API docs
+    API_BASE = API_BASE  # Defined in ENDPOINTS registry above
 
     def __init__(self, config: dict):
         self.base_url = config["base_url"].rstrip("/")
@@ -120,7 +171,7 @@ class KeeperClient:
 
     def _connect_oauth2(self) -> bool:
         """Authenticate via OAuth2 client_credentials grant."""
-        token_url = f"{self.base_url}/oauth/token"  # [VERIFY ENDPOINT]
+        token_url = f"{self.base_url}{ENDPOINTS['token']}"
         try:
             resp = self._session.post(
                 token_url,
@@ -254,19 +305,18 @@ class KeeperClient:
         resp = self._request("DELETE", endpoint)
         return resp.status_code in (200, 204)
 
-    # ── vault operations (CyberArk "Safes" → KeeperPAM "Vaults") ─
-    # [VERIFY ENDPOINTS] — confirm all /vaults paths against KeeperPAM API docs
+    # ── vault operations (CyberArk "Safes" → KeeperPAM "Vaults") ────────────
 
     def create_safe(self, safe_name: str, properties: dict = None) -> dict:
         """Create a vault (KeeperPAM equivalent of a CyberArk safe)."""
         payload = {"name": safe_name}
         if properties:
             payload.update(properties)
-        return self._post("/vaults", payload)  # [VERIFY ENDPOINT]
+        return self._post(ENDPOINTS["vault_create"], payload)
 
     def get_safe(self, safe_name: str) -> dict:
         encoded = quote(safe_name, safe="")
-        return self._get(f"/vaults/{encoded}")  # [VERIFY ENDPOINT]
+        return self._get(ENDPOINTS["vault_get"].format(vault_name=encoded))
 
     def safe_exists(self, safe_name: str) -> bool:
         try:
@@ -276,26 +326,30 @@ class KeeperClient:
             return False
 
     def get_safes(self) -> List[Dict[str, Any]]:
-        resp = self._get("/vaults")  # [VERIFY ENDPOINT]
+        resp = self._get(ENDPOINTS["vaults_list"])
         return resp.get("vaults", resp.get("value", []))
 
     def add_safe_member(self, safe_name: str, member: dict) -> dict:
         """Add a member to a vault with permissions."""
         encoded = quote(safe_name, safe="")
-        return self._post(f"/vaults/{encoded}/members", member)  # [VERIFY ENDPOINT]
+        return self._post(ENDPOINTS["vault_member_add"].format(vault_name=encoded), member)
 
     def update_safe_member(self, safe_name: str, member_name: str, permissions: dict) -> dict:
         """Update an existing vault member's permissions."""
         encoded_safe = quote(safe_name, safe="")
         encoded_member = quote(member_name, safe="")
-        return self._put(f"/vaults/{encoded_safe}/members/{encoded_member}", permissions)  # [VERIFY ENDPOINT]
+        return self._put(
+            ENDPOINTS["vault_member_update"].format(
+                vault_name=encoded_safe, member_name=encoded_member
+            ),
+            permissions,
+        )
 
-    # ── record operations (CyberArk "Accounts" → KeeperPAM "Records") ──
-    # [VERIFY ENDPOINTS] — confirm all /records paths against KeeperPAM API docs
+    # ── record operations (CyberArk "Accounts" → KeeperPAM "Records") ────────
 
     def import_account(self, account_data: dict) -> dict:
         """Import a single record into KeeperPAM."""
-        return self._post("/records", account_data)  # [VERIFY ENDPOINT]
+        return self._post(ENDPOINTS["record_create"], account_data)
 
     def get_accounts(self, **filters) -> List[Dict[str, Any]]:
         all_accounts = []
@@ -303,7 +357,7 @@ class KeeperClient:
         total = None
         while True:
             params = {"limit": self.batch_size, "offset": offset, **filters}
-            resp = self._get("/records", params)  # [VERIFY ENDPOINT]
+            resp = self._get(ENDPOINTS["records_list"], params)
             accounts = resp.get("records", resp.get("value", []))
             if total is None:
                 total = resp.get("count", 0)
@@ -317,15 +371,15 @@ class KeeperClient:
 
     def verify_account(self, account_id: str) -> dict:
         """Trigger password rotation check (heartbeat) for a record."""
-        return self._post(f"/records/{account_id}/verify")  # [VERIFY ENDPOINT]
+        return self._post(ENDPOINTS["record_verify"].format(record_id=account_id))
 
     def get_account_details(self, account_id: str) -> dict:
-        return self._get(f"/records/{account_id}")  # [VERIFY ENDPOINT]
+        return self._get(ENDPOINTS["record_get"].format(record_id=account_id))
 
     def retrieve_password(self, account_id: str, reason: str = "Validation") -> str:
         """Retrieve a password from KeeperPAM."""
         resp = self._post(
-            f"/records/{account_id}/password",  # [VERIFY ENDPOINT]
+            ENDPOINTS["record_password_get"].format(record_id=account_id),
             {"reason": reason},
         )
         if isinstance(resp, dict):
@@ -334,24 +388,23 @@ class KeeperClient:
 
     def delete_account(self, account_id: str) -> bool:
         """Delete a record (for rollback)."""
-        return self._delete(f"/records/{account_id}")  # [VERIFY ENDPOINT]
+        return self._delete(ENDPOINTS["record_delete"].format(record_id=account_id))
 
-    # ── linked records ────────────────────────────────────────────
+    # ── linked records ────────────────────────────────────────────────────────
 
     def link_account(self, account_id: str, linked_account: dict) -> dict:
         """Link a logon/reconcile/index record."""
-        return self._post(f"/records/{account_id}/link", linked_account)  # [VERIFY ENDPOINT]
+        return self._post(ENDPOINTS["record_link"].format(record_id=account_id), linked_account)
 
     # ── record type operations (CyberArk "Platforms" → KeeperPAM "Record Types") ─
-    # [VERIFY ENDPOINTS]
 
     def get_platforms(self) -> List[Dict[str, Any]]:
-        resp = self._get("/record-types")  # [VERIFY ENDPOINT]
+        resp = self._get(ENDPOINTS["record_types_list"])
         return resp.get("recordTypes", resp.get("value", []))
 
     def import_platform(self, platform_zip: bytes) -> dict:
         """Import a record type package into KeeperPAM."""
-        url = f"{self.base_url}{self.API_BASE}/record-types/import"  # [VERIFY ENDPOINT]
+        url = f"{self.base_url}{self.API_BASE}{ENDPOINTS['record_types_import']}"
         resp = self._session.post(
             url,
             files={"ImportFile": ("platform.zip", platform_zip, "application/zip")},
@@ -365,13 +418,23 @@ class KeeperClient:
 
     def preflight_check(self) -> Dict[str, Any]:
         results = {
+            "endpoints_verified": ENDPOINTS_VERIFIED,
             "connectivity": False,
             "authenticated": False,
             "can_list_safes": False,
             "can_list_accounts": False,
-            "can_create_safes": False,
             "errors": [],
         }
+
+        # C-03 gate — block live execution until endpoints are confirmed
+        if not ENDPOINTS_VERIFIED:
+            results["errors"].append(
+                "C-03 BLOCK: KeeperPAM endpoints not verified. "
+                "Confirm ENDPOINTS in core/keeper_client.py against Keeper Security API docs, "
+                "then set ENDPOINTS_VERIFIED = True."
+            )
+            return results
+
         try:
             requests.get(self.base_url, verify=self.verify_ssl, timeout=self.timeout)
             results["connectivity"] = True
@@ -393,7 +456,7 @@ class KeeperClient:
             results["errors"].append(f"Vault listing failed: {e}")
 
         try:
-            self._get("/records", {"limit": 1})  # [VERIFY ENDPOINT]
+            self._get(ENDPOINTS["records_list"], {"limit": 1})
             results["can_list_accounts"] = True
         except Exception as e:
             results["errors"].append(f"Record listing failed: {e}")
