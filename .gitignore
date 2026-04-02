@@ -60,3 +60,7 @@ CHECKLIST.md
 
 # ── Git artifacts ─────────────────────────────────────────────────────────────
 .git.bak/
+
+# Nexus workspace — daily notes are noise, not tracked
+nexus/workspace/memory/
+nexus/agents/shift-pmo/memory/
