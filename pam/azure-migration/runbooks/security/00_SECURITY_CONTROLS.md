@@ -83,19 +83,23 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
 
 ---
 
-### C-03 — KeeperPAM OAuth2 Endpoint Verification
+### C-03 — KeeperPAM REST Endpoint Verification
 
-**Finding:** The KeeperPAM OAuth2 token endpoint URL is configured in `config.json` without validation against Keeper Security's published API documentation. An incorrect or stale endpoint would cause silent auth failures or route tokens to an unintended endpoint.
+**Finding:** All 15 KeeperPAM REST endpoint paths (OAuth2 token, vault operations, record operations, record type operations) are consolidated in `core/keeper_client.py` under the `ENDPOINTS` dict. All paths are marked UNVERIFIED and have not been confirmed against Keeper Security's published API documentation. An incorrect path would cause silent failures or data written to wrong endpoints during live migration.
 
-**Status:** DOCUMENTED — requires action before P4 (pilot).
+**Status:** DOCUMENTED — requires action before P4 (pilot). Live execution is hard-blocked by `ENDPOINTS_VERIFIED = False` in `core/keeper_client.py`. `preflight_check()` returns a C-03 error until the flag is flipped.
 
 **Required Action:**
 
 1. Obtain current KeeperPAM API documentation from Keeper Security account team.
-2. Verify `keeperpam_token_url` in `config.example.json` matches the published endpoint for the tenant region.
+   Reference: https://docs.keeper.io/en/enterprise-guide/pam
+2. Open `core/keeper_client.py` and verify each path in the `ENDPOINTS` dict against the API docs.
+   Pay particular attention to: `API_BASE`, `token`, `vaults_list`, `record_create`, `record_password_get`.
 3. Confirm OAuth2 grant type (`client_credentials`) is supported for the licensed SKU.
-4. Document verified endpoint in P0 runbook under "KeeperPAM connectivity check."
-5. Update this register: set Status = IMPLEMENTED, Verified By = Security Lead, Date = verification date.
+4. Confirm `API_BASE` path prefix (currently `/api/rest`) is correct for the tenant region.
+5. Once all paths are confirmed, set `ENDPOINTS_VERIFIED = True` in `core/keeper_client.py`.
+6. Run `python3 cli.py preflight` — must pass C-03 gate before proceeding.
+7. Update this register: set Status = IMPLEMENTED, Verified By = [name], Date = [date].
 
 ---
 
@@ -223,12 +227,13 @@ This T-SQL step is documented in the P0 runbook under "Post-deployment SQL RBAC.
 
 The following controls are documented but require client-specific decisions or infrastructure investment before implementation.
 
-### C-03 — KeeperPAM OAuth2 Endpoint
+### C-03 — KeeperPAM REST Endpoint Verification
 
-**Decision Required:** Verify correct OAuth2 token URL for the client's KeeperPAM tenant region with Keeper Security.
-**Owner:** Client security team + iOPEX integration lead
-**Deadline:** Before P4 (pilot migration)
-**Risk if deferred:** Silent authentication failures or token routing to incorrect endpoint
+**Decision Required:** Verify all 15 REST endpoint paths in `core/keeper_client.py` ENDPOINTS dict against Keeper Security API docs. Set `ENDPOINTS_VERIFIED = True` to unlock live execution.
+**Owner:** iOPEX integration lead + Keeper Security TAM
+**Deadline:** Before P4 (pilot migration) — hard-blocked by code gate
+**Risk if deferred:** Live execution blocked. `preflight_check()` returns C-03 error until resolved.
+**Effort:** ~30 minutes with Keeper Security API docs or TAM.
 
 ---
 
