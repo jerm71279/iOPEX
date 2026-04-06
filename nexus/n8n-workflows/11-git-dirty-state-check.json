@@ -1,0 +1,131 @@
+{
+  "name": "11 — Daily Git Dirty State Check",
+  "_meta": {
+    "description": "Daily 8:00 AM — scans all git repos in ~/projects for uncommitted changes. Silent if all clean. Fires Telegram alert if any repos are dirty.",
+    "setup": [
+      "Credential 'Nexus Telegram Bot' must be configured with TELEGRAM_BOT_TOKEN_IOPEX",
+      "Variable TELEGRAM_CHAT_ID must be set in n8n Settings → Variables",
+      "SSH credential 'Maverick WSL Host' must be configured (ssh-maverick)"
+    ]
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 8:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "command": "bash -lc 'find ~/projects -maxdepth 3 -name \".git\" -type d 2>/dev/null | while IFS= read -r git_dir; do repo_dir=$(dirname \"$git_dir\"); st=$(git -C \"$repo_dir\" status --porcelain 2>/dev/null); [ -n \"$st\" ] && echo \"$repo_dir\"; done; echo \"EXIT:0\"'"
+      },
+      "id": "run-git-check",
+      "name": "Scan Git Repos",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "continueOnFail": true,
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "ssh-maverick",
+          "name": "Maverick WSL Host"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = ($input.item.json.stdout || '').replace(/EXIT:\\d+/, '').trim();\nconst repos = stdout.split('\\n').map(r => r.trim()).filter(Boolean);\nconst names = repos.map(r => r.split('/').pop());\nconst ts = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';\nconst summary = repos.length > 0\n  ? `⚠️ *Git Dirty State Alert* [${ts}]\\n\\n${names.map(n => `• \\`${n}\\``).join('\\n')}\\n\\nRun \\`git status\\` in each repo and commit or stash before next session.`\n  : '';\nreturn [{ json: { has_dirty: repos.length > 0, repos, names, summary, checked_at: ts } }];"
+      },
+      "id": "parse-output",
+      "name": "Parse Git Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "dirty-check",
+              "leftValue": "={{ $json.has_dirty }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "has-dirty",
+      "name": "Any Dirty Repos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.summary }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "alert-telegram",
+      "name": "Alert — Dirty Repos",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 220],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-nexus",
+          "name": "Nexus Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 8:00 AM": {
+      "main": [
+        [{ "node": "Scan Git Repos", "type": "main", "index": 0 }]
+      ]
+    },
+    "Scan Git Repos": {
+      "main": [
+        [{ "node": "Parse Git Output", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Git Output": {
+      "main": [
+        [{ "node": "Any Dirty Repos?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Any Dirty Repos?": {
+      "main": [
+        [{ "node": "Alert — Dirty Repos", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "git" },
+    { "name": "scheduled" },
+    { "name": "alert" }
+  ]
+}
