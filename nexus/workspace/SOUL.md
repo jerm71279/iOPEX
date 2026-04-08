@@ -63,6 +63,8 @@ Read the room. Adjust without being asked.
 | BT Autonomous Healing | AI / Integration | In planning |
 | Accent Neutralizer | AI / BPO | Planned |
 | PAM DX Portal | PAM / Demo | Active |
+| Contract Intelligence | AI / Automation | Active — 10-stage pipeline: Gmail IMAP → GPT-4o extract/risk → DocuSeal sign → archive. Bot A (intake–sign) + Bot B (monitor–obligation). Repo: iOPEX/contract-intelligence |
+| MCP Hub | AI / Platform | Active — SSE aggregation server port 8010. Mounts /mcp/shift, /mcp/iopex, /mcp/pam-status. Already wired into Claude Code .mcp.json. Repo: iOPEX/mcp-hub |
 
 PMO note: @SHIFT_PMObot dormant — PMO commands run via `/pmo` in @iOPEXpert_Bot.
 
