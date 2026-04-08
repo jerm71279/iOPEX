@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIFT — KeeperPAM Migration Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg-page:#060D16;--bg-card:#0A1628;--bg-card-hover:#0D2137;--bg-surface:#081422;--border:#1E3050;--border-light:#1A2A42;--blue:#3B82F6;--blue-dim:rgba(59,130,246,0.15);--green:#06D6A0;--green-dim:rgba(6,214,160,0.15);--amber:#F59E0B;--amber-dim:rgba(245,158,11,0.15);--red:#EF4444;--red-dim:rgba(239,68,68,0.15);--purple:#A855F7;--purple-dim:rgba(168,85,247,0.15);--cyan:#00C8E8;--cyan-dim:rgba(0,200,232,0.15);--teal:#14B8A6;--teal-dim:rgba(20,184,166,0.15);--rose:#F472B6;--text-bright:#F1F5F9;--text-standard:#CBD5E1;--text-muted:#64748B;--font-sans:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--font-mono:'JetBrains Mono','Consolas','Courier New',monospace;--radius:8px;--transition:0.25s ease}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-standard);min-height:100vh;display:flex}
+.sidebar{width:230px;background:var(--bg-card);border-right:1px solid var(--border);padding:20px 12px;position:fixed;height:100vh;display:flex;flex-direction:column;gap:4px;overflow-y:auto;z-index:100}
+.sidebar-logo{font-family:var(--font-mono);font-size:1rem;font-weight:700;color:var(--teal);letter-spacing:3px;text-align:center;padding:4px 0}
+.sidebar-sub{font-family:var(--font-mono);font-size:0.48rem;color:var(--text-muted);letter-spacing:2px;text-align:center;text-transform:uppercase;margin-bottom:12px}
+.option-indicator{font-family:var(--font-mono);font-size:0.5rem;text-align:center;padding:4px 8px;border-radius:4px;letter-spacing:1px;margin-bottom:8px}
+.nav-link{width:100%;padding:10px 12px;border:none;border-radius:var(--radius);background:transparent;color:var(--text-muted);font-family:var(--font-sans);font-size:0.78rem;font-weight:500;text-align:left;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:10px}
+.nav-link:hover{background:var(--bg-card-hover);color:var(--text-standard)}
+.nav-link.active{background:var(--teal-dim);color:var(--teal);font-weight:600}
+.nav-icon{font-size:0.9rem;width:20px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:0.5rem;color:var(--text-muted);letter-spacing:1px;line-height:1.6}
+.main{margin-left:230px;flex:1;padding:24px 28px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:20px}
+.page-title{font-size:1.3rem;font-weight:800;color:var(--text-bright)}
+.page-subtitle{font-size:0.78rem;color:var(--text-muted);margin-top:4px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:var(--transition)}
+.stat-card:hover{border-color:var(--border-light);background:var(--bg-card-hover)}
+.stat-label{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.stat-value{font-size:1.5rem;font-weight:800;color:var(--text-bright)}
+.badge{font-family:var(--font-mono);font-size:0.55rem;font-weight:600;padding:3px 8px;border-radius:10px;letter-spacing:0.5px;display:inline-block}
+.badge-green{background:var(--green-dim);color:var(--green)}.badge-amber{background:var(--amber-dim);color:var(--amber)}.badge-red{background:var(--red-dim);color:var(--red)}.badge-blue{background:var(--blue-dim);color:var(--blue)}.badge-teal{background:var(--teal-dim);color:var(--teal)}.badge-purple{background:var(--purple-dim);color:var(--purple)}.badge-cyan{background:var(--cyan-dim);color:var(--cyan)}.badge-muted{background:rgba(100,116,139,0.15);color:var(--text-muted)}
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.panel-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border)}
+.panel-title{font-size:0.85rem;font-weight:600;color:var(--text-bright)}
+.panel-body{padding:14px 18px}
+.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;padding:14px}
+.health-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:var(--transition)}
+.health-item:hover{border-color:var(--teal)}
+.health-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green);box-shadow:0 0 8px var(--green-dim)}.dot-amber{background:var(--amber);box-shadow:0 0 8px var(--amber-dim);animation:pulse 2s infinite}.dot-red{background:var(--red);box-shadow:0 0 8px var(--red-dim)}.dot-gray{background:var(--text-muted)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.health-name{font-size:0.78rem;font-weight:600;color:var(--text-bright)}
+.health-msg{font-size:0.65rem;color:var(--text-muted)}
+.phase-timeline{display:flex;gap:4px;padding:16px}
+.phase-segment{flex:1;height:36px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.55rem;font-weight:600;cursor:pointer;transition:var(--transition);border:1px solid var(--border);position:relative;text-align:center}
+.phase-segment:hover{transform:translateY(-2px)}
+.phase-segment.past{opacity:0.6}.phase-segment.current{box-shadow:0 0 14px currentColor;border-color:currentColor}.phase-segment.future{opacity:0.3}
+.phase-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:var(--transition)}
+.phase-card:hover{border-color:var(--border-light)}
+.phase-card-header{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;user-select:none}
+.phase-card-header:hover{background:var(--bg-card-hover)}
+.phase-num{font-family:var(--font-mono);font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:0.5px}
+.phase-card-title{flex:1;font-weight:600;color:var(--text-bright);font-size:0.88rem}
+.phase-card-weeks{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted)}
+.phase-expand{color:var(--text-muted);transition:transform 0.3s ease}
+.phase-card.open .phase-expand{transform:rotate(90deg)}
+.phase-card-body{max-height:0;overflow:hidden;transition:max-height 0.5s ease}
+.phase-card.open .phase-card-body{max-height:3000px}
+.phase-card-content{padding:0 18px 18px}
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px}
+.agent-card{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--text-muted);border-radius:var(--radius);padding:14px;cursor:pointer;transition:var(--transition)}
+.agent-card:hover{background:var(--bg-card-hover)}
+.agent-card.selected{border-left-color:var(--cyan);box-shadow:0 0 12px var(--cyan-dim)}
+.agent-card.status-complete{border-left-color:var(--green)}.agent-card.status-active{border-left-color:var(--amber)}.agent-card.status-pending{border-left-color:var(--text-muted)}.agent-card.status-blocked{border-left-color:var(--red)}
+.agent-num{font-family:var(--font-mono);font-size:0.6rem;font-weight:700;color:var(--text-muted);letter-spacing:1px}
+.agent-name{font-weight:600;color:var(--text-bright);font-size:0.85rem;margin:4px 0}
+.agent-desc{font-size:0.7rem;color:var(--text-muted);line-height:1.5}
+.agent-detail{background:var(--bg-card);border:1px solid var(--cyan);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.detail-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.detail-label{font-family:var(--font-mono);font-size:0.58rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;min-width:90px;padding-top:2px}
+.detail-value{font-size:0.78rem;color:var(--text-standard);line-height:1.5}
+.wave-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;display:grid;grid-template-columns:50px 1fr auto;gap:14px;align-items:center;transition:var(--transition)}
+.wave-card:hover{border-color:var(--border-light)}
+.wave-number{font-family:var(--font-mono);font-size:1.4rem;font-weight:800;text-align:center}
+.wave-name{font-weight:600;color:var(--text-bright);font-size:0.88rem}
+.wave-type{font-size:0.7rem;color:var(--text-muted)}
+.gate-entry{display:block;padding:18px;margin-bottom:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);transition:var(--transition)}
+.gate-entry:hover{border-color:var(--border-light)}
+.gate-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.gate-name{font-weight:600;color:var(--text-bright);font-size:0.82rem}
+.gate-meta{font-size:0.65rem;color:var(--text-muted);margin-top:2px}
+.gate-req{font-size:0.7rem;color:var(--text-standard);margin-top:6px;line-height:1.5}
+.gate-context{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.gate-context-box{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.gate-context-label{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.callout{border-left:3px solid;border-radius:var(--radius);padding:14px 18px;margin:16px 0}
+.callout.amber{background:var(--amber-dim);border-color:var(--amber)}.callout.teal{background:var(--teal-dim);border-color:var(--teal)}.callout.red{background:var(--red-dim);border-color:var(--red)}.callout.blue{background:var(--blue-dim);border-color:var(--blue)}.callout.green{background:var(--green-dim);border-color:var(--green)}
+.callout-title{font-weight:700;font-size:0.78rem;margin-bottom:4px}
+.callout p{font-size:0.72rem;color:var(--text-muted);line-height:1.6}
+.section-label{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin:20px 0 10px}
+.activity-item{font-size:0.75rem;color:var(--text-standard);padding:4px 0 4px 14px;border-left:2px solid var(--border);margin-bottom:4px;line-height:1.5}
+.etl-pipeline{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:16px}
+.etl-step{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);text-align:center;font-family:var(--font-mono);font-size:0.58rem;font-weight:600;letter-spacing:0.5px;background:var(--bg-surface);color:var(--text-muted)}
+.etl-step.done{background:var(--green-dim);color:var(--green);border-color:var(--green)}
+.etl-arrow{color:var(--text-muted);font-size:1rem;padding:0 4px}
+.overlay{display:none;position:fixed;inset:0;z-index:9000;background:rgba(6,13,22,0.88);backdrop-filter:blur(6px);overflow-y:auto;padding:60px 24px;justify-content:center;align-items:flex-start}
+.overlay.visible{display:flex}
+.overlay-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;max-width:860px;width:100%;padding:28px 32px;position:relative;max-height:80vh;overflow-y:auto}
+.overlay-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer}
+.overlay-close:hover{color:var(--text-bright)}
+table{width:100%;border-collapse:collapse;font-size:0.68rem}
+th{padding:7px 10px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.62rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border)}
+td{padding:6px 10px;border-bottom:1px solid var(--border-light);color:var(--text-standard);vertical-align:top;line-height:1.6}
+tr:last-child td{border-bottom:none}
+p{font-size:0.72rem;line-height:1.7;margin-bottom:10px}p:last-child{margin-bottom:0}
+ul,ol{padding-left:18px;font-size:0.7rem;line-height:2}
+code{font-family:var(--font-mono);color:var(--teal);font-size:0.85em}
+h4{font-size:0.78rem;font-weight:700;color:var(--text-bright);margin:14px 0 8px}
+.guide-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
+.guide-section-title{font-size:0.88rem;font-weight:700;color:var(--text-bright);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-light)}
+.qa-item{margin-top:12px;border-left:3px solid var(--blue);padding:10px 14px;background:var(--bg-surface);border-radius:0 6px 6px 0}
+.qa-q{font-weight:700;color:var(--blue);font-size:0.7rem;margin-bottom:6px}
+.qa-a{font-size:0.7rem;color:var(--text-standard);line-height:1.75}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">SHIFT</div>
+  <div class="sidebar-sub">Secure Hybrid Identity &amp; Function Transfer</div>
+  <div class="option-indicator" style="background:var(--green-dim);color:var(--green);">&#9679; KEEPERPAM — LIVE TARGET</div>
+
+  <button class="nav-link active" onclick="showPage('mission',this)"><span class="nav-icon">&#x25A3;</span> Mission Control</button>
+  <button class="nav-link" onclick="showPage('phases',this)"><span class="nav-icon">&#x25B6;</span> Phase Explorer</button>
+  <button class="nav-link" onclick="showPage('agents',this)"><span class="nav-icon">&#x25C8;</span> Agents</button>
+  <button class="nav-link" onclick="showPage('waves',this)"><span class="nav-icon">&#x25E7;</span> Wave Execution</button>
+  <button class="nav-link" onclick="showPage('gates',this)"><span class="nav-icon">&#x25CF;</span> Gate Tracker</button>
+  <button class="nav-link" onclick="showPage('keeper',this)"><span class="nav-icon">&#x1F511;</span> KeeperPAM Details</button>
+  <button class="nav-link" onclick="showPage('guide',this)"><span class="nav-icon">&#x2753;</span> Guide &amp; FAQ</button>
+  <button class="nav-link" onclick="showPage('securityqa',this)"><span class="nav-icon">&#x1F512;</span> Security Q&amp;A</button>
+  <button class="nav-link" onclick="showPage('sod',this)"><span class="nav-icon">&#x2696;</span> Separation of Duties</button>
+  <button class="nav-link" onclick="showPage('info',this)"><span class="nav-icon">&#x26A0;</span> Status &amp; Info</button>
+
+  <div class="sidebar-footer">iOPEX SHIFT v2.1<br>KEEPERPAM · 80 WEEKS · 15+3 AGENTS<br>Standalone Deliverable</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══ MISSION CONTROL ══ -->
+<div class="page active" id="page-mission">
+  <div class="page-header">
+    <div class="page-title">Mission Control</div>
+    <div class="page-subtitle">80-Week CyberArk → KeeperPAM Migration — Real-Time Dashboard</div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Accounts</div><div class="stat-value">2,847</div></div>
+    <div class="stat-card"><div class="stat-label">NHIs Detected</div><div class="stat-value" style="color:var(--amber)">234</div></div>
+    <div class="stat-card"><div class="stat-label">Integrations</div><div class="stat-value">34</div></div>
+    <div class="stat-card"><div class="stat-label">Migration Waves</div><div class="stat-value">5</div></div>
+    <div class="stat-card"><div class="stat-label">Gates Passed</div><div class="stat-value" style="color:var(--green)">17/17</div></div>
+    <div class="stat-card"><div class="stat-label">Active Agents</div><div class="stat-value" style="color:var(--cyan)">3</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">Migration Progress — Phase Timeline</div><span class="badge badge-green">P6 PARALLEL RUNNING</span></div>
+    <div class="phase-timeline">
+      <div class="phase-segment past" style="background:var(--green-dim);color:var(--green);border-color:var(--green)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P0<br><span style="font-size:0.45rem;opacity:0.7">W1-4</span></div></div>
+      <div class="phase-segment past" style="background:var(--green-dim);color:var(--green);border-color:var(--green)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P1<br><span style="font-size:0.45rem;opacity:0.7">W5-12</span></div></div>
+      <div class="phase-segment past" style="background:var(--green-dim);color:var(--green);border-color:var(--green)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P2<br><span style="font-size:0.45rem;opacity:0.7">W13-18</span></div></div>
+      <div class="phase-segment past" style="background:var(--green-dim);color:var(--green);border-color:var(--green)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P3<br><span style="font-size:0.45rem;opacity:0.7">W19-22</span></div></div>
+      <div class="phase-segment past" style="background:var(--green-dim);color:var(--green);border-color:var(--green)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P4<br><span style="font-size:0.45rem;opacity:0.7">W23-28</span></div></div>
+      <div class="phase-segment past" style="background:var(--green-dim);color:var(--green);border-color:var(--green)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P5<br><span style="font-size:0.45rem;opacity:0.7">W29-40</span></div></div>
+      <div class="phase-segment current" style="background:var(--cyan-dim);color:var(--cyan);border-color:var(--cyan)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P6<br><span style="font-size:0.45rem;opacity:0.7">W41-48</span></div></div>
+      <div class="phase-segment future" style="background:var(--bg-surface);color:var(--text-muted)" onclick="showPage('phases',document.querySelectorAll('.nav-link')[1])"><div>P7<br><span style="font-size:0.45rem;opacity:0.7">W49-50</span></div></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Agent Status</div><span class="badge badge-cyan">3 ACTIVE</span></div>
+      <div class="health-grid" style="grid-template-columns:1fr">
+        <div class="health-item" onclick="showPage('agents',document.querySelectorAll('.nav-link')[2])"><div class="health-dot dot-green"></div><div><div class="health-name">01–12 Discovery–NHI Handler</div><div class="health-msg">P1–P5 complete</div></div></div>
+        <div class="health-item" onclick="showPage('agents',document.querySelectorAll('.nav-link')[2])"><div class="health-dot dot-amber"></div><div><div class="health-name">15 Hybrid Fleet</div><div class="health-msg">W41-46 — active (parallel run)</div></div></div>
+        <div class="health-item" onclick="showPage('agents',document.querySelectorAll('.nav-link')[2])"><div class="health-dot dot-amber"></div><div><div class="health-name">05 Heartbeat</div><div class="health-msg">W41-48 — monitoring</div></div></div>
+        <div class="health-item" onclick="showPage('agents',document.querySelectorAll('.nav-link')[2])"><div class="health-dot dot-amber"></div><div><div class="health-name">06 Integration</div><div class="health-msg">W41-44 — KSM SDK cutover</div></div></div>
+        <div class="health-item" onclick="showPage('agents',document.querySelectorAll('.nav-link')[2])"><div class="health-dot dot-green"></div><div><div class="health-name">07 Compliance</div><div class="health-msg">W41-49 — evidence collection</div></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Gate Status</div><span class="badge badge-green">17/17 PASSED</span></div>
+      <div style="padding:10px 14px;max-height:280px;overflow-y:auto">
+        <script>
+        const gateStatusData=[{id:'g1',name:'Project Kick-off',week:4,status:'passed'},{id:'g2',name:'NHI Classification Review',week:10,status:'passed'},{id:'g3',name:'Discovery Sign-off',week:12,status:'passed'},{id:'g4',name:'Staging Approval',week:18,status:'passed'},{id:'g5',name:'Structure Approval',week:22,status:'passed'},{id:'g6',name:'Pilot Results Approval',week:28,status:'passed'},{id:'g7',name:'Wave 1 Approval',week:32,status:'passed'},{id:'g8',name:'Wave 2 Approval',week:34,status:'passed'},{id:'g9',name:'Wave 3 Approval',week:36,status:'passed'},{id:'g10',name:'Wave 4 Approval',week:38,status:'passed'},{id:'g11',name:'Production Complete',week:40,status:'passed'},{id:'g12',name:'Integration Cutover',week:44,status:'passed'},{id:'g13',name:'Cutover Approval',week:48,status:'active'},{id:'g14',name:'Final Sign-off',week:50,status:'pending'},{id:'g15',name:'SHIFT Architecture Review',week:12,status:'passed'},{id:'g16',name:'SHIFT MVP Walkthrough',week:22,status:'passed'},{id:'g17',name:'SHIFT Production Cutover',week:46,status:'active'}];
+        document.write(gateStatusData.map(g=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;margin-bottom:3px"><div class="health-dot ${g.status==='passed'?'dot-green':g.status==='active'?'dot-amber':'dot-gray'}"></div><span style="font-size:0.72rem;color:var(--text-bright);flex:1">${g.name}</span><span class="badge badge-muted">W${g.week}</span><span class="badge ${g.status==='passed'?'badge-green':g.status==='active'?'badge-amber':'badge-muted'}">${g.status.toUpperCase()}</span></div>`).join(''));
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:4px">
+    <div class="stat-card" style="border-top:2px solid var(--red)"><div class="stat-label">Critical Risks</div><div class="stat-value" style="color:var(--red)">2</div><div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">Audit discontinuity, permission loss</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--amber)"><div class="stat-label">High Risks</div><div class="stat-value" style="color:var(--amber)">4</div><div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">Permission escalation, Conjur re-arch, PSM loss, CCP/AAM</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--blue)"><div class="stat-label">Medium Risks</div><div class="stat-value" style="color:var(--blue)">3</div><div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">Gateway HA, TLS config, PSM archive</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--green)"><div class="stat-label">Low Risks</div><div class="stat-value" style="color:var(--green)">2</div><div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">Credential in-transit, state file perms</div></div>
+  </div>
+</div>
+
+<!-- ══ PHASE EXPLORER ══ -->
+<div class="page" id="page-phases">
+  <div class="page-header"><div class="page-title">Phase Explorer</div><div class="page-subtitle">8-Phase Migration Lifecycle — CyberArk PAS → KeeperPAM (80 Weeks)</div></div>
+  <div id="phaseCards"></div>
+</div>
+
+<!-- ══ AGENTS ══ -->
+<div class="page" id="page-agents">
+  <div class="page-header"><div class="page-title">AI Agents</div><div class="page-subtitle">15 SHIFT Orchestration Agents + 3 Support Agents</div></div>
+  <div id="agentDetail" style="display:none"></div>
+  <div class="agent-grid" id="agentGrid"></div>
+</div>
+
+<!-- ══ WAVE EXECUTION ══ -->
+<div class="page" id="page-waves">
+  <div class="page-header"><div class="page-title">Wave Execution</div><div class="page-subtitle">5-Wave Production Migration — KeeperPAM ETL Pipeline</div></div>
+  <div class="callout teal" style="margin-bottom:20px"><div class="callout-title" style="color:var(--teal)">KeeperPAM ETL — 9-Step Pipeline</div><p>FREEZE → EXPORT → TRANSFORM → BUILD HIERARCHY → BULK IMPORT → POST-IMPORT TRANSFORM → HEARTBEAT → INTEGRITY → UNFREEZE. The 3-tier hierarchy build (PAM Config → PAM Resource → PAM User) and post-import transform are unique to Keeper — absent from Option A/C pipelines.</p></div>
+  <div id="waveCards"></div>
+</div>
+
+<!-- ══ GATE TRACKER ══ -->
+<div class="page" id="page-gates">
+  <div class="page-header"><div class="page-title">Gate Tracker</div><div class="page-subtitle">17 Human Approval Gates — KeeperPAM Migration Programme</div></div>
+  <div id="gateList"></div>
+</div>
+
+<!-- ══ KEEPER DETAILS ══ -->
+<div class="page" id="page-keeper">
+  <div class="page-header"><div class="page-title">KeeperPAM — Technical Details</div><div class="page-subtitle">Architecture, configuration, and integration specifics for the live target</div></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="panel"><div class="panel-header"><div class="panel-title">Authentication</div></div><div class="panel-body" style="font-size:0.72rem;line-height:1.8">
+      <p><strong style="color:var(--cyan)">OAuth2 client credentials</strong> via Keeper PAM API. Client ID and secret in env vars — never in config files.</p>
+      <p>Env vars: <code>KEEPER_CLIENT_ID</code>, <code>KEEPER_CLIENT_SECRET</code></p>
+      <p>Token refreshed proactively 60s before expiry.</p>
+      <p>SAML SSO + enforced MFA supported via Keeper Identity.</p>
+    </div></div>
+    <div class="panel"><div class="panel-header"><div class="panel-title">Encryption</div></div><div class="panel-body" style="font-size:0.72rem;line-height:1.8">
+      <p><strong style="color:var(--green)">Zero-knowledge AES-256-GCM</strong> — Keeper server never sees plaintext. Encryption/decryption client-side.</p>
+      <p><strong>FedRAMP High</strong> authorized March 2026.</p>
+      <p>Even a full server compromise exposes only ciphertext.</p>
+    </div></div>
+  </div>
+
+  <div class="panel"><div class="panel-header"><div class="panel-title">3-Tier Data Hierarchy (Structural Delta from CyberArk)</div></div><div class="panel-body">
+    <p style="margin-bottom:14px">Keeper uses a 3-tier model. A CyberArk Account maps to a <code>pamUser</code> linked to a <code>pamMachine</code> or <code>pamDatabase</code>. The cyberark-import tool handles ~20% of work; the remaining 80% is post-import transform to build correct linkage. Each CyberArk Safe → 2 Keeper Shared Folders.</p>
+    <div style="display:flex;flex-direction:column;gap:4px;margin:16px 0">
+      <div style="background:var(--bg-surface);border:1px solid var(--amber);border-radius:6px;padding:12px 16px"><div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--amber);margin-bottom:4px">PAM CONFIG</div><div style="font-size:0.68rem;color:var(--text-standard)">Top-level env config — defines gateway assignment, rotation policies, compliance scope. Maps from CyberArk Safe policy settings.</div></div>
+      <div style="text-align:center;color:var(--border);font-size:1rem;padding:2px">&#9660;</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--cyan);border-radius:6px;padding:12px 16px"><div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cyan);margin-bottom:4px">PAM RESOURCE (pamMachine / pamDatabase)</div><div style="font-size:0.68rem;color:var(--text-standard)">The target system. Maps from CyberArk <code>address</code> + <code>platformId</code>. One Resource has many Users.</div></div>
+      <div style="text-align:center;color:var(--border);font-size:1rem;padding:2px">&#9660;</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--green);border-radius:6px;padding:12px 16px"><div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--green);margin-bottom:4px">PAM USER (pamUser)</div><div style="font-size:0.68rem;color:var(--text-standard)">The privileged credential. Maps from CyberArk <code>userName</code> + <code>secret</code>. Retrieved password written here and zeroed from memory immediately after import.</div></div>
+    </div>
+    <table style="margin-top:12px"><thead><tr><th>CyberArk Field</th><th>Keeper Target</th><th>Notes</th></tr></thead><tbody>
+      <tr><td><code>safeName</code></td><td>Shared Folder</td><td>Each Safe → 2 folders (credentials + resources)</td></tr>
+      <tr><td><code>platformId</code></td><td>PAM Template</td><td>Platform → PAM Template via Agent 13 template map</td></tr>
+      <tr><td><code>address</code></td><td>pamMachine.hostname</td><td>Becomes the PAM Resource hostname/IP</td></tr>
+      <tr><td><code>userName</code></td><td>pamUser.username</td><td>Linked to parent PAM Resource</td></tr>
+      <tr><td><code>secret</code></td><td>pamUser.password</td><td>Retrieved via <code>POST /Accounts/{id}/Password/Retrieve</code> — held in memory only</td></tr>
+      <tr><td><code>platformAccountProperties</code></td><td>pamUser custom fields</td><td>Platform-specific fields per PAM Template definition</td></tr>
+    </tbody></table>
+  </div></div>
+
+  <div class="panel"><div class="panel-header"><div class="panel-title">KSM — Replaces CCP/AAM</div></div><div class="panel-body">
+    <p><strong style="color:var(--purple)">Keeper Secrets Manager (KSM)</strong> — 40+ native integrations replace CCP/AAM for application credential retrieval.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
+      <span class="badge badge-purple">GitHub Actions</span><span class="badge badge-purple">Terraform</span><span class="badge badge-purple">Ansible</span><span class="badge badge-purple">Kubernetes</span><span class="badge badge-purple">Jenkins</span><span class="badge badge-purple">AWS Secrets Manager</span><span class="badge badge-purple">Azure Key Vault</span><span class="badge badge-purple">HashiCorp Vault</span><span class="badge badge-purple">Python SDK</span><span class="badge badge-purple">Java SDK</span><span class="badge badge-purple">C# .NET SDK</span><span class="badge badge-purple">Go SDK</span>
+    </div>
+    <p>Agent 06 scans all application code for CCP/AAM patterns and generates KSM SDK replacement packages. Full re-architecture for any app using AAM agent injection model — feature-flag toggle for safe rollback.</p>
+  </div></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="panel"><div class="panel-header"><div class="panel-title">Keeper Gateway</div></div><div class="panel-body" style="font-size:0.72rem;line-height:1.8">
+      <p>Docker container (min <strong>4 CPU / 16 GB RAM</strong>). HA cluster required at 250K+ accounts.</p>
+      <p>Handles rotation for <strong>~25–30 platforms</strong> natively.</p>
+      <p><strong>Network:</strong> Outbound HTTPS to Keeper cloud only. No inbound rules required.</p>
+      <p><strong>Custom scripts needed</strong> for network gear (IOS/NX-OS/ASA) — validate before Wave 3.</p>
+    </div></div>
+    <div class="panel"><div class="panel-header"><div class="panel-title">KCM — Session Recording</div></div><div class="panel-body" style="font-size:0.72rem;line-height:1.8">
+      <p><strong style="color:var(--cyan)">Keeper Connection Manager</strong> — Apache Guacamole-based.</p>
+      <p>Browser-native session recording — no Windows RDS licensing required.</p>
+      <p>Replaces CyberArk PSM. PSM session history cannot be migrated — archive before P7 decommission.</p>
+      <p>Configured and validated in P2. KCM session policies set in P6.</p>
+    </div></div>
+  </div>
+
+  <div class="callout amber">
+    <div class="callout-title">Permission Model — 22 CyberArk Permissions → 4 Keeper Boolean Axes (LOSSY)</div>
+    <p>Keeper uses 4 boolean axes: <code>manage_users</code>, <code>manage_records</code>, <code>can_edit</code>, <code>can_share</code>. 12 CyberArk permissions have no Keeper equivalent and are permanently lost. Agent 03 produces a full escalation + loss report. Enterprise Security Architect must independently review every escalation flag at gate g3 — iOPEX cannot self-approve (PCI-DSS Req 7.1).</p>
+  </div>
+</div>
+
+<!-- ══ GUIDE & FAQ ══ -->
+<div class="page" id="page-guide">
+  <div class="page-header"><div class="page-title">Guide &amp; FAQ</div><div class="page-subtitle">Comprehensive reference — SHIFT Framework, KeeperPAM migration methodology</div></div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">What Is This Control Center?</div>
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing the CyberArk PAS → KeeperPAM migration. It surfaces every phase, agent, gate, and risk factor across the 80-week engagement. <strong style="color:var(--green)">KeeperPAM</strong> is the selected target — zero-knowledge SaaS, FedRAMP High, KSM SDK replaces CCP/AAM, KCM provides browser-native session recording.</p>
+    <p><strong>Technical overview:</strong> The frontend is a single-page app. All data flows through the 15-agent AI orchestrator (SHIFT). Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. This version is a standalone deliverable with all data inlined.</p>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">SHIFT Architecture — Framework-Agnostic Design</div>
+    <p>SHIFT is a <strong>methodology, tooling, and agent design pattern</strong> — not an SDK. The orchestration engine is swappable (LangGraph, CrewAI, AutoGen, plain Python). Agent logic, phase gates, ETL pipeline spec, and ML feedback loops carry over unchanged regardless of engine choice.</p>
+    <div style="display:flex;flex-direction:column;gap:0;margin:14px 0">
+      <div style="background:var(--amber-dim);border:1px solid var(--amber);border-radius:6px;padding:14px;margin-bottom:4px"><div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--amber);margin-bottom:6px;letter-spacing:.04em">LAYER 0 — PMO INTELLIGENCE</div><div style="font-size:0.68rem;color:var(--text-standard);line-height:1.6">iOPEX PMO Engine generates weekly PMO Directive JSON — action items, gate readiness, blocked items, team accountability. RAG corpus (ChromaDB + SQLite) ingests all project events.</div></div>
+      <div style="text-align:center;color:var(--border);padding:4px">&#9660;</div>
+      <div style="background:var(--teal-dim);border:1px solid var(--teal);border-radius:6px;padding:14px;margin-bottom:4px"><div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--teal);margin-bottom:6px;letter-spacing:.04em">LAYER 1 — EXECUTION ENGINE</div><div style="font-size:0.68rem;color:var(--text-standard);line-height:1.6">Receives PMO Directives, routes action items to the 15 SHIFT LangGraph agents, emits structured Execution Result payloads. Closes the weekly PMO cycle.</div></div>
+      <div style="text-align:center;color:var(--border);padding:4px">&#9660;</div>
+      <div style="background:var(--cyan-dim);border:1px solid var(--cyan);border-radius:6px;padding:14px"><div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--cyan);margin-bottom:6px;letter-spacing:.04em">LAYER 2 — SHIFT CONTROL CENTER</div><div style="font-size:0.68rem;color:var(--text-standard);line-height:1.6">This dashboard — real-time view of gates, waves, checkpoints, agents, and phases. In production: backend connects to live CyberArk PVWA and KeeperPAM APIs.</div></div>
+    </div>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">8 Migration Phases (P0–P7)</div>
+    <table><thead><tr><th>Phase</th><th>Name</th><th>Duration</th><th>Key Focus</th><th>Agents</th></tr></thead><tbody>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P0</td><td style="color:var(--text-bright)">Environment Setup</td><td style="color:var(--text-muted)">W1-4</td><td>Infrastructure, Keeper Gateway deployment, KCM provisioning, preflight checks</td><td style="font-family:var(--font-mono);color:var(--teal)">Manual</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P1</td><td style="color:var(--text-bright)">Discovery &amp; Analysis</td><td style="color:var(--text-muted)">W5-12</td><td>Full scan, NHI classification, gap analysis, permission mapping (22→4 axes)</td><td style="font-family:var(--font-mono);color:var(--teal)">11,01,09,12,02,03</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P2</td><td style="color:var(--text-bright)">Infrastructure &amp; Staging</td><td style="color:var(--text-muted)">W13-18</td><td>KeeperPAM tenant config, PAM template validation, Gateway rotation scripts, 10-assertion staging</td><td style="font-family:var(--font-mono);color:var(--teal)">13,10</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P3</td><td style="color:var(--text-bright)">Structure Migration</td><td style="color:var(--text-muted)">W19-22</td><td>Shared Folder creation, PAM hierarchy structure, permission escalation review</td><td style="font-family:var(--font-mono);color:var(--teal)">03,14</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P4</td><td style="color:var(--text-bright)">Test &amp; Pilot</td><td style="color:var(--text-muted)">W23-28</td><td>50-account pilot, 9-step ETL validation, App Owner confirmation, rollback test</td><td style="font-family:var(--font-mono);color:var(--teal)">04,05</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P5</td><td style="color:var(--text-bright)">Production Migration</td><td style="color:var(--text-muted)">W29-40</td><td>5-wave production: 2,847 accounts, CCP/AAM→KSM repointing, compliance evidence</td><td style="font-family:var(--font-mono);color:var(--teal)">04,05,06,07,12,14</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P6</td><td style="color:var(--text-bright)">Parallel Running</td><td style="color:var(--text-muted)">W41-48</td><td>Dual-system operation, traffic shifting 10%→50%→90%→100%, KSM cutover, KCM validation</td><td style="font-family:var(--font-mono);color:var(--teal)">15,05,06,07</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P7</td><td style="color:var(--text-bright)">Decommission</td><td style="color:var(--text-muted)">W49-50</td><td>CyberArk teardown (PSM→CPM→PVWA→Vault), audit log archival, ops handoff</td><td style="font-family:var(--font-mono);color:var(--teal)">07,08</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">Wave Execution Summary — 5 Waves</div>
+    <table><thead><tr><th>Wave</th><th>Account Type</th><th>Count</th><th>Weeks</th><th>Key Keeper Note</th></tr></thead><tbody>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">W1</td><td style="color:var(--text-bright)">Standard Accounts</td><td>698</td><td>W21-24</td><td>Validates Shared Folder + 3-tier hierarchy build at scale</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">W2</td><td style="color:var(--text-bright)">Infrastructure Accounts</td><td>498</td><td>W25-26</td><td>Domain admin via Gateway (Windows Domain). KCM session recording verified.</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">W3</td><td style="color:var(--text-bright)">NHIs (No CCP/AAM)</td><td>554</td><td>W27-28</td><td>Custom Gateway scripts for network gear. Each NHI subtype rotation validated in staging first.</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">W4</td><td style="color:var(--text-bright)">NHIs With CCP/AAM</td><td>350</td><td>W29-30</td><td>KSM SDK replaces CCP/AAM — 40+ native integrations. Feature-flag toggle for rollback.</td></tr>
+      <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">W5</td><td style="color:var(--text-bright)">Final Cleanup</td><td>747</td><td>W31-32</td><td>3-tier completeness audit. 12 lost-permission risk acceptances. Agent 07 FedRAMP/PCI evidence.</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="guide-section">
+    <div class="guide-section-title">Why KeeperPAM Was Selected</div>
+    <div class="callout teal" style="margin-bottom:12px"><div class="callout-title" style="color:var(--cyan)">Primary Recommendation: KeeperPAM (Option B) &#x2713;</div><p>Zero-knowledge AES-256-GCM — server never sees plaintext. FedRAMP High (March 2026). KSM: 40+ native integrations replace CCP/AAM. KCM: Apache Guacamole session recording, browser-native, no Windows RDS licensing. <strong style="color:var(--amber)">Key gap:</strong> ~25-30 rotation platforms vs. CyberArk 225+. Network gear requires custom Gateway scripts. Gateway HA cluster required at 250K+ accounts.</p></div>
+    <table><thead><tr><th>Dimension</th><th>Devolutions (A)</th><th style="color:var(--cyan)">Keeper (B) &#x2713;</th><th>MiniOrange (C)</th></tr></thead><tbody>
+      <tr><td style="font-weight:600;color:var(--text-bright)">Timeline</td><td>44 weeks</td><td style="color:var(--cyan)">36 weeks</td><td>32 weeks</td></tr>
+      <tr><td style="font-weight:600;color:var(--text-bright)">Zero-Knowledge</td><td style="color:var(--red)">✗ Server-side</td><td style="color:var(--green)">✓ AES-256-GCM</td><td style="color:var(--red)">✗ Server-side</td></tr>
+      <tr><td style="font-weight:600;color:var(--text-bright)">FedRAMP</td><td style="color:var(--red)">✗ None</td><td style="color:var(--green)">✓ High (Mar 2026)</td><td style="color:var(--red)">✗ None</td></tr>
+      <tr><td style="font-weight:600;color:var(--text-bright)">Session Mgmt</td><td style="color:var(--green)">✓ RDM (strongest)</td><td style="color:var(--green)">✓ KCM (Guacamole)</td><td style="color:var(--amber)">⚠ Basic only</td></tr>
+      <tr><td style="font-weight:600;color:var(--text-bright)">DevOps/NHI</td><td style="color:var(--amber)">⚠ REST API only</td><td style="color:var(--green)">✓ KSM 40+ integrations</td><td style="color:var(--red)">✗ REST API only</td></tr>
+      <tr><td style="font-weight:600;color:var(--text-bright)">Scale at 250K</td><td style="color:var(--amber)">⚠ Validate needed</td><td style="color:var(--amber)">⚠ HA Gateway cluster</td><td style="color:var(--red)">✗ Untested</td></tr>
+      <tr><td style="font-weight:600;color:var(--text-bright)">Recommendation</td><td style="color:var(--blue)">SESSION LAYER</td><td style="color:var(--cyan)">PRIMARY PAM</td><td style="color:var(--purple)">MFA/SSO ONLY</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- ══ SECURITY Q&A ══ -->
+<div class="page" id="page-securityqa">
+  <div class="page-header"><div class="page-title">Security Q&amp;A</div><div class="page-subtitle">Deep dive for Enterprise Security Architect — KeeperPAM deployment</div></div>
+  <div class="panel" style="padding:16px 20px;margin-bottom:16px">
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">SHIFT Engagement — Security Review</div>
+    <div style="font-size:1.1rem;font-weight:700;color:var(--text-bright);margin-bottom:8px">Security Deep Dive — Enterprise Security Architect Q&amp;A</div>
+    <div style="font-size:0.72rem;color:var(--text-standard);line-height:1.7">Security-focused Q&amp;A covering encryption, authentication, network security, compliance (PCI-DSS, SOX), NHI/DevOps secrets, penetration testing, and operational security. Prepared for Enterprise Security Architect review.</div>
+  </div>
+  <div id="secQAContent"></div>
+  <div class="panel" style="margin-top:20px">
+    <div class="panel-header"><div class="panel-title" style="color:var(--red)">Security Risk Summary — Sign-Off Matrix</div></div>
+    <div class="panel-body">
+      <table><thead><tr><th>Risk</th><th>Severity</th><th>Owner</th><th>Mitigation</th></tr></thead><tbody>
+        <tr><td>Audit log discontinuity</td><td><span style="color:var(--red);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Enterprise Compliance</td><td>Agent 07 archives pre-migration; retain per compliance policy</td></tr>
+        <tr><td>Permission model loss (12 perms)</td><td><span style="color:var(--red);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Security Architect</td><td>Agent 03 report — mandatory review at gate g3</td></tr>
+        <tr><td>Permission escalation on mapping</td><td><span style="color:var(--red);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Security Architect</td><td>Dual-control review — iOPEX cannot self-approve</td></tr>
+        <tr><td>Conjur / Kubernetes re-architecture</td><td><span style="color:var(--red);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">App Teams</td><td>PENDING_EXTERNAL_TEAM — outside automated scope</td></tr>
+        <tr><td>PSM session recording loss</td><td><span style="color:var(--amber);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">MEDIUM</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Enterprise Compliance</td><td>Archive recordings before P7 decommission</td></tr>
+        <tr><td>CCP/AAM re-point failures</td><td><span style="color:var(--amber);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">MEDIUM</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">iOPEX Delivery</td><td>Agent 06 code scan; app team sign-off per wave</td></tr>
+        <tr><td>Keeper Gateway network exposure</td><td><span style="color:var(--green);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">LOW</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Enterprise NOC/Infra</td><td>No inbound rules required; outbound HTTPS only</td></tr>
+        <tr><td>TLS misconfiguration</td><td><span style="color:var(--green);font-weight:700;font-family:var(--font-mono);font-size:0.63rem">LOW</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">iOPEX Delivery</td><td>Pre-P1 cert validation; penetration test pre-P5</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEPARATION OF DUTIES ══ -->
+<div class="page" id="page-sod">
+  <div class="page-header"><div class="page-title">Separation of Duties</div><div class="page-subtitle">iOPEX as Migration Integrator — Enterprise Client Accountability Model</div></div>
+  <div class="callout teal"><div class="callout-title">Core Principle</div><p>iOPEX operates all 15 agents and the ETL orchestrator. The Enterprise client retains accountability for every approval gate. <strong>The team that performs the work cannot also sign off on it.</strong> This is enforced mechanically through Agent 08 gate logic.</p></div>
+  <div id="sodContent"></div>
+  <div class="panel" style="margin-top:16px"><div class="panel-header"><div class="panel-title">RACI Summary</div></div><div class="panel-body">
+    <table><thead><tr><th>Activity</th><th style="text-align:center;color:var(--cyan)">iOPEX</th><th style="text-align:center;color:var(--green)">Enterprise</th><th>Team</th></tr></thead><tbody>
+      <tr><td>Run discovery agents (01,09,11,12)</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--cyan)">R</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">I</td><td style="color:var(--text-muted)">PAM Owner</td></tr>
+      <tr><td>Confirm NHI ownership</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--text-muted)">C</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">App Owners</td></tr>
+      <tr><td>Accept compliance risk / gap findings</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--text-muted)">C</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">Compliance + Exec Sponsor</td></tr>
+      <tr><td>Approve permission mapping output</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--red)">✗</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">Security Architect</td></tr>
+      <tr><td>Execute ETL waves (Agent 04)</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--cyan)">R</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">I</td><td style="color:var(--text-muted)">—</td></tr>
+      <tr><td>Confirm wave accounts accessible</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--text-muted)">C</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">App Owners (per wave)</td></tr>
+      <tr><td>Certify NHI rotation policies active</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--text-muted)">C</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">Compliance (SOX dual-control)</td></tr>
+      <tr><td>Approve CCP→KSM production code</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--red)">✗</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">Dev Leads</td></tr>
+      <tr><td>Authorize source set-to-read-only</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--red)">✗</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">CAB + Exec Sponsor</td></tr>
+      <tr><td>Accept platform ownership post-migration</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--text-muted)">I</td><td style="text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">A/R</td><td style="color:var(--text-muted)">Operations</td></tr>
+    </tbody></table>
+    <div style="font-size:0.6rem;color:var(--text-muted);font-style:italic;margin-top:8px">R = Responsible · A = Accountable · C = Consulted · I = Informed · ✗ = Explicitly prohibited</div>
+  </div></div>
+</div>
+
+<!-- ══ STATUS & INFO ══ -->
+<div class="page" id="page-info">
+  <div class="page-header"><div class="page-title">Status &amp; Info</div><div class="page-subtitle">Engagement overview and current programme state</div></div>
+  <div class="callout green"><div class="callout-title" style="color:var(--green)">&#9679; KeeperPAM — Live Migration Target</div><p>This standalone deliverable represents the CyberArk → KeeperPAM migration programme managed by iOPEX using the SHIFT methodology. All data reflects the Option B (KeeperPAM) migration path. Options A (Devolutions) and C (MiniOrange) are reference paths only.</p></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div class="panel"><div class="panel-header"><div class="panel-title">Programme Summary</div></div><div class="panel-body" style="font-size:0.72rem;line-height:2">
+      <div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">ENGAGEMENT</span><br>CyberArk PAS On-Prem → KeeperPAM SaaS</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">TIMELINE</span><br>80 weeks (50 weeks for Option B track)</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">ACCOUNTS</span><br>2,847 total · 234 NHIs · 34 integrations</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">CURRENT PHASE</span><br>P6 — Parallel Running &amp; Cutover</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">GATES</span><br>17/17 approved (g13 + g17 active)</div>
+    </div></div>
+    <div class="panel"><div class="panel-header"><div class="panel-title">iOPEX Stack</div></div><div class="panel-body" style="font-size:0.72rem;line-height:2">
+      <div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">METHODOLOGY</span><br>SHIFT — Secure Hybrid Identity &amp; Function Transfer</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">ORCHESTRATION</span><br>15-Agent AI Orchestrator (Python 3.12 / LangGraph)</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">PMO ENGINE</span><br>iOPEX PMO Brain — RAG corpus + weekly directives</div>
+      <div style="margin-top:8px"><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.6rem">COMPLIANCE</span><br>PCI-DSS v4.0 · NIST 800-53 Rev5 · HIPAA · SOX</div>
+    </div></div>
+  </div>
+  <div class="callout amber" style="margin-top:16px"><div class="callout-title">Deliverable Note</div><p>This is a standalone demonstration/proposal tool with all data inlined. In production, the SHIFT Control Center backend connects to live CyberArk PVWA and KeeperPAM APIs. No credentials or production data are contained in this file.</p></div>
+</div>
+
+</main>
+
+<!-- OVERLAY -->
+<div class="overlay" id="drillOverlay">
+  <div class="overlay-panel">
+    <button class="overlay-close" onclick="closeDrill()">&times;</button>
+    <div style="font-size:1rem;font-weight:700;color:var(--text-bright);margin-bottom:16px" id="drillTitle"></div>
+    <div id="drillContent"></div>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────
+const PHASES=[
+  {id:'p0',name:'Environment Setup & Kick-Off',weeks:'1-4',risk:'low',agents:[],
+   summary:'Provision AI Orchestration VM, deploy Keeper Gateway (Docker), configure KCM, validate connectivity, project kick-off.',
+   activities:['Project kick-off meeting with all stakeholders','Provision AI Orchestration VM (Ubuntu 22.04, CIS L2 hardened)','Install Python 3.12, migration toolkit, dependencies','Configure KEEPER_CLIENT_ID / KEEPER_CLIENT_SECRET env vars','Deploy Keeper Gateway Docker nodes per network segment','Provision KCM (Keeper Connection Manager) for session recording','Configure ServiceNow integration for change management','Set up SIEM forwarding (syslog-ng TLS 6514)','Run python3 cli.py preflight — verify all connectivity'],
+   deliverables:['Provisioned AI Orchestration VM with hardened baseline','Verified connectivity to CyberArk PVWA and KeeperPAM','Passing preflight checks for all 15 agents','Keeper Gateway nodes deployed and reachable','KCM provisioned and connected to Gateway','ServiceNow + SIEM integrations active'],
+   gates:['g1']},
+  {id:'p1',name:'Discovery & Analysis',weeks:'5-12',risk:'low',agents:['11','1','9','12','2','3'],
+   summary:'Full inventory of accounts, dependencies, NHIs, gaps, and permissions. Keeper 4-axis permission mapping with escalation detection.',
+   activities:['W5-6: Agent 11 (Source Adapter) — connect to CyberArk PVWA, normalize inventory','W7-8: Agent 01 (Discovery) — full env scan, multi-signal NHI detection','W9-10: Agent 09 (Dependency Mapper) — IIS logs, app→account→safe mapping','W9-10: Agent 12 (NHI Handler) — weighted multi-signal scoring, rotation policies','W11-12: Agent 02 (Gap Analysis) — 10-domain maturity, 4 compliance frameworks','W11-12: Agent 03 (Permissions) — maps 22 CyberArk perms → Keeper 4 boolean axes, flags escalation risk'],
+   deliverables:['Discovery manifest (JSON): accounts, safes, platforms, NHIs, integrations','Dependency graph: application-to-account-to-safe mappings','NHI classification report: confidence scores, 7 subtypes, rotation policies','Gap analysis report: 10-domain scores, compliance mapping (PCI/NIST/HIPAA/SOX)','Permission audit: 22→4 axes mapping with escalation flags (Security Architect review required)','Wave classification: 5-wave order by risk'],
+   gates:['g2','g3']},
+  {id:'p2',name:'Infrastructure & Staging',weeks:'13-18',risk:'medium',agents:['13','10'],
+   summary:'Deploy KeeperPAM infrastructure, validate PAM templates, configure Gateway rotation scripts, run 10-assertion staging pipeline.',
+   activities:['Configure Keeper Cloud OAuth2 / SAML authentication','Deploy Keeper Gateway (Docker) HA nodes for enterprise scale','Provision KCM and connect to all Gateway nodes','Configure Gateway rotation scripts for all 25-30 supported platforms','W13-15: Agent 13 (Platform Plugins) — validate Keeper PAM template coverage vs CyberArk platforms','W16-18: Agent 10 (Staging Validation) — 10-assertion mini-ETL with 100 sample accounts','Test rollback: DELETE records from Keeper staging tenant'],
+   deliverables:['KeeperPAM tenant fully configured (OAuth2, SAML, MFA)','Keeper Gateway HA deployed with rotation script coverage','Platform/template validation report (Agent 13)','Staging validation report: 10/10 assertions passed (Agent 10)','Rollback procedure tested and documented'],
+   gates:['g4']},
+  {id:'p3',name:'Structure Migration',weeks:'19-22',risk:'low',agents:['3','14'],
+   summary:'Create Keeper Shared Folders, build PAM Config→Resource hierarchy structure, apply permission mappings, onboard applications.',
+   activities:['W19-20: Agent 03 (Permissions P3) — create Shared Folders in Keeper Vault','Build PAM Config → PAM Resource hierarchy per safe structure','Apply permissions via Keeper 4 boolean axes (manage_users, manage_records, can_edit, can_share)','Flag escalation cases for Security Architect review (12 perms have no Keeper equivalent)','W21-22: Agent 14 (Onboarding) — 10-step application onboarding pipeline','Submit ServiceNow CHG for pilot migration window'],
+   deliverables:['Keeper Shared Folder structure (matches CyberArk Safe names)','PAM hierarchy structure created (PAM Config → Resource)','Permission mapping verification report','Escalation flags reviewed and accepted by Security Architect','Application onboarding results (Agent 14)','Approved ServiceNow CHG for pilot'],
+   gates:['g5']},
+  {id:'p4',name:'Test & Pilot',weeks:'23-28',risk:'medium',agents:['4','5'],
+   summary:'Migrate ~50 accounts via 9-step Keeper ETL pipeline. Validate 3-tier hierarchy build, post-import transform, KCM session recording, rollback. BLOCKS production.',
+   activities:['W23-26: Agent 04 — 9-step pilot ETL: FREEZE→EXPORT→TRANSFORM→BUILD HIERARCHY→BULK IMPORT→POST-IMPORT TRANSFORM→HEARTBEAT→INTEGRITY→UNFREEZE','W26-28: Agent 05 — 10-check post-migration validation','Test rollback: verify DELETE works, accounts removed from Keeper','Validate KCM session recording for pilot accounts','Document timing metrics for production wave planning'],
+   deliverables:['Pilot pipeline report (Agent 04): 9-step success/failure counts','Pilot validation report: 10-check results (Agent 05)','KCM session recording verified','Rollback tested and documented','Timing metrics for production wave sizing','Approved ServiceNow CHG for production waves'],
+   gates:['g6']},
+  {id:'p5',name:'Production Migration',weeks:'29-40',risk:'high',agents:['4','5','6','7','12','14'],
+   summary:'5-wave production migration of 2,847 accounts. Per-wave gates. KSM SDK replaces CCP/AAM. Compliance evidence collected.',
+   activities:['W29-32: Wave 1 (698 standard accounts) — validates Keeper 3-tier at production scale','W33-34: Wave 2 (498 infrastructure) — domain admin, database, Gateway rotation validation','W35-36: Wave 3 (554 NHIs, no CCP/AAM) — Gateway scripts, custom rotation per NHI subtype','W37-38: Wave 4 (350 NHIs, CCP/AAM) — Agent 06 generates KSM SDK packages, feature-flag cutover','W39-40: Wave 5 (747 remaining) — final reconciliation, compliance evidence','Per-wave: Agent 04 ETL, Agent 05 heartbeat, Agent 18 integrity check, human gate approval'],
+   deliverables:['Per-wave migration reports (Agent 04): success counts, batch details','Per-wave validation reports (Agent 05): 10-check results','Integration change registry (Agent 06): per-app KSM SDK repointing','NHI rotation confirmation (Agent 12): rotation active in Keeper','Compliance report (Agent 07): PCI-DSS, NIST, HIPAA, SOX evidence packages'],
+   gates:['g7','g8','g9','g10','g11']},
+  {id:'p6',name:'Parallel Running & Cutover',weeks:'41-48',risk:'medium',agents:['15','5','6','7'],
+   summary:'Dual-system operation. Gradual traffic shift 10%→50%→90%→100%. KSM SDK cutover per application. KCM session policy finalization. Final cutover approval.',
+   activities:['W41-44: Agent 15 (Hybrid Fleet) — parallel-run setup, 10% Keeper traffic','W41-44: Agent 06 — KSM SDK cutover for remaining integrations','W45-46: Traffic shift to 50% then 90% Keeper','W47-48: Agent 05 final validation, Agent 07 final compliance report','W48: Set source CyberArk vault to read-only (requires g13 approval)','Configure KCM session policies for all privileged session recording'],
+   deliverables:['Parallel-run metrics (Agent 15): error rates, latency, discrepancies','Integration cutover registry (Agent 06): per-app KSM sign-off','Final validation report (Agent 05): all 2,847 accounts verified','Final compliance evidence package (Agent 07)'],
+   gates:['g12','g13']},
+  {id:'p7',name:'Decommission & Close-Out',weeks:'49-50',risk:'medium',agents:['7','8'],
+   summary:'Archive CyberArk audit logs and PSM recordings. Ordered decommission (PSM→CPM→PVWA→Vault). Operations handoff. Project close-out.',
+   activities:['W49: Agent 07 — archive CyberArk audit logs (NOT transferred to Keeper — manual export)','Archive PSM recordings (KCM records going forward)','Keep CyberArk vault read-only for compliance retention period','W49-50: Agent 08 (Runbook) — ordered decommission: PSM→CPM→PVWA→Vault (approval each step)','Knowledge transfer to operations (Keeper Admin Console + KCM administration)','Decommission AI Orchestration VM or repurpose for other engagements'],
+   deliverables:['Archived CyberArk audit logs and PSM recordings','Final compliance close-out report','Lessons learned document','Operations handoff documentation + KeeperPAM runbooks','Project closure report with migration metrics'],
+   gates:['g14']}
+];
+
+const AGENTS=[
+  {id:'1',num:'01',name:'Discovery',status:'complete',phases:'P1',weeks:'W7-8',
+   desc:'Full CyberArk environment scan. Enumerates safes, platforms, accounts. Multi-signal NHI detection: platform + name patterns + safe patterns.',
+   inputs:['PVWA REST API access','Audit logs (90 days)'],outputs:['Discovery manifest (JSON)','NHI preliminary list'],
+   api:['GET /Safes','GET /Safes/{name}/Members','GET /Platforms/Targets','GET /Applications']},
+  {id:'2',num:'02',name:'Gap Analysis',status:'complete',phases:'P1',weeks:'W11-12',
+   desc:'10-domain maturity assessment: auth, session, lifecycle, platform, CPM, safe structure, permissions, NHI, integration, audit. Maps to PCI-DSS v4.0, NIST 800-53 Rev5, HIPAA, SOX.',
+   inputs:['Discovery manifest (Agent 01)'],outputs:['Gap analysis report','Compliance mapping'],api:[]},
+  {id:'3',num:'03',name:'Permissions',status:'complete',phases:'P1, P3',weeks:'W11-12, W19-20',
+   desc:'Permission audit and structure migration. P1: audits all 22 CyberArk safe permissions per member. P3: creates Keeper Shared Folders with 4-axis permission mapping. Flags escalation + loss cases.',
+   inputs:['Discovery manifest','Target API access'],outputs:['Permission mapping report','Escalation flags','Keeper Shared Folders'],
+   api:['GET /Safes/{name}/Members (source)','POST /api/v2/shared-folders (Keeper target)']},
+  {id:'4',num:'04',name:'Migration Pipeline',status:'complete',phases:'P4, P5',weeks:'W23-40',
+   desc:'Core ETL engine. 9-step Keeper pipeline: FREEZE→EXPORT→TRANSFORM→BUILD HIERARCHY→BULK IMPORT→POST-IMPORT TRANSFORM→HEARTBEAT→INTEGRITY→UNFREEZE. 120-min watchdog timer. Emergency unfreeze on exception.',
+   inputs:['Agent 09 dependency map','Agent 10 staging pass','Agent 12 NHI classifications'],
+   outputs:['Per-wave migration reports','Batch execution logs'],
+   api:['POST /Accounts/{id}/Password/Retrieve (source)','POST /api/v2/vault/records/add (Keeper)']},
+  {id:'5',num:'05',name:'Heartbeat',status:'complete',phases:'P4-P6',weeks:'W26-48',
+   desc:'10-check post-migration validation: count comparison (<1% variance), heartbeat verification (>95%), permission mapping, metadata integrity, audit continuity, KCM session recording, rollback test.',
+   inputs:['Migrated accounts in Keeper'],outputs:['Validation reports per wave'],
+   api:['POST /Accounts/{id}/Verify (source)','POST /api/v2/secrets/verify (Keeper)']},
+  {id:'6',num:'06',name:'Integration',status:'complete',phases:'P5, P6',weeks:'W35-44',
+   desc:'CCP/AAM → KSM SDK repointing. Scans codebases for CyberArk API calls. Generates KSM SDK replacement packages (Python/Java/C#/PowerShell). 40+ native integrations. Feature-flag routing for safe rollback.',
+   inputs:['Integration inventory (Agent 09)','KSM SDK templates'],
+   outputs:['Integration change registry','KSM SDK replacement packages'],api:[]},
+  {id:'7',num:'07',name:'Compliance',status:'complete',phases:'P5-P7',weeks:'W38-49',
+   desc:'Compliance reporting. Maps migration evidence to PCI-DSS v4.0, NIST 800-53 Rev5, HIPAA, SOX. Includes Keeper-specific risks: 3-tier hierarchy accuracy, Gateway HA, audit discontinuity, 12 lost-permission risk acceptances.',
+   inputs:['All migration + validation reports'],outputs:['Per-wave compliance reports','Final close-out report with FedRAMP/PCI evidence'],api:[]},
+  {id:'8',num:'08',name:'Runbook',status:'complete',phases:'P7',weeks:'W49-50',
+   desc:'Phase gate management and decommission sequencing. Manages ordered shutdown: PSM→CPM→PVWA→Vault. Human approval at each step.',
+   inputs:['All prior reports','Compliance close-out'],outputs:['Decommission confirmation','Project closure'],api:[]},
+  {id:'9',num:'09',name:'Dependency Mapper',status:'complete',phases:'P1',weeks:'W9-10',
+   desc:'Builds application dependency graph. 6 scanners: IIS logs, Windows services, scheduled tasks, Jenkins pipelines, scripts, config files for CyberArk API call patterns.',
+   inputs:['Discovery manifest (Agent 01)','IIS logs','System scans'],
+   outputs:['Dependency graph (JSON)','Application-to-account mappings'],api:[]},
+  {id:'10',num:'10',name:'Staging Validation',status:'complete',phases:'P2',weeks:'W16-18',
+   desc:'10-assertion staging pipeline. Mini-ETL on ~100 sample accounts. Hard-blocks Agent 04 production migration if any assertion fails. Validates Keeper 3-tier hierarchy in staging.',
+   inputs:['KeeperPAM staging tenant','Sample accounts (20 per wave type)'],
+   outputs:['Staging validation report (10 assertions)'],
+   api:['GET /Safes (source)','POST /api/v2/shared-folders (Keeper)','DELETE /api/v2/vault/records/{id} (rollback test)']},
+  {id:'11',num:'11',name:'Source Adapter',status:'complete',phases:'P1',weeks:'W5-6',
+   desc:'Multi-vendor source adapter. Connects to CyberArk PVWA, extracts raw data, produces NormalizedAccount canonical inventory. Supports CyberArk, BeyondTrust, Devolutions, Keeper, HashiCorp, AWS, Azure, GCP.',
+   inputs:['Source PAM API credentials'],
+   outputs:['Normalized inventory (NormalizedAccount, NormalizedContainer, NormalizedPlatform)'],
+   api:['POST /Auth/{type}/Logon','GET /Accounts?limit=1000','GET /Safes']},
+  {id:'12',num:'12',name:'NHI Handler',status:'complete',phases:'P1, P5',weeks:'W9-10, W35-36',
+   desc:'Non-Human Identity classification. Weighted multi-signal scoring: platform 35%, name patterns 20%, container 10%, dependency 25%, audit 10%. 7 NHI subtypes with per-type Keeper rotation strategies.',
+   inputs:['Discovery manifest','Dependency graph','Audit logs'],
+   outputs:['NHI classification report','Per-type Keeper Gateway rotation policies'],api:[]},
+  {id:'13',num:'13',name:'Platform Plugins',status:'complete',phases:'P2',weeks:'W13-15',
+   desc:'Validates target PAM template coverage vs CyberArk source platforms. Auto-creates missing Keeper PAM Templates. Validates Gateway rotation script coverage. Flags custom script requirements.',
+   inputs:['Discovery manifest (platforms list)'],
+   outputs:['Platform validation report','Keeper PAM template map'],
+   api:['GET /Platforms/Targets (source)','GET /api/v2/record-types (Keeper)']},
+  {id:'14',num:'14',name:'Onboarding Factory',status:'complete',phases:'P3, P5',weeks:'W21-22, W38-40',
+   desc:'10-step application onboarding pipeline: Validate→Create Structure→Permissions→Resolve PAM Template→Create PAM Resource→Create PAM User→Assign Gateway→Set Rotation→Verify Heartbeat→Generate KSM SDK Instructions→Report.',
+   inputs:['Application requests','Keeper Shared Folder structure'],
+   outputs:['Onboarding report','Per-app KSM SDK retrieval instructions'],api:[]},
+  {id:'15',num:'15',name:'Hybrid Fleet',status:'active',phases:'P6',weeks:'W41-46',
+   desc:'Parallel-run manager. Monitors CyberArk (source) + KeeperPAM (target) simultaneously. Gradual traffic shift: 10%→50%→90%→100%. Auto-rollback if failure threshold exceeded.',
+   inputs:['All migrated accounts','Integration registry'],
+   outputs:['Parallel-run metrics report','Cutover recommendation'],api:[]},
+  {id:'sh1',num:'SH-01',name:'Portal Builder',status:'active',phases:'P1-P6',weeks:'W7-48',
+   desc:'PAM DX Portal development. Spring Boot 3.2 + Java 17 + Thymeleaf. PamVendorAdapter interface — vendor-agnostic, zero portal changes when swapping PAM backend. Keeper adapter maps to Keeper REST + KSM SDK + KCM.',
+   inputs:['Requirements','PamVendorAdapter contract'],outputs:['Portal WAR/container','REST API gateway','OpenAPI spec'],api:[]},
+  {id:'sh2',num:'SH-02',name:'ICG',status:'active',phases:'P2-P5',weeks:'W13-38',
+   desc:'Integration Code Generator. Produces KSM SDK replacement packages for CCP/AAM migration. Supports Python, Java, C#, PowerShell output.',
+   inputs:['Integration inventory (Agent 09)','KSM SDK templates'],outputs:['Generated KSM client code packages'],api:[]},
+  {id:'18',num:'18',name:'Integrity Validator',status:'active',phases:'P4-P6',weeks:'W26-46',
+   desc:'Independent migration integrity validator. Runs 12 schema-level checks (IC_01–IC_12) using a SEPARATE read-only API session. Blocking failures pause wave advancement. Cannot modify any vault record.',
+   inputs:['Agent 04 migration manifest','Agent 05 heartbeat report','Source vault (read-only)'],
+   outputs:['WaveIntegrityReport (per wave)','Blocking failure list'],
+   api:['GET /Accounts/{id} (read-only, separate session)']}
+];
+
+const WAVES=[
+  {num:1,name:'Standard Accounts',risk:'low',type:'Test/Dev, sandbox, PoC, lab, demo',count:698,weeks:'W29-32',gate:'g7',status:'complete',
+   desc:'Lowest risk — test/dev environments, sandbox accounts, PoC. Validates Keeper 3-tier hierarchy build at production scale. First real-world validation of Keeper Gateway rotation scripts.',
+   etl:['FREEZE','EXPORT','TRANSFORM','BUILD HIERARCHY','BULK IMPORT','POST-IMPORT TRANSFORM','HEARTBEAT','INTEGRITY','UNFREEZE']},
+  {num:2,name:'Infrastructure Accounts',risk:'medium',type:'Domain admins, DB service accounts, network devices',count:498,weeks:'W33-34',gate:'g8',status:'complete',
+   desc:'Domain admin + database service accounts. Keeper Gateway handles Windows Domain and DB rotation. KCM session recording verified for all domain admin access. Validate pamUser/pamDatabase linkage before unfreeze.',
+   etl:['FREEZE','EXPORT','TRANSFORM','BUILD HIERARCHY','BULK IMPORT','POST-IMPORT TRANSFORM','HEARTBEAT','INTEGRITY','UNFREEZE']},
+  {num:3,name:'NHIs (No CCP/AAM)',risk:'high',type:'Service accounts, API keys — no active integrations',count:554,weeks:'W35-36',gate:'g9',status:'complete',
+   desc:'Non-human identities without CCP/AAM. Custom Gateway scripts for network gear (IOS/NX-OS/ASA). Each NHI subtype rotation script validated in staging before wave start.',
+   etl:['FREEZE','EXPORT','TRANSFORM','BUILD HIERARCHY','BULK IMPORT','POST-IMPORT TRANSFORM','HEARTBEAT','INTEGRITY','UNFREEZE']},
+  {num:4,name:'NHIs With CCP/AAM',risk:'critical',type:'Active application dependencies — HIGHEST RISK',count:350,weeks:'W37-38',gate:'g10',status:'complete',
+   desc:'HIGHEST RISK — CCP/AAM → KSM SDK full re-architecture. Agent 06 generates KSM SDK packages (Python/Java/C#/.NET). 40+ native integrations — audit apps first. Feature-flag toggle between CyberArk and Keeper endpoints.',
+   etl:['FREEZE','EXPORT','TRANSFORM','RECODE KSM SDK','BUILD HIERARCHY','BULK IMPORT','POST-IMPORT TRANSFORM','UNFREEZE']},
+  {num:5,name:'Final Cleanup',risk:'medium',type:'Stragglers, exceptions, compliance verification',count:747,weeks:'W39-40',gate:'g11',status:'complete',
+   desc:'Final bulk wave — validates 3-tier hierarchy completeness and KSM integration count. Compliance evidence collected for 12 unrepresentable-permission risk acceptances. Agent 07 generates FedRAMP/PCI-DSS compliance report.',
+   etl:['FREEZE','EXPORT','TRANSFORM','BUILD HIERARCHY','BULK IMPORT','POST-IMPORT TRANSFORM','HEARTBEAT','INTEGRITY','UNFREEZE']}
+];
+
+const GATES=[
+  {id:'g1',name:'Project Kick-off',phase:'P0',week:4,approvers:['Exec Sponsor','NOC/Infra'],status:'passed',requirements:'Executive sponsor approves charter, timeline, resource allocation. RACI matrix signed by all stakeholders.',context:'Keeper: Deploy Keeper Gateway (Docker) nodes per network segment. Configure KCM for session management. Keeper Cloud is SaaS — no infrastructure to manage on target side.'},
+  {id:'g2',name:'NHI Classification Review',phase:'P1',week:10,approvers:['PAM Engineer','App Owners'],status:'passed',requirements:'SME validates high-risk NHI classifications. Confirm NHI owners, dependency chains, Keeper rotation requirements. App owners acknowledge within 5 business days.',context:'Keeper: NHI rotation via Keeper Gateway (~25-30 platforms). Custom Gateway scripts required for network device NHIs. Flag for Agent 12 review.'},
+  {id:'g3',name:'Discovery Sign-off',phase:'P1',week:12,approvers:['PAM Engineer','Compliance','Exec Sponsor'],status:'passed',requirements:'Review and approve: discovery manifest, dependency graph, NHI classifications, gap analysis, permission audit. All signed before P2.',context:'Keeper: SMEs review 22→4 boolean axes mapping. 12 permissions with no Keeper equivalent. Critical: Keeper 3-tier hierarchy means post-import transform accuracy must be validated.'},
+  {id:'g4',name:'Staging Approval',phase:'P2',week:18,approvers:['PAM Engineer','NOC/Infra'],status:'passed',requirements:'Agent 10 staging: all 10 assertions passed. Keeper PAM template and 3-tier hierarchy validated in staging.',context:'Keeper: Staging validates Shared Folder creation, PAM hierarchy build, post-import transform accuracy, and Gateway heartbeat for ~25 platforms.'},
+  {id:'g5',name:'Structure Approval',phase:'P3',week:22,approvers:['PAM Engineer','App Owners','CAB'],status:'passed',requirements:'Keeper Shared Folders and PAM hierarchy verified. Escalation flags from 4-axis boolean mapping reviewed. CAB approves pilot CHG.',context:'PCI-DSS 7.1 dual-control — Security Architect MUST independently review all escalation flags. 3-tier hierarchy errors compound at scale.'},
+  {id:'g6',name:'Pilot Results Approval',phase:'P4',week:28,approvers:['PAM Engineer','App Owners','Exec Sponsor'],status:'passed',requirements:'Heartbeat >95%. KCM session recording verified. Rollback tested. App owners confirm access in Keeper. BLOCKS ALL PRODUCTION WAVES.',context:'Keeper: Pilot validates Gateway rotation and KSM SDK credential retrieval. Critical: validate post-import transform accuracy on pilot accounts.'},
+  {id:'g7',name:'Wave 1 Approval',phase:'P5',week:32,approvers:['PAM Engineer','App Owners'],status:'passed',requirements:'Wave 1 heartbeat >95%. Standard accounts verified functional in KeeperPAM.',context:'Keeper: Validates Shared Folder creation and PAM hierarchy build at production scale. Post-import transform must succeed at batch volume.'},
+  {id:'g8',name:'Wave 2 Approval',phase:'P5',week:34,approvers:['PAM Engineer','NOC/Infra'],status:'passed',requirements:'Infrastructure team validates critical service accounts. Domain admin access confirmed via Keeper Gateway.',context:'Keeper: Domain admin rotation via Gateway (Windows Domain). KCM session recording verified for domain admin access.'},
+  {id:'g9',name:'Wave 3 Approval',phase:'P5',week:36,approvers:['PAM Engineer','App Owners','Compliance'],status:'passed',requirements:'NHI accounts functional. Keeper Gateway rotation policies confirmed active. NHI owners validated within 48 hours.',context:'Keeper: Custom Gateway scripts for network device NHIs. SOX dual-control — Compliance independently verifies rotation policies.'},
+  {id:'g10',name:'Wave 4 Approval',phase:'P5',week:38,approvers:['PAM Engineer','App Owners'],status:'passed',requirements:'KSM SDK integrations working per application. Dev Lead sign-off required. Replacement code deployed and tested.',context:'Keeper: Full CCP/AAM→KSM re-architecture. Agent 06 KSM SDK packages must be individually verified by each Dev Lead.'},
+  {id:'g11',name:'Production Complete',phase:'P5',week:40,approvers:['PAM Engineer','Compliance','App Owners'],status:'passed',requirements:'100% account coverage (source count = target count). Compliance report reviewed. All App Owners confirm.',context:'Keeper: Compliance evidence includes 12 lost-permission risk acceptances and 3-tier hierarchy accuracy audit.'},
+  {id:'g12',name:'Integration Cutover',phase:'P6',week:44,approvers:['App Owners','Dev Leads'],status:'passed',requirements:'Each application owner confirms KSM SDK integration works. Dev Lead sign-off per application. Rollback code prepared.',context:'Keeper: 34 KSM SDK integration packages individually verified. Feature flags toggle between CyberArk and Keeper endpoints.'},
+  {id:'g13',name:'Cutover Approval',phase:'P6',week:48,approvers:['CAB','Exec Sponsor','Compliance'],status:'active',requirements:'Final validation, compliance evidence, parallel-run metrics, all App Owner sign-offs. Source set to read-only.',context:'Keeper: Parallel-run validated KSM + KCM at production load. Point-of-no-return — all 3 Enterprise approvers must independently authorize.'},
+  {id:'g14',name:'Final Sign-off',phase:'P7',week:50,approvers:['Exec Sponsor','Compliance','Security'],status:'pending',requirements:'All deliverables archived. Decommission complete. Keeper Admin Console + KCM ops handoff complete.',context:'Keeper: CyberArk vault retained read-only for audit. Operations trained on Keeper Admin Console + KCM administration.'},
+  {id:'g15',name:'SHIFT Architecture Review',phase:'SHIFT',week:12,approvers:['Architecture Board'],status:'passed',requirements:'PamVendorAdapter interface approved. Keeper adapter maps to Keeper REST + KSM SDK + KCM. OpenAPI spec reviewed.',context:'Keeper: Adapter maps to Keeper REST API + KSM SDK for credential access + KCM for session proxy.'},
+  {id:'g16',name:'SHIFT MVP Walkthrough',phase:'SHIFT',week:22,approvers:['PAM Engineer','UX'],status:'passed',requirements:'Login flow, Keeper Vault browsing, credential checkout via KSM, KCM session recording validated by stakeholders.',context:'Keeper: MVP demonstrates Keeper Vault credential checkout and KCM browser-based session recording.'},
+  {id:'g17',name:'SHIFT Production Cutover',phase:'SHIFT',week:46,approvers:['Operations','Security'],status:'active',requirements:'Portal uptime SLA met. Keeper adapter green. Load test passed. Security scan clean.',context:'Keeper: Portal connects to Keeper Vault + KCM in production. Load tested with 500 concurrent developer sessions.'}
+];
+
+// ── Core ───────────────────────────────────────────────────────────────
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='phases') renderPhases();
+  if(id==='agents') renderAgents();
+  if(id==='waves') renderWaves();
+  if(id==='gates') renderGates();
+  if(id==='securityqa') renderSecQA();
+  if(id==='sod') renderSoD();
+}
+
+function openDrill(title,content){
+  document.getElementById('drillTitle').textContent=title;
+  document.getElementById('drillContent').innerHTML=content;
+  document.getElementById('drillOverlay').classList.add('visible');
+}
+function closeDrill(){document.getElementById('drillOverlay').classList.remove('visible')}
+
+function statusDotClass(s){return s==='complete'||s==='passed'?'dot-green':s==='active'?'dot-amber':s==='blocked'?'dot-red':'dot-gray'}
+function riskColor(r){return r==='low'?'green':r==='medium'?'amber':r==='high'||r==='critical'?'red':'text-muted'}
+
+// ── Phase Explorer ────────────────────────────────────────────────────
+function renderPhases(){
+  document.getElementById('phaseCards').innerHTML=PHASES.map(p=>`
+    <div class="phase-card" id="pc-${p.id}">
+      <div class="phase-card-header" onclick="togglePhase('${p.id}')">
+        <div class="phase-num" style="background:var(--${riskColor(p.risk)}-dim,rgba(100,116,139,0.15));color:var(--${riskColor(p.risk)},var(--text-muted))">${p.id.toUpperCase()}</div>
+        <div class="phase-card-title">${p.name}</div>
+        <div class="phase-card-weeks">W${p.weeks}</div>
+        <span class="badge badge-${riskColor(p.risk)}">${p.risk.toUpperCase()}</span>
+        <div class="phase-expand">&#x25B6;</div>
+      </div>
+      <div class="phase-card-body"><div class="phase-card-content">
+        <p style="font-size:0.78rem;color:var(--text-standard);margin-bottom:12px">${p.summary}</p>
+        ${p.agents.length?`<div class="section-label">Agents</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${p.agents.map(id=>{const a=AGENTS.find(x=>x.id===id);return a?`<span class="badge badge-${a.status==='complete'?'green':a.status==='active'?'amber':'muted'}" style="cursor:pointer" onclick="showPage('agents',document.querySelectorAll('.nav-link')[2]);setTimeout(()=>selectAgent('${id}'),100)">${a.num} ${a.name}</span>`:''}).join('')}</div>`:''}
+        <div class="section-label">Activities (KeeperPAM)</div>
+        ${p.activities.map(a=>`<div class="activity-item">${a}</div>`).join('')}
+        <div class="section-label" style="margin-top:14px">Deliverables</div>
+        ${p.deliverables.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;font-size:0.75rem"><span class="badge badge-teal" style="font-size:0.5rem">&#x25A0;</span>${d}</div>`).join('')}
+        ${p.gates.length?`<div class="section-label" style="margin-top:14px">Gates</div><div style="display:flex;gap:6px;flex-wrap:wrap">${p.gates.map(g=>`<span class="badge badge-amber">${g.toUpperCase()}</span>`).join('')}</div>`:''}
+      </div></div>
+    </div>`).join('');
+}
+let expandedPhases={};
+function togglePhase(id,force){
+  const c=document.getElementById('pc-'+id);
+  if(!c) return;
+  if(force){c.classList.add('open');expandedPhases[id]=true;}
+  else{c.classList.toggle('open');expandedPhases[id]=c.classList.contains('open');}
+}
+
+// ── Agents ────────────────────────────────────────────────────────────
+let selectedAgent=null;
+function renderAgents(){
+  document.getElementById('agentGrid').innerHTML=AGENTS.map(a=>`
+    <div class="agent-card status-${a.status} ${selectedAgent===a.id?'selected':''}" onclick="selectAgent('${a.id}')">
+      <div class="agent-num">AGENT ${a.num}</div>
+      <div class="agent-name">${a.name}</div>
+      <div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap">
+        <span class="badge badge-${a.status==='complete'?'green':a.status==='active'?'amber':'muted'}">${a.status.toUpperCase()}</span>
+        <span class="badge badge-muted">${a.phases}</span>
+        <span class="badge badge-cyan">${a.weeks}</span>
+      </div>
+      <div class="agent-desc">${a.desc}</div>
+    </div>`).join('');
+}
+
+function selectAgent(id){
+  selectedAgent=id;
+  const a=AGENTS.find(x=>x.id===id);
+  if(!a) return;
+  document.querySelectorAll('.agent-card').forEach(c=>{c.classList.remove('selected');if(c.onclick.toString().includes(`'${id}'`)) c.classList.add('selected')});
+  document.getElementById('agentDetail').style.display='block';
+  document.getElementById('agentDetail').innerHTML=`
+    <div class="agent-detail">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--cyan);background:var(--cyan-dim);padding:4px 10px;border-radius:4px">AGENT ${a.num}</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-bright)">${a.name}</div>
+        <span class="badge badge-${a.status==='complete'?'green':a.status==='active'?'amber':'muted'}">${a.status.toUpperCase()}</span>
+        <button style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem" onclick="document.getElementById('agentDetail').style.display='none'">&times;</button>
+      </div>
+      <div class="detail-row"><div class="detail-label">Description</div><div class="detail-value">${a.desc}</div></div>
+      <div class="detail-row"><div class="detail-label">Phases</div><div class="detail-value">${a.phases}</div></div>
+      <div class="detail-row"><div class="detail-label">Weeks</div><div class="detail-value">${a.weeks}</div></div>
+      <div class="detail-row"><div class="detail-label">Inputs</div><div class="detail-value">${a.inputs.map(i=>`<span class="badge badge-muted" style="margin:2px">${i}</span>`).join('')}</div></div>
+      <div class="detail-row"><div class="detail-label">Outputs</div><div class="detail-value">${a.outputs.map(o=>`<span class="badge badge-teal" style="margin:2px">${o}</span>`).join('')}</div></div>
+      ${a.api.length?`<div class="detail-row"><div class="detail-label">API Calls</div><div class="detail-value">${a.api.map(c=>`<code style="display:block;margin:2px 0">${c}</code>`).join('')}</div></div>`:''}
+    </div>`;
+  document.getElementById('agentDetail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── Waves ─────────────────────────────────────────────────────────────
+function renderWaves(){
+  document.getElementById('waveCards').innerHTML=WAVES.map(w=>`
+    <div class="wave-card" style="border-left:3px solid var(--${riskColor(w.risk)})">
+      <div class="wave-number" style="color:var(--${riskColor(w.risk)})">${w.num}</div>
+      <div>
+        <div class="wave-name">${w.name}</div>
+        <div class="wave-type">${w.type}</div>
+        <div style="margin-top:8px;font-size:0.7rem;color:var(--text-standard);line-height:1.6">${w.desc}</div>
+        <div style="margin-top:12px">
+          <div style="font-family:var(--font-mono);font-size:0.55rem;color:var(--text-muted);letter-spacing:1px;margin-bottom:8px">KEEPER ETL PIPELINE</div>
+          <div class="etl-pipeline" style="padding:0;flex-wrap:wrap;gap:4px">
+            ${w.etl.map((s,i)=>`<span class="etl-step done" style="min-width:auto;padding:5px 8px;font-size:0.55rem">${s}</span>${i<w.etl.length-1?'<span class="etl-arrow">→</span>':''}`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="badge badge-${riskColor(w.risk)}">${w.risk.toUpperCase()}</div>
+        <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-top:4px">${w.weeks}</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--text-bright);margin-top:4px">${w.count.toLocaleString()}</div>
+        <div style="font-size:0.6rem;color:var(--text-muted)">accounts</div>
+        <div class="badge badge-green" style="margin-top:8px">COMPLETE</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Gates ─────────────────────────────────────────────────────────────
+function renderGates(){
+  document.getElementById('gateList').innerHTML=GATES.map(g=>`
+    <div class="gate-entry">
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px">
+        <div class="gate-dot ${statusDotClass(g.status)}" style="margin-top:4px"></div>
+        <div style="flex:1">
+          <div class="gate-name">${g.name}</div>
+          <div class="gate-meta">
+            <span class="badge badge-muted">${g.phase}</span>
+            <span style="margin-left:6px">Week ${g.week}</span>
+            <span style="margin-left:12px">Approvers: ${g.approvers.map(a=>`<span class="badge badge-cyan" style="margin-left:2px">${a}</span>`).join('')}</span>
+          </div>
+        </div>
+        <span class="badge ${g.status==='passed'?'badge-green':g.status==='active'?'badge-amber':'badge-muted'}">${g.status.toUpperCase()}</span>
+      </div>
+      <div class="callout teal" style="margin:0 0 10px"><div class="callout-title" style="color:var(--teal)">KeeperPAM Context</div><p style="color:var(--text-standard)">${g.context}</p></div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div class="gate-context-label">Requirements</div>
+        <div class="gate-req">${g.requirements}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Security Q&A ─────────────────────────────────────────────────────
+function renderSecQA(){
+  const sections=[
+    ['Data Encryption & Secrets at Rest',[
+      ['How are privileged credentials protected at rest in KeeperPAM?','<strong>Zero-knowledge AES-256-GCM.</strong> The Keeper server never sees plaintext — encryption/decryption happens client-side. Even a full server compromise exposes only ciphertext. FedRAMP High authorized (March 2026).'],
+      ['During migration, credentials are in-flight between CyberArk and Keeper. What protects them?','All extraction uses CyberArk PVWA REST API over HTTPS — TLS enforced. Passwords held in memory only during EXPORT→IMPORT. The orchestrator zeroes password variables immediately after use. Credentials never touch disk, log files, or state files.'],
+      ['What happens to the credential if the import step fails mid-flight?','Watchdog timer triggers emergency UNFREEZE of source vault. Failed account flagged in audit log for manual review. Partial import rolled back. Credential never left in half-migrated state.'],
+    ]],
+    ['Authentication & Access Control',[
+      ['How does the orchestrator authenticate to KeeperPAM?','OAuth2 client credentials grant via Keeper PAM API. Client ID and secret in environment variables — never in config files. Token refreshed proactively 60s before expiry — no silent token failures during live runs.'],
+      ['What happens to the 22 CyberArk permissions during migration to Keeper?','Keeper uses 4 boolean axes (manage_users, manage_records, can_edit, can_share). Agent 03 flags permission loss (12 permissions unrepresentable) and escalation risk. <strong>Enterprise Security Architect must independently review every escalation flag</strong> — iOPEX cannot self-approve (PCI-DSS Req 7.1 dual-control).'],
+      ['Is MFA enforced for privileged access in the target architecture?','Yes — Keeper Identity provides SAML/OIDC with TOTP, Push, and FIDO2 enforcement. Users authenticate through Keeper MFA before receiving a KeeperPAM session token or KCM session.'],
+    ]],
+    ['Network Security',[
+      ['What network exposure does the Keeper Gateway require?','Docker container (4 CPU / 16 GB) inside the Enterprise perimeter. Outbound HTTPS to Keeper cloud for command polling only. <strong>No inbound firewall rules required.</strong> Network gear requires custom rotation scripts — validate before Wave 3.'],
+      ['How are secrets injected into CI/CD pipelines without hardcoding?','KSM (Keeper Secrets Manager) — 40+ native integrations. Secrets never in YAML, env var blocks, or logs. <code>trufflehog</code> + <code>detect-secrets</code> scan every commit — hard-fail on credential pattern detected.'],
+    ]],
+    ['Audit, Compliance & Governance',[
+      ['What happens to the CyberArk audit trail when we migrate?','<strong style="color:var(--red)">Most critical compliance risk.</strong> CyberArk audit history does NOT migrate to KeeperPAM — audit trail restarts at migration date. Agent 07 archives all CyberArk logs before P7 decommission. Retain per compliance policy (7 years SOX, 1 year PCI-DSS minimum).'],
+      ['How do we maintain PCI-DSS compliance through the migration window?','Three controls: (1) Dual-control at g3 — Agent 03 permission mapping reviewed by Security Architect. (2) Parallel running (P6) — both systems live simultaneously. (3) Read-only gate (g13) — CyberArk read-only until all 3 Enterprise approvers authorize.'],
+      ['What is the highest-authority gate?','Gate g13 — Cutover Approval. Sets source CyberArk vault to read-only. All 3 Enterprise approvers (CAB, Exec Sponsor, Compliance) must independently authorize. If any withholds approval, migration pauses. iOPEX cannot proceed on partial authorization.'],
+    ]],
+  ];
+
+  document.getElementById('secQAContent').innerHTML=sections.map(([cat,qas],i)=>`
+    <details class="panel" style="margin-bottom:12px" open>
+      <summary style="list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--amber);background:rgba(229,142,26,0.12);padding:2px 7px;border-radius:3px">${String(i+1).padStart(2,'0')}</span>
+          <span style="font-weight:700;color:var(--text-bright);font-size:0.78rem">${cat}</span>
+        </div>
+        <span style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono)">${qas.length} Q&A</span>
+      </summary>
+      <div style="padding:4px 16px 16px">
+        ${qas.map(([q,a])=>`<div class="qa-item"><div class="qa-q">Q: ${q}</div><div class="qa-a">${a}</div></div>`).join('')}
+      </div>
+    </details>`).join('');
+}
+
+// ── SoD ───────────────────────────────────────────────────────────────
+function renderSoD(){
+  const rules=[
+    ['1','var(--purple)','iOPEX Runs — Enterprise Client Approves Every Gate','iOPEX Migration Engineers execute all agent runs, ETL waves, and deliverable production. No gate in the programme can be approved by iOPEX. Every gate requires a named Enterprise approver independent of the team that performed the work — from g1 (Kick-off) through g14 (Final Sign-off).','Agent 08 enforces this mechanically — a gate cannot reach APPROVED without the required Enterprise approver roles.'],
+    ['2','var(--red)','Permission Mapping Approval is Enterprise Security Only (PCI-DSS 7.1)','Agent 03 produces the permission escalation and loss report. iOPEX has zero approval authority. Enterprise Security Architect must independently review every escalation flag before Phase 3. PCI-DSS Req 7.1 dual-control: the team that performs a control cannot also approve it.','Gate g5 hard-blocks Phase 4 until Security Architect sign-off. No delegation to iOPEX permitted.'],
+    ['3','var(--amber)','NHI Ownership Can Only Be Declared by App Owners','iOPEX agents classify NHIs using platform signals, name patterns, and safe name patterns. AI confidence scores are indicators — not declarations. Only the application team that owns the workload can confirm a service account belongs to them.','Gate g2 requires individual App Owner acknowledgment within 5 business days. iOPEX cannot confirm NHI ownership on their behalf.'],
+    ['4','var(--cyan)','Application Functionality is Declared by App Owners — Not iOPEX','After each wave, iOPEX provides heartbeat success rates and integrity check results. These confirm the credential exists and rotates in Keeper. They do not confirm the application works. Only the App Owner can confirm end-to-end workflow.','Pilot gate g6 blocks all production waves. App Owners must physically verify access in KeeperPAM.'],
+    ['5','var(--red)','SOX Dual-Control on NHI Rotation Certification (Wave 3)','Wave 3 migrates 554 NHIs and configures Keeper Gateway rotation policies. The team that configures a control (iOPEX) cannot certify it operates correctly. Enterprise Compliance must independently verify at gate g9.','SOX Section 404 requires dual-control for credential management operations.'],
+    ['6','var(--red)','Cutover Approval (g13) — iOPEX Has Zero Authority','Gate g13 sets source CyberArk vault to read-only. iOPEX presents evidence (parallel-run metrics, final validation, App Owner sign-offs). All 3 Enterprise approvers (CAB, Exec Sponsor, Compliance) must authorize independently.','This is the highest-authority gate. If any approver withholds, migration pauses indefinitely. No partial authorization.'],
+  ];
+  document.getElementById('sodContent').innerHTML=rules.map(([num,color,title,body,enforcement])=>`
+    <div style="padding:14px 16px;background:var(--bg-surface);border:1px solid var(--border);border-left:4px solid ${color};border-radius:4px;margin-bottom:10px">
+      <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:7px">
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:${color};font-weight:800;min-width:16px">${num}</div>
+        <div style="font-size:0.7rem;font-weight:700;color:var(--text-bright);line-height:1.4">${title}</div>
+      </div>
+      <div style="font-size:0.67rem;color:var(--text-standard);line-height:1.75;margin-bottom:8px;padding-left:26px">${body}</div>
+      <div style="margin-left:26px;padding:6px 10px;background:var(--bg-card);border-left:2px solid ${color};font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);line-height:1.6"><strong style="color:${color}">ENFORCED:</strong> ${enforcement}</div>
+    </div>`).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+renderPhases();
+renderAgents();
+renderWaves();
+renderGates();
+renderSecQA();
+renderSoD();
+</script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIFT — CyberArk → KeeperPAM Migration Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #060D16;
+  --bg-card: #0A1628;
+  --bg-surface: #081422;
+  --border: #1E3050;
+  --border-light: #1A2A42;
+  --blue: #3B82F6;
+  --blue-dim: rgba(59,130,246,0.15);
+  --green: #06D6A0;
+  --green-dim: rgba(6,214,160,0.15);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245,158,11,0.15);
+  --red: #EF4444;
+  --red-dim: rgba(239,68,68,0.15);
+  --purple: #A855F7;
+  --purple-dim: rgba(168,85,247,0.15);
+  --cyan: #00C8E8;
+  --cyan-dim: rgba(0,200,232,0.15);
+  --teal: #14B8A6;
+  --teal-dim: rgba(20,184,166,0.15);
+  --text-bright: #F1F5F9;
+  --text-standard: #CBD5E1;
+  --text-muted: #64748B;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-standard);
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+.container { max-width: 960px; margin: 0 auto; }
+
+/* ── Header ── */
+.doc-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+.doc-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--green);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.doc-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.doc-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.live-badge {
+  display: inline-block;
+  background: var(--green-dim);
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(6,214,160,0.3);
+  margin-top: 12px;
+}
+
+/* ── Section ── */
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: .04em;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: .06em;
+}
+
+/* ── Callout ── */
+.callout {
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  font-size: 0.7rem;
+  line-height: 1.7;
+}
+.callout.green { background: var(--green-dim); border-left: 3px solid var(--green); }
+.callout.amber { background: var(--amber-dim); border-left: 3px solid var(--amber); }
+.callout.red   { background: var(--red-dim);   border-left: 3px solid var(--red); }
+.callout.teal  { background: var(--teal-dim);  border-left: 3px solid var(--teal); }
+.callout.blue  { background: var(--blue-dim);  border-left: 3px solid var(--blue); }
+.callout-title {
+  font-weight: 700;
+  font-size: 0.68rem;
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+  letter-spacing: .04em;
+}
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; font-size: 0.67rem; }
+thead tr { border-bottom: 2px solid var(--border); }
+th { padding: 7px 10px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.62rem; text-transform: uppercase; letter-spacing: .04em; }
+td { padding: 6px 10px; border-bottom: 1px solid var(--border-light); color: var(--text-standard); vertical-align: top; line-height: 1.6; }
+tr:last-child td { border-bottom: none; }
+
+/* ── Badge ── */
+.badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: .04em;
+}
+.badge-green  { background: var(--green-dim);  color: var(--green);  }
+.badge-cyan   { background: var(--cyan-dim);   color: var(--cyan);   }
+.badge-amber  { background: var(--amber-dim);  color: var(--amber);  }
+.badge-red    { background: var(--red-dim);    color: var(--red);    }
+.badge-teal   { background: var(--teal-dim);   color: var(--teal);   }
+.badge-purple { background: var(--purple-dim); color: var(--purple); }
+.badge-blue   { background: var(--blue-dim);   color: var(--blue);   }
+
+/* ── Q&A ── */
+.qa-item {
+  margin-top: 12px;
+  border-left: 3px solid var(--blue);
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-radius: 0 6px 6px 0;
+}
+.qa-q { font-weight: 700; color: var(--blue); font-size: 0.7rem; margin-bottom: 6px; }
+.qa-a { font-size: 0.7rem; color: var(--text-standard); line-height: 1.75; }
+
+/* ── Hierarchy ── */
+.tier-row {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.tier-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 130px;
+  color: var(--cyan);
+}
+.tier-desc { font-size: 0.68rem; color: var(--text-standard); line-height: 1.6; }
+.tier-arrow { text-align: center; color: var(--border); font-size: 1rem; padding: 0 16px; }
+
+/* ── Risk table severity colors ── */
+.sev-high   { color: var(--red);   font-weight: 700; font-family: var(--font-mono); font-size: 0.63rem; }
+.sev-medium { color: var(--amber); font-weight: 700; font-family: var(--font-mono); font-size: 0.63rem; }
+.sev-low    { color: var(--green); font-weight: 700; font-family: var(--font-mono); font-size: 0.63rem; }
+
+/* ── Mono text ── */
+code { font-family: var(--font-mono); color: var(--teal); font-size: 0.85em; }
+
+/* ── Footer ── */
+.doc-footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+p { font-size: 0.72rem; line-height: 1.7; margin-bottom: 10px; }
+p:last-child { margin-bottom: 0; }
+ul, ol { padding-left: 18px; font-size: 0.7rem; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <div class="doc-header">
+    <div class="doc-eyebrow">iOPEX · SHIFT Migration Programme</div>
+    <div class="doc-title">CyberArk PAS → KeeperPAM<br>Migration Overview</div>
+    <div class="doc-subtitle">
+      Enterprise PAM migration delivered via the SHIFT framework — 15-agent AI orchestration,
+      8-phase lifecycle, and 17 human approval gates.
+    </div>
+    <div class="live-badge">&#9679; KEEPERPAM — LIVE MIGRATION TARGET</div>
+  </div>
+
+  <!-- ── 1. WHAT IS SHIFT ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">01</span> What Is SHIFT</div>
+    <p><strong style="color:var(--text-bright)">SHIFT</strong> (Secure Hybrid Identity &amp; Function Transfer) is iOPEX's PAM migration methodology, tooling, and agent design pattern. It is framework-agnostic — the orchestration engine is swappable (LangGraph, CrewAI, AutoGen, plain Python). The migration methodology, 15 agent contracts, phase gates, ETL pipeline, and ML feedback loops carry over unchanged regardless of engine choice.</p>
+
+    <div class="callout green">
+      <div class="callout-title" style="color:var(--green)">Selected Target: KeeperPAM</div>
+      KeeperPAM is the confirmed live migration target. Zero-knowledge SaaS architecture, FedRAMP High authorized (March 2026). Keeper Secrets Manager (KSM) replaces CyberArk CCP/AAM for application credential retrieval. Keeper Connection Manager (KCM) provides browser-native session recording.
+    </div>
+
+    <p style="margin-top:12px">The SHIFT Control Center is a real-time operational dashboard surfacing every phase, agent, gate, wave, and risk factor across the 80-week migration engagement. In production the backend connects to live CyberArk PVWA and KeeperPAM APIs.</p>
+  </div>
+
+  <!-- ── 2. KEEPERPAM 3-TIER HIERARCHY ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">02</span> KeeperPAM — 3-Tier Hierarchy (Structural Delta from CyberArk)</div>
+    <p>KeeperPAM uses a 3-tier object model. A single CyberArk Account maps to a <code>pamUser</code> record linked to a <code>pamMachine</code> or <code>pamDatabase</code> resource. The cyberark-import tool handles bulk import (~20% of work); the remaining 80% is post-import transformation to build the correct 3-tier linkage.</p>
+    <p>Each CyberArk Safe may become <strong>2 Keeper Shared Folders</strong> — one for credentials, one for PAM resources.</p>
+
+    <div style="margin-top:16px">
+      <div class="tier-row" style="border-left: 3px solid var(--amber);">
+        <div class="tier-label" style="color:var(--amber)">PAM Config</div>
+        <div class="tier-desc">Top-level configuration object — defines the PAM environment, gateway assignment, rotation policies, and compliance scope. Maps to the CyberArk Safe's policy settings.</div>
+      </div>
+      <div class="tier-arrow">&#9660;</div>
+      <div class="tier-row" style="border-left: 3px solid var(--cyan);">
+        <div class="tier-label" style="color:var(--cyan)">PAM Resource<br><span style="font-size:0.58rem;color:var(--text-muted)">(pamMachine / pamDatabase)</span></div>
+        <div class="tier-desc">The target system — a server, database, or network device. Maps from CyberArk's <code>address</code> + <code>platformId</code> fields. One Resource may have multiple Users.</div>
+      </div>
+      <div class="tier-arrow">&#9660;</div>
+      <div class="tier-row" style="border-left: 3px solid var(--green);">
+        <div class="tier-label" style="color:var(--green)">PAM User<br><span style="font-size:0.58rem;color:var(--text-muted)">(pamUser)</span></div>
+        <div class="tier-desc">The privileged credential — maps from CyberArk's <code>userName</code> + <code>secret</code>. This is the atomic unit of the ETL IMPORT step. Retrieved password is written here and discarded from memory immediately after.</div>
+      </div>
+    </div>
+
+    <div class="callout teal" style="margin-top:14px">
+      <div class="callout-title" style="color:var(--teal)">Field Mapping — CyberArk Account → Keeper</div>
+      <table style="margin-top:6px">
+        <thead><tr><th>CyberArk Field</th><th>Keeper Target</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>safeName</code></td><td>Shared Folder</td><td>Each Safe → 2 folders (credentials + resources). Folder map built in P3.</td></tr>
+          <tr><td><code>platformId</code></td><td>PAM Template</td><td>Platform → PAM Template, resolved via Agent 13 template map</td></tr>
+          <tr><td><code>address</code></td><td>pamMachine.hostname</td><td>Becomes the PAM Resource hostname/IP</td></tr>
+          <tr><td><code>userName</code></td><td>pamUser.username</td><td>Linked to the parent PAM Resource</td></tr>
+          <tr><td><code>secret</code></td><td>pamUser.password</td><td>Retrieved via <code>POST /Accounts/{id}/Password/Retrieve</code> — held in memory only</td></tr>
+          <tr><td><code>platformAccountProperties</code></td><td>pamUser custom fields</td><td>Platform-specific fields mapped per template definition</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 3. MIGRATION PHASES ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">03</span> 8 Migration Phases (P0–P7) — 80-Week Programme</div>
+    <table>
+      <thead><tr><th>Phase</th><th>Name</th><th>Duration</th><th>Key Focus</th><th>Agents</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P0</td><td style="color:var(--text-bright)">Environment Setup</td><td style="color:var(--text-muted)">2–3 wks</td><td>Infrastructure provisioning, network connectivity, credentials, Keeper Gateway deployment</td><td style="font-family:var(--font-mono);color:var(--teal)">Manual</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P1</td><td style="color:var(--text-bright)">Discovery &amp; Assessment</td><td style="color:var(--text-muted)">3–4 wks</td><td>Full environment scan, NHI classification, gap analysis, dependency mapping</td><td style="font-family:var(--font-mono);color:var(--teal)">11,01,09,12,02,03</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P2</td><td style="color:var(--text-bright)">Infrastructure &amp; Staging</td><td style="color:var(--text-muted)">2–3 wks</td><td>KeeperPAM tenant config, PAM template validation, staging tests, Gateway rotation scripts</td><td style="font-family:var(--font-mono);color:var(--teal)">13,10</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P3</td><td style="color:var(--text-bright)">Structure Migration</td><td style="color:var(--text-muted)">2–3 wks</td><td>Shared Folder creation, permission mapping output review (Security Architect sign-off), app onboarding setup</td><td style="font-family:var(--font-mono);color:var(--teal)">03,14</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P4</td><td style="color:var(--text-bright)">Pilot Migration</td><td style="color:var(--text-muted)">1–2 wks</td><td>Small-batch ETL, end-to-end pipeline validation, App Owner physical verification</td><td style="font-family:var(--font-mono);color:var(--teal)">04,05</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P5</td><td style="color:var(--text-bright)">Production Migration</td><td style="color:var(--text-muted)">4–6 wks</td><td>5-wave production batches, CCP/AAM→KSM repointing, compliance evidence collection</td><td style="font-family:var(--font-mono);color:var(--teal)">04,05,06,14,07</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P6</td><td style="color:var(--text-bright)">Parallel Running</td><td style="color:var(--text-muted)">4–6 wks</td><td>Both systems live simultaneously — traffic shifting, cutover preparation, KCM session validation</td><td style="font-family:var(--font-mono);color:var(--teal)">15,05,06,07</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">P7</td><td style="color:var(--text-bright)">Decommission</td><td style="color:var(--text-muted)">2–3 wks</td><td>CyberArk teardown, audit log archival, final compliance evidence, project close-out</td><td style="font-family:var(--font-mono);color:var(--teal)">07</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── 4. 15 AGENTS ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">04</span> 15 AI Agents — SHIFT Orchestrator</div>
+    <p style="margin-bottom:12px">Each agent is a specialized module in the orchestrator. Agents execute in deterministic sequence within each phase — earlier agents feed data to later ones.</p>
+    <table>
+      <thead><tr><th>#</th><th>Agent</th><th>Purpose</th><th>Phase(s)</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">01</td><td style="color:var(--text-bright)">Discovery</td><td>Full CyberArk environment scan via Applications API — accounts, safes, platforms, members</td><td style="font-family:var(--font-mono);color:var(--teal)">P1</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">02</td><td style="color:var(--text-bright)">Gap Analysis</td><td>10-domain maturity assessment across PCI-DSS, NIST 800-53, HIPAA, SOX</td><td style="font-family:var(--font-mono);color:var(--teal)">P1</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">03</td><td style="color:var(--text-bright)">Permissions</td><td>Maps 22 CyberArk permissions to Keeper role model. Flags escalations + losses. <strong style="color:var(--amber)">Output requires Security Architect independent review.</strong></td><td style="font-family:var(--font-mono);color:var(--teal)">P1,P3</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">04</td><td style="color:var(--text-bright)">ETL</td><td>7-step pipeline: FREEZE → EXPORT → TRANSFORM → FOLDER CREATION → IMPORT → HEARTBEAT → UNFREEZE. Watchdog timer + crash recovery.</td><td style="font-family:var(--font-mono);color:var(--teal)">P4,P5</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">05</td><td style="color:var(--text-bright)">Heartbeat</td><td>10-check post-migration validation — connectivity, rotation, credential retrieval, audit continuity</td><td style="font-family:var(--font-mono);color:var(--teal)">P4–P6</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">06</td><td style="color:var(--text-bright)">Integration</td><td>CCP/AAM code scanning → generates KSM SDK replacement code for all application integrations</td><td style="font-family:var(--font-mono);color:var(--teal)">P5,P6</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">07</td><td style="color:var(--text-bright)">Compliance</td><td>PCI-DSS, NIST 800-53, HIPAA, SOX evidence collection. Archives CyberArk audit logs before P7 decommission.</td><td style="font-family:var(--font-mono);color:var(--teal)">P5–P7</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">08</td><td style="color:var(--text-bright)">Runbook</td><td>Phase gate management and decommission procedure execution</td><td style="font-family:var(--font-mono);color:var(--teal)">P6,P7</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">09</td><td style="color:var(--text-bright)">Dependency Mapper</td><td>6 scanners: IIS, Windows services, scheduled tasks, Jenkins, scripts, config files</td><td style="font-family:var(--font-mono);color:var(--teal)">P1</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">10</td><td style="color:var(--text-bright)">Staging Validation</td><td>10-assertion validation against KeeperPAM staging tenant before production</td><td style="font-family:var(--font-mono);color:var(--teal)">P2</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">11</td><td style="color:var(--text-bright)">Source Adapter</td><td>Multi-vendor extraction: CyberArk, BeyondTrust, Secret Server, HashiCorp, AWS, Azure, GCP</td><td style="font-family:var(--font-mono);color:var(--teal)">P1</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">12</td><td style="color:var(--text-bright)">NHI Handler</td><td>Weighted multi-signal NHI classification: platform type + naming patterns + Safe name patterns</td><td style="font-family:var(--font-mono);color:var(--teal)">P1</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">13</td><td style="color:var(--text-bright)">Platform Plugins</td><td>Validates CyberArk platforms → maps to Keeper PAM Templates. Auto-creates templates for unmapped platforms.</td><td style="font-family:var(--font-mono);color:var(--teal)">P2</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">14</td><td style="color:var(--text-bright)">Onboarding Factory</td><td>10-step pipeline for new service account onboarding into KeeperPAM during and after migration</td><td style="font-family:var(--font-mono);color:var(--teal)">P3,P5</td></tr>
+        <tr><td style="color:var(--cyan);font-family:var(--font-mono);font-weight:700">15</td><td style="color:var(--text-bright)">Hybrid Fleet Manager</td><td>Parallel-run traffic management — both CyberArk and KeeperPAM live simultaneously through P6</td><td style="font-family:var(--font-mono);color:var(--teal)">P6</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── 5. KEEPER TECHNICAL DETAILS ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">05</span> KeeperPAM — Key Technical Details</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:14px;">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--green);margin-bottom:8px;letter-spacing:.06em;">ENCRYPTION</div>
+        <p style="font-size:0.68rem">Zero-knowledge AES-256-GCM. Encryption/decryption is client-side — the Keeper server never sees plaintext. A full server compromise exposes only ciphertext.</p>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:14px;">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cyan);margin-bottom:8px;letter-spacing:.06em;">COMPLIANCE</div>
+        <p style="font-size:0.68rem">FedRAMP High authorized (March 2026). SOC 2 Type II. Supports PCI-DSS Req 7.1 dual-control gate workflow at g3 and g9.</p>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:14px;">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--amber);margin-bottom:8px;letter-spacing:.06em;">KEEPER GATEWAY</div>
+        <p style="font-size:0.68rem">Docker container (min 4 CPU / 16 GB RAM). Handles rotation for ~25–30 platforms natively. Outbound HTTPS to Keeper cloud only — no inbound firewall rules required. Network gear requires custom rotation scripts — validate before Wave 3.</p>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:14px;">
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--purple);margin-bottom:8px;letter-spacing:.06em;">KSM — REPLACES CCP/AAM</div>
+        <p style="font-size:0.68rem">Keeper Secrets Manager: 40+ native integrations — GitHub Actions, Terraform, Ansible, Kubernetes, Jenkins. Agent 06 scans all app code for CCP/AAM patterns and generates KSM SDK replacements. Full re-architecture for any app using AAM agent injection.</p>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="callout-title" style="color:var(--amber)">Permission Model — 22 CyberArk Permissions → Keeper Role Model (LOSSY)</div>
+      Keeper uses a vault role model — not a 1:1 map with CyberArk's 22 permissions. Agent 03 flags two critical risks: <strong>permission loss</strong> (9 permissions have no Keeper equivalent) and <strong>escalation</strong> (some members may receive more access than intended due to role rounding). Agent 03 produces a full report. <strong>iOPEX cannot self-approve this output</strong> — the Enterprise Security Architect must independently review every escalation flag at gate g3 (PCI-DSS Req 7.1 dual-control).
+    </div>
+
+    <div class="callout red" style="margin-top:12px">
+      <div class="callout-title" style="color:var(--red)">9 CyberArk Permissions Lost — No Keeper Equivalent</div>
+      <code>AccessWithoutConfirmation</code> · <code>SpecifyNextAccountContent</code> · <code>BackupSafe</code> · <code>CreateFolders</code> · <code>DeleteFolders</code> · <code>MoveAccountsAndFolders</code> · <code>RequestsAuthorizationLevel1</code> · <code>RequestsAuthorizationLevel2</code> · <code>InitiateCPMAccountManagementOperations</code><br>
+      <span style="font-size:0.65rem;margin-top:6px;display:block">All must be reviewed for compliance impact before Phase 3 proceeds.</span>
+    </div>
+  </div>
+
+  <!-- ── 6. SECURITY Q&A ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">06</span> Security Architecture Q&amp;A — KeeperPAM Focus</div>
+
+    <div class="qa-item">
+      <div class="qa-q">How does the orchestrator authenticate to KeeperPAM?</div>
+      <div class="qa-a">OAuth2 client credentials grant via Keeper PAM API. Client ID and secret are environment variables — never in config files or code. Token is refreshed proactively before expiry (within 60 seconds) to prevent silent token failures during a live migration run.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What happens to credentials in-flight during ETL?</div>
+      <div class="qa-a">All extraction uses CyberArk PVWA REST API over HTTPS (TLS enforced). Passwords retrieved via <code>POST /Accounts/{id}/Password/Retrieve</code> are held in memory only during the EXPORT→IMPORT step. The orchestrator zeroes password variables immediately after use. Credentials never touch disk, log files, or state files. Error sanitization strips secrets before writing to the audit log.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What happens to CyberArk audit history when we migrate?</div>
+      <div class="qa-a"><strong style="color:var(--red)">This is the most critical compliance risk.</strong> CyberArk audit history does NOT migrate to KeeperPAM — the audit trail restarts at the migration date. Agent 07 automatically exports and archives all CyberArk audit logs before decommission in P7. Archived logs must be retained per the Enterprise compliance retention policy (7 years for SOX, 1 year for PCI-DSS minimum).</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What network exposure does the Keeper Gateway require?</div>
+      <div class="qa-a">The Gateway runs as a Docker container and requires line-of-sight to all managed target systems inside the Enterprise perimeter. It does <strong>NOT</strong> require inbound internet exposure. Outbound HTTPS to Keeper cloud for command polling only. No inbound firewall rules needed for the Gateway itself.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How are DevOps secrets and NHIs handled?</div>
+      <div class="qa-a">NHI detection uses three signals: (1) platform type, (2) naming patterns (<code>svc-</code>, <code>app-</code>), (3) Safe name patterns (<code>appcred</code>, <code>cicd</code>). NHIs get a separate migration track. Keeper Secrets Manager (KSM) replaces CCP/AAM — 40+ native integrations for GitHub Actions, Terraform, Ansible, Kubernetes, Jenkins. App teams update SDK calls; Agent 06 generates the replacement code.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the highest-authority gate?</div>
+      <div class="qa-a">Gate g13 — Cutover Approval. Sets the source CyberArk vault to read-only — the last fully reversible action before decommission. All three Enterprise approvers (CAB, Exec Sponsor, Compliance) must independently authorize. If any approver withholds approval, the migration pauses indefinitely. iOPEX cannot proceed on partial or verbal authorization.</div>
+    </div>
+  </div>
+
+  <!-- ── 7. RISK MATRIX ── -->
+  <div class="section">
+    <div class="section-title"><span class="label">07</span> Security Risk Summary</div>
+    <table>
+      <thead><tr><th>Risk</th><th>Severity</th><th>Owner</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Audit log discontinuity</td><td><span class="sev-high">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Enterprise Compliance</td><td>Agent 07 archives pre-migration; retain per policy</td></tr>
+        <tr><td>Permission model loss (9 perms)</td><td><span class="sev-high">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Security Architect</td><td>Agent 03 report — mandatory review at gate g3</td></tr>
+        <tr><td>Permission escalation on mapping</td><td><span class="sev-high">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Security Architect</td><td>Dual-control review — iOPEX cannot self-approve</td></tr>
+        <tr><td>Conjur / Kubernetes re-architecture</td><td><span class="sev-high">HIGH</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">App Teams</td><td>PENDING_EXTERNAL_TEAM — outside automated scope</td></tr>
+        <tr><td>PSM session recording loss</td><td><span class="sev-medium">MEDIUM</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Enterprise Compliance</td><td>Archive recordings before P7 decommission</td></tr>
+        <tr><td>CCP/AAM re-point failures</td><td><span class="sev-medium">MEDIUM</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">iOPEX Delivery</td><td>Agent 06 code scan; app team sign-off per wave</td></tr>
+        <tr><td>Keeper Gateway network exposure</td><td><span class="sev-low">LOW</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">Enterprise NOC/Infra</td><td>No inbound rules required; outbound HTTPS only</td></tr>
+        <tr><td>TLS misconfiguration</td><td><span class="sev-low">LOW</span></td><td style="color:var(--cyan);font-family:var(--font-mono);font-size:0.63rem">iOPEX Delivery</td><td>Pre-P1 cert validation; penetration test pre-P5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <div class="doc-footer">
+    <span>iOPEX Technologies · SHIFT Migration Programme</span>
+    <span>CyberArk PAS → KeeperPAM · 80-Week Engagement</span>
+  </div>
+
+</div>
+</body>
+</html>
