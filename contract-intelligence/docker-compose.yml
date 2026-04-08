@@ -1,0 +1,22 @@
+services:
+  docuseal:
+    image: docuseal/docuseal:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data/docuseal:/data
+    environment:
+      - SECRET_KEY_BASE=change_me_in_production_use_a_long_random_string
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - docuseal
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contract Intellegence — Executive Presentation</title>
+    <style>
+        :root { --primary: #1a1a2e; --accent: #667eea; --bg: #f8fafc; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; color: #1e293b; line-height: 1.5; }
+        .nav { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; }
+        .btn { background: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.95rem; text-align: center; width: 100%; box-sizing: border-box; transition: all 0.2s; }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        
+        /* Agent Roster */
+        .agent-item { display: flex; align-items: center; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #e2e8f0; opacity: 0.4; transition: all 0.4s; background: white; }
+        .agent-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; background: #f1f5f9; font-size: 1.1rem; }
+        .agent-info { flex: 1; }
+        .agent-name { font-weight: 600; font-size: 0.85rem; }
+        .agent-desc { font-size: 0.7rem; color: #64748b; }
+        
+        .agent-active { opacity: 1; border-color: var(--accent); background: #eff6ff; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2); }
+        .agent-active .agent-icon { background: var(--accent); color: white; }
+        .agent-done { opacity: 1; border-color: var(--success); background: #f0fdf4; }
+        .agent-done .agent-icon { background: var(--success); color: white; }
+
+        /* Log Window */
+        .log-container { background: #0f172a; color: #38bdf8; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.8rem; height: 220px; overflow-y: auto; border: 1px solid #1e293b; }
+        .log-entry { margin-bottom: 6px; border-left: 2px solid #1e293b; padding-left: 10px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Status Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748b; padding: 0.75rem; border-bottom: 2px solid #f1f5f9; }
+        td { padding: 1rem 0.75rem; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        
+        .risk-badge { font-weight: bold; padding: 4px 8px; border-radius: 4px; display: none; }
+        .risk-LOW { background: #dcfce7; color: #166534; display: inline-block; }
+
+        /* Overlay */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .pdf-view { background: white; width: 850px; height: 90vh; border-radius: 12px; padding: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .pdf-header { background: #1a1a2e; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .pdf-body { flex: 1; padding: 3rem; background: #f1f5f9; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+        .pdf-page { background: white; width: 100%; max-width: 600px; min-height: 800px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 4rem; box-sizing: border-box; border: 1px solid #e2e8f0; }
+        .pdf-content-mock { font-family: 'Times New Roman', serif; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <div>
+            <h1 style="margin:0; font-size: 1.3rem;">Contract Intellegence</h1>
+            <div style="font-size: 0.75rem; opacity: 0.8;">End-to-End Agentic Automation Workflow</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-weight: 600; font-size: 1rem;">Executive Hands-On Mode</div>
+            <div style="font-size: 0.7rem; color: #22c55e;">● Standalone Simulation Live</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar: Steps & Roster -->
+        <div class="sidebar">
+            <div class="card" id="step1Card">
+                <h3 style="margin-top:0; font-size: 1rem; color: var(--accent);">Step 1: Intake Trigger</h3>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem;">Anil, please select the <strong>Quote PDF</strong> to initiate the agent team.</p>
+                <input type="file" id="fileInput" style="margin-bottom: 1rem; font-size: 0.8rem;" onchange="enableLaunch()">
+                <button class="btn" id="launchBtn" disabled onclick="startAutomation()">🚀 Launch Pipeline</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0; font-size: 1rem;">The Agent Team</h3>
+                <div id="roster">
+                    <div class="agent-item" id="A-INTAKE"><div class="agent-icon">📥</div><div class="agent-info"><div class="agent-name">Intake Agent</div><div class="agent-desc">Downloads & verifies PDF</div></div></div>
+                    <div class="agent-item" id="A-EXTRACT"><div class="agent-icon">🧠</div><div class="agent-info"><div class="agent-name">Extractor Agent</div><div class="agent-desc">Vision-based data parse (Claude)</div></div></div>
+                    <div class="agent-item" id="A-RISK"><div class="agent-icon">⚖️</div><div class="agent-info"><div class="agent-name">Risk Agent</div><div class="agent-desc">Scores business risk factors</div></div></div>
+                    <div class="agent-item" id="A-GENERATE"><div class="agent-icon">📄</div><div class="agent-info"><div class="agent-name">Generator Agent</div><div class="agent-desc">Builds dynamic contract PDF</div></div></div>
+                    <div class="agent-item" id="A-SIGN"><div class="agent-icon">✍️</div><div class="agent-info"><div class="agent-name">Signer Agent</div><div class="agent-desc">Dispatches to DocuSeal</div></div></div>
+                    <div class="agent-item" id="A-MONITOR"><div class="agent-icon">📡</div><div class="agent-info"><div class="agent-name">Monitor Agent</div><div class="agent-status agent-desc">Webhook Listener (Real-time)</div></div></div>
+                    <div class="agent-item" id="A-OBLIGATION"><div class="agent-icon">🔍</div><div class="agent-info"><div class="agent-name">Obligation Agent</div><div class="agent-desc">Post-sign metadata sync</div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="main">
+            <div class="card">
+                <h3 style="margin-top:0; font-size: 1rem;">Live Workflow Status</h3>
+                <table>
+                    <thead><tr><th>Contract ID</th><th>Active Agent</th><th>Status</th><th>Risk</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong id="idDisp">--</strong></td>
+                            <td><code id="agentDisp" style="color:var(--accent)">Idle</code></td>
+                            <td><span id="statusDisp" style="color:#94a3b8">Ready</span></td>
+                            <td><span id="riskDisp" class="risk-badge">--</span></td>
+                            <td id="actionCell">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0; font-size: 1rem;">Agent "Thought Process" Logs</h3>
+                <div class="log-container" id="logs">
+                    <div style="color:#64748b; font-style: italic;">[System] Simulation ready. Select a file to begin the demonstration.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signing Mock Overlay -->
+    <div class="overlay" id="overlay">
+        <div class="pdf-view">
+            <div class="pdf-header">
+                <div><strong>E-Signature Request</strong> — CNT-82B04F11</div>
+                <div style="font-size: 0.8rem; opacity: 0.7;">Powered by Agent B</div>
+            </div>
+            <div class="pdf-body">
+                <div class="pdf-page">
+                    <div class="pdf-content-mock">
+                        <h1 style="text-align:center; text-decoration: underline;">SERVICE AGREEMENT</h1>
+                        <p style="margin-top: 3rem;">This agreement is made between <strong>Service Provider</strong> and <strong>Acme Global Corp</strong>.</p>
+                        <p><strong>Total Amount:</strong> $50,000.00 USD</p>
+                        <p><strong>Service Terms:</strong> Net 30 Days</p>
+                        <p style="margin-top: 2rem;">The Client agrees to the terms and conditions outlined in the original Quote generated on April 4, 2026...</p>
+                        <div style="margin-top: 10rem; border-top: 1px solid #000; width: 200px; padding-top: 0.5rem;">
+                            Authorized Signature
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 2rem; padding-bottom: 2rem;">
+                    <button class="btn" style="background:var(--success); padding: 1.2rem 4rem; font-size: 1.2rem;" onclick="completeSignature()">✍ Sign & Complete Contract</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sequence = [
+            {id: 'A-INTAKE', label: 'INTAKE', log: 'Intake Agent: Quote PDF recognized. Source: Manual Upload. Verification successful.'},
+            {id: 'A-EXTRACT', label: 'EXTRACT', log: 'Extractor Agent: Claude 3.5 Sonnet analyzing vision-path... Extracted Client: Acme Global Corp, Amount: $50,000.00.'},
+            {id: 'A-RISK', label: 'RISK', log: 'Risk Agent: Scoring against Global Risk Matrix. Result: LOW (Standard terms, verified tax ID).'},
+            {id: 'A-GENERATE', label: 'GENERATE', log: 'Generator Agent: Injecting data into Master Template... Contract PDF generated with zero manual entry.'},
+            {id: 'A-SIGN', label: 'SIGN', log: 'Signer Agent: DocuSeal submission created. Dispatching signing URL to client email.'}
+        ];
+
+        function enableLaunch() {
+            document.getElementById('launchBtn').disabled = false;
+        }
+
+        function addLog(msg) {
+            const container = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            const ts = new Date().toLocaleTimeString().split(' ')[0];
+            div.innerHTML = `<span style="color:#64748b">[${ts}]</span> ${msg}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function startAutomation() {
+            document.getElementById('launchBtn').disabled = true;
+            document.getElementById('launchBtn').innerText = '🤖 Running...';
+            document.getElementById('idDisp').innerText = 'CNT-82B04F11';
+            document.getElementById('statusDisp').innerText = 'active';
+            document.getElementById('statusDisp').style.color = 'var(--success)';
+            runStep(0);
+        }
+
+        function runStep(idx) {
+            if (idx >= sequence.length) {
+                document.getElementById('actionCell').innerHTML = `<button class="btn" style="background:var(--success); padding: 5px 10px; font-size: 0.8rem;" onclick="openSigning()">SIGN DOCUMENT</button>`;
+                addLog('Signer Agent: System is now waiting for client action.');
+                return;
+            }
+
+            const step = sequence[idx];
+            
+            // Clear previous active
+            if (idx > 0) document.getElementById(sequence[idx-1].id).className = 'agent-item agent-done';
+            
+            // Set current active
+            const el = document.getElementById(step.id);
+            el.className = 'agent-item agent-active';
+            document.getElementById('agentDisp').innerText = step.label;
+            
+            addLog(step.log);
+            
+            if (step.id === 'A-RISK') {
+                document.getElementById('riskDisp').className = 'risk-badge risk-LOW';
+                document.getElementById('riskDisp').innerText = 'LOW';
+            }
+
+            setTimeout(() => runStep(idx + 1), 3000); // 3 seconds per agent for visibility
+        }
+
+        function openSigning() {
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function completeSignature() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('A-SIGN').className = 'agent-item agent-done';
+            
+            // Wake up Monitor Agent instantly
+            const mon = document.getElementById('A-MONITOR');
+            mon.className = 'agent-item agent-active';
+            document.getElementById('agentDisp').innerText = 'MONITOR';
+            addLog('Monitor Agent: Real-time Webhook received from DocuSeal. Signature Captured.');
+            
+            setTimeout(() => {
+                mon.className = 'agent-item agent-done';
+                const obl = document.getElementById('A-OBLIGATION');
+                obl.className = 'agent-item agent-active';
+                document.getElementById('agentDisp').innerText = 'OBLIGATION';
+                addLog('Obligation Agent: Scanning executed text for post-sign metadata...');
+                addLog('Obligation Agent: Found Renewal Date (2027-04-04) & SLA (99.9%). Syncing to CRM.');
+                
+                setTimeout(() => {
+                    obl.className = 'agent-item agent-done';
+                    document.getElementById('statusDisp').innerText = 'complete';
+                    document.getElementById('agentDisp').innerText = 'FINISHED';
+                    addLog('System: Workflow concluded successfully. Total time: 14m 22s (including human sign time).');
+                }, 2000);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

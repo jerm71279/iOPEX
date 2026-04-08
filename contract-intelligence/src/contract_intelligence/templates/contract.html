@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Service Agreement — {{ contract_id }}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Inter, sans-serif; font-size: 13px; color: #1a1a2e; line-height: 1.6; padding: 48px; background: white; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; padding-bottom: 24px; border-bottom: 2px solid #0a1628; }
+  .logo { font-size: 22px; font-weight: 800; color: #0a1628; }
+  .logo span { color: #f0a500; }
+  .contract-meta { text-align: right; font-size: 12px; color: #6b7280; }
+  .contract-meta strong { color: #0a1628; font-size: 14px; }
+  h1 { font-size: 24px; font-weight: 800; color: #0a1628; margin-bottom: 8px; letter-spacing: -0.5px; }
+  h2 { font-size: 15px; font-weight: 700; color: #0a1628; margin: 32px 0 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+  .party { background: #f8faff; border-radius: 8px; padding: 16px 20px; border: 1px solid #e5e7eb; }
+  .party-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 8px; }
+  .party-name { font-size: 15px; font-weight: 700; color: #0a1628; }
+  .party-detail { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { background: #0a1628; color: white; padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; }
+  td { padding: 10px 14px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+  tr:nth-child(even) td { background: #f8faff; }
+  .total-row td { font-weight: 700; background: #f0f4ff; font-size: 14px; }
+  .clause { margin-bottom: 16px; }
+  .clause-num { font-weight: 700; color: #0a1628; }
+  .signature-block { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 64px; }
+  .sig-line { border-top: 1px solid #1a1a2e; padding-top: 8px; margin-top: 48px; }
+  .sig-label { font-size: 11px; color: #6b7280; }
+  .sig-name { font-weight: 700; font-size: 13px; color: #0a1628; margin-top: 4px; }
+  .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 11px; color: #9ca3af; }
+  .ai-stamp { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 12px; margin: 16px 0; font-size: 11px; color: #166534; }
+  {% if risk_flag == 'MEDIUM' %}.risk-note { background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 12px; color: #92400e; }{% endif %}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">{{ provider_name }}</div>
+  </div>
+  <div class="contract-meta">
+    <div><strong>SERVICE AGREEMENT</strong></div>
+    <div>Contract ID: {{ contract_id }}</div>
+    <div>Date: {{ quote_date }}</div>
+  </div>
+</div>
+
+<h1>Service Agreement</h1>
+<p style="color:#6b7280; margin-bottom:24px;">This Service Agreement ("Agreement") is entered into as of {{ quote_date }} between the parties identified below.</p>
+
+<div class="ai-stamp">
+  ✓ AI-verified · Risk: {{ risk_flag }} · {{ risk_summary }}
+</div>
+
+{% if risk_flag == 'MEDIUM' and review_notes %}
+<div class="risk-note">⚠ RevOps Review Notes: {{ review_notes }}</div>
+{% endif %}
+
+<div class="parties">
+  <div class="party">
+    <div class="party-label">Service Provider</div>
+    <div class="party-name">{{ provider_name }}</div>
+    <div class="party-detail">{{ provider_email }}</div>
+  </div>
+  <div class="party">
+    <div class="party-label">Client</div>
+    <div class="party-name">{{ client_name }}</div>
+    <div class="party-detail">{{ client_email }}</div>
+    {% if client_tax_id != '—' %}<div class="party-detail">Tax ID: {{ client_tax_id }}</div>{% endif %}
+  </div>
+</div>
+
+<h2>1. Services</h2>
+<div class="clause">
+  <span class="clause-num">1.1</span> The Service Provider agrees to provide the following services to the Client:
+</div>
+<p>{{ service_description }}</p>
+
+<h2>2. Fees &amp; Payment</h2>
+<table>
+  <tr><th>Description</th><th>Amount</th><th>Currency</th></tr>
+  <tr><td>{{ service_description }}</td><td>{{ total_amount }}</td><td>{{ currency }}</td></tr>
+  <tr class="total-row"><td><strong>Total</strong></td><td><strong>{{ total_amount }}</strong></td><td>{{ currency }}</td></tr>
+</table>
+<p><strong>Payment Terms:</strong> {{ payment_terms }}</p>
+
+<h2>3. Term &amp; Termination</h2>
+<div class="clause">
+  <span class="clause-num">3.1</span> This Agreement commences on {{ quote_date }} and continues until the services are completed or terminated by either party with thirty (30) days written notice.
+</div>
+<div class="clause">
+  <span class="clause-num">3.2</span> Either party may terminate immediately if the other party materially breaches this Agreement.
+</div>
+
+<h2>4. Intellectual Property</h2>
+<div class="clause">
+  <span class="clause-num">4.1</span> All source code, software, and technology used to deliver the services remain the exclusive property of the Service Provider. The Client receives rights to the service outcomes only, not to any underlying software or IP.
+</div>
+
+<h2>5. Confidentiality</h2>
+<div class="clause">
+  <span class="clause-num">5.1</span> Each party agrees to keep confidential all non-public information received from the other party and to use such information only for the purposes of this Agreement.
+</div>
+
+<h2>6. Limitation of Liability</h2>
+<div class="clause">
+  <span class="clause-num">6.1</span> Neither party shall be liable for indirect, incidental, or consequential damages. Maximum liability is limited to the fees paid under this Agreement in the twelve months preceding the claim.
+</div>
+
+<h2>7. Governing Law</h2>
+<div class="clause">
+  <span class="clause-num">7.1</span> This Agreement is governed by the laws of the jurisdiction agreed upon by both parties. Disputes shall be resolved by binding arbitration.
+</div>
+
+<div class="signature-block">
+  <div>
+    <div class="sig-line">
+      <div class="sig-label">Client Signature</div>
+      <div class="sig-name">{{ client_name }}</div>
+      <div class="sig-label">{{ client_email }}</div>
+    </div>
+  </div>
+  <div>
+    <div class="sig-line">
+      <div class="sig-label">Service Provider — Authorised Signatory</div>
+      <div class="sig-name">{{ provider_signatory }}</div>
+      <div class="sig-label">{{ provider_email }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  {{ provider_name }} · Contract ID: {{ contract_id }} · Generated by contract-intelligence v0.1.0
+  <br>This document was prepared autonomously by an AI system and is subject to human review for MEDIUM and HIGH risk contracts.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Intelligence — Mission Control</title>
+    <style>
+        :root { --primary: #1a1a2e; --accent: #667eea; --bg: #f8fafc; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; color: #1e293b; line-height: 1.5; }
+        .nav { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; }
+        .btn { background: var(--accent); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; transition: all 0.2s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        /* Agent Roster Styling */
+        .agent-list { list-style: none; padding: 0; margin-top: 1rem; }
+        .agent-item { display: flex; align-items: center; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #e2e8f0; background: #fff; transition: all 0.3s; }
+        .agent-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; font-size: 1.2rem; background: #f1f5f9; }
+        .agent-info { flex: 1; }
+        .agent-name { font-weight: 600; font-size: 0.85rem; }
+        .agent-status { font-size: 0.7rem; color: #64748b; }
+        .agent-active { border-color: var(--accent); background: #eff6ff; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2); }
+        .agent-active .agent-icon { background: var(--accent); color: white; }
+        .agent-done { border-color: var(--success); background: #f0fdf4; }
+        .agent-done .agent-icon { background: var(--success); color: white; }
+
+        /* Pipeline Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th { text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748b; padding: 0.75rem; border-bottom: 2px solid #f1f5f9; }
+        td { padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+        .risk-LOW { color: var(--success); font-weight: bold; }
+        .risk-MEDIUM { color: var(--warning); font-weight: bold; }
+        .risk-HIGH { color: var(--danger); font-weight: bold; }
+
+        /* Live Log */
+        .log-container { background: #0f172a; color: #38bdf8; padding: 1rem; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; height: 200px; overflow-y: auto; border: 1px solid #1e293b; }
+        .log-entry { margin-bottom: 4px; border-left: 2px solid #1e293b; padding-left: 8px; }
+        .log-ts { color: #64748b; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <div>
+            <h1 style="margin:0; font-size: 1.25rem;">Contract Intellegence</h1>
+            <div style="font-size: 0.75rem; opacity: 0.8;">End-to-End Agentic Workflow Demo</div>
+        </div>
+        <div style="text-align: right;">
+            <div id="systemClock" style="font-weight: 600;">--:--:--</div>
+            <div style="font-size: 0.7rem; color: #22c55e;">● System Live</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar: Agent Roster -->
+        <div class="sidebar">
+            <div class="card" style="padding: 1rem;">
+                <h3 style="margin-top:0; font-size: 1rem;">Launch New Contract</h3>
+                <form id="uploadForm">
+                    <input type="file" id="pdfFile" accept=".pdf" required style="display:block; width:100%; margin-bottom: 1rem; font-size: 0.8rem;">
+                    <button type="submit" class="btn" style="width:100%">🚀 Start Agent Pipeline</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0; font-size: 1rem;">The Agent Team</h3>
+                <div class="agent-list" id="agentRoster">
+                    <div class="agent-item" data-step="INTAKE"><div class="agent-icon">📥</div><div class="agent-info"><div class="agent-name">Intake Agent</div><div class="agent-status">Monitoring Intake</div></div></div>
+                    <div class="agent-item" data-step="EXTRACT"><div class="agent-icon">🧠</div><div class="agent-info"><div class="agent-name">Extractor Agent</div><div class="agent-status">Claude Vision Parse</div></div></div>
+                    <div class="agent-item" data-step="RISK"><div class="agent-icon">⚖️</div><div class="agent-info"><div class="agent-name">Risk Agent</div><div class="agent-status">Business Risk Scoring</div></div></div>
+                    <div class="agent-item" data-step="GENERATE"><div class="agent-icon">📄</div><div class="agent-info"><div class="agent-name">Generator Agent</div><div class="agent-status">PDF Generation</div></div></div>
+                    <div class="agent-item" data-step="SIGN"><div class="agent-icon">✍️</div><div class="agent-info"><div class="agent-name">Signer Agent</div><div class="agent-status">Signature Dispatch</div></div></div>
+                    <div class="agent-item" data-step="MONITOR"><div class="agent-icon">📡</div><div class="agent-info"><div class="agent-name">Monitor Agent</div><div class="agent-status">Webhook Listener</div></div></div>
+                    <div class="agent-item" data-step="OBLIGATION"><div class="agent-icon">🔍</div><div class="agent-info"><div class="agent-name">Obligation Agent</div><div class="agent-status">Post-Sign Metadata</div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content: Pipelines and Logs -->
+        <div class="main-content">
+            <div class="card">
+                <h3 style="margin-top:0; font-size: 1rem;">Active Workflows</h3>
+                <table id="pipelineTable">
+                    <thead>
+                        <tr>
+                            <th>Contract</th>
+                            <th>Current Agent</th>
+                            <th>Status</th>
+                            <th>Risk</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pipelineBody">
+                        <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding: 2rem;">No active pipelines. Start one on the left!</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0; font-size: 1rem;">Live Agent Audit Logs</h3>
+                <div class="log-container" id="logWindow">
+                    <div class="log-entry">System initialized. Waiting for contract intake...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedContractId = null;
+
+        function updateClock() {
+            document.getElementById('systemClock').textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+
+        async function loadPipelines() {
+            const res = await fetch('/status/list');
+            const data = await res.json();
+            const body = document.getElementById('pipelineBody');
+            
+            if (data.length === 0) return;
+
+            body.innerHTML = '';
+            data.forEach((p, idx) => {
+                if (idx === 0) selectedContractId = p.contract_id; // Focus on newest
+                
+                const row = `<tr>
+                    <td><strong>${p.contract_id}</strong></td>
+                    <td><code style="color:var(--accent)">${p.current_step}</code></td>
+                    <td><span class="badge status-${p.status}">${p.status}</span></td>
+                    <td><span class="risk-${p.risk_flag || ''}">${p.risk_flag || 'PENDING'}</span></td>
+                    <td>
+                        ${p.current_step === 'HUMAN_REVIEW' ? `<a href="/review/${p.contract_id}" class="btn" style="padding: 4px 8px; font-size: 0.7rem; background:var(--warning);">REVIEW</a>` : ''}
+                        ${p.current_step === 'SIGN' ? `<a href="/sign/${p.contract_id}" class="btn" style="padding: 4px 8px; font-size: 0.7rem; background:var(--success);">SIGN</a>` : ''}
+                        <a href="/audit/${p.contract_id}" target="_blank" class="btn" style="padding: 4px 8px; font-size: 0.7rem; background:#64748b;">LOGS</a>
+                    </td>
+                </tr>`;
+                body.insertAdjacentHTML('beforeend', row);
+            });
+
+            if (selectedContractId) updateAgentRoster(data[0]);
+        }
+
+        async function updateAgentRoster(latestState) {
+            const steps = ["INTAKE", "EXTRACT", "RISK", "GENERATE", "SIGN", "MONITOR", "DOWNLOAD", "COUNTER_SIGN", "EMAIL", "ARCHIVE", "OBLIGATION"];
+            const currentIdx = steps.indexOf(latestState.current_step);
+            
+            document.querySelectorAll('.agent-item').forEach(item => {
+                const step = item.getAttribute('data-step');
+                const stepIdx = steps.indexOf(step);
+                
+                item.classList.remove('agent-active', 'agent-done');
+                if (step === latestState.current_step) {
+                    item.classList.add('agent-active');
+                    item.querySelector('.agent-status').textContent = 'Currently Processing...';
+                } else if (stepIdx < currentIdx && currentIdx !== -1) {
+                    item.classList.add('agent-done');
+                    item.querySelector('.agent-status').textContent = 'Task Completed';
+                }
+            });
+
+            // Update Logs for the focused contract
+            const auditRes = await fetch('/status/' + latestState.contract_id);
+            const auditData = await auditRes.json();
+            const logWindow = document.getElementById('logWindow');
+            logWindow.innerHTML = '';
+            auditData.steps.forEach(s => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `<span class="log-ts">[${s.ts.split('T')[1].split('.')[0]}]</span> <strong>${s.step}:</strong> ${s.detail || 'Processing...'}`;
+                logWindow.appendChild(entry);
+            });
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
+
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('pdf', document.getElementById('pdfFile').files[0]);
+            const btn = e.target.querySelector('button');
+            btn.textContent = 'Intake Agent Active...';
+            btn.disabled = true;
+
+            const res = await fetch('/trigger/upload', { method: 'POST', body: formData });
+            if (res.ok) {
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('Intake failed.');
+                btn.textContent = '🚀 Start Agent Pipeline';
+                btn.disabled = false;
+            }
+        };
+
+        loadPipelines();
+        setInterval(loadPipelines, 3000);
+    </script>
+</body>
+</html>
