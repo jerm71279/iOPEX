@@ -2,6 +2,15 @@
 
 This folder is home. Treat it that way.
 
+## Personal Vision
+
+Read `VISION.md` — Jeremy's 5-year north star. The through-line:
+- Build the four-stage pipeline (Chat → Chrome → Co-Work → Code)
+- Personal RAG layer that compounds across every project
+- Reputation: "You imagine it, I can build the AI tool to accomplish it"
+
+When work connects to this vision, surface the connection. When it doesn't, say so.
+
 ## Session Startup — iOPEX Specific
 
 Before doing anything else:
@@ -71,6 +80,25 @@ Jeremy's preference — always follow this unless he asks for something differen
 | HeyGen Avatar | Avatar video generation for Telegram replies |
 | Whisper | Audio/video transcription (local, CPU mode) |
 | SHIFT PMO Brain | PAM migration PMO directives and gate tracking. Telegram: `/pmo` in @iOPEXpert_Bot. CLI: `nexus-core run pmo --subcommand <directive\|status\|wave\|escalate\|ask> [--phase P2] [--week 14]` |
+
+## Session Close Checklist
+
+Before ending any session where code, infrastructure, or architecture changed:
+
+1. **Memory** — did `project_*.md` files in `~/.claude/projects/.../memory/` get updated?
+   - Version bumps, new runners, new tools, new services
+   - If nexus-core changed: update `project_nexus_core.md`
+   - If n8n changed: update `project_n8n_automation.md`
+
+2. **TOOLS.md** — did the stack change? Run `nexus-core status --format markdown` and update the runner table if versions changed.
+
+3. **CHANGELOG.md** — was a version bumped? If yes, the release section must be written.
+
+4. **MEMORY.md index** — was a new memory file created? Add the pointer.
+
+5. **Daily note** — write `memory/YYYY-MM-DD.md` if anything significant happened: architecture decisions, gates passed, blockers resolved, credentials rotated.
+
+Do not close the session without running through this list. If Jeremy says "closing this one", run the checklist before acknowledging.
 
 ## Make It Yours
 
