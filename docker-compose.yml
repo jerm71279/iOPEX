@@ -69,7 +69,9 @@ services:
     build:
       context: ./digital-expert
       dockerfile: Dockerfile
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-iopex_expert}
       REDIS_URL: redis://redis:6379
@@ -92,7 +94,9 @@ services:
       context: ./digital-expert
       dockerfile: Dockerfile
     entrypoint: ["python3", "run.py"]
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-iopex_expert}
       REDIS_URL: redis://redis:6379
@@ -109,7 +113,9 @@ services:
     build:
       context: ./digital-expert
       dockerfile: Dockerfile.worker
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-iopex_expert}
     volumes:
