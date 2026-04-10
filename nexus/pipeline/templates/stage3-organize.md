@@ -35,6 +35,70 @@ Status: [ ] Draft  [ ] Complete
 - Stage 1: `nexus/pipeline/projects/{{PROJECT_NAME}}/stage1-ideation.md`
 - Stage 2: `nexus/pipeline/projects/{{PROJECT_NAME}}/stage2-research.md`
 
+## AI Council Review
+
+<!-- Mandatory gate before Stage 4. Run 6-panel review: 3 domain SME panels + 3 AI perspectives.
+     Panels must be tailored to the project domain — do not use generic roles.
+     Verdict options: INVEST / CONDITIONAL APPROVE / REVISE / ARCHIVE
+     Non-negotiable fixes must be resolved before Stage 4 begins. -->
+
+### Panel 1 — [Domain SME 1]
+**Score:** /10
+**Strengths:**
+-
+**Critical Issues:**
+-
+**Action Items:**
+-
+
+### Panel 2 — [Domain SME 2]
+**Score:** /10
+**Strengths:**
+-
+**Critical Issues:**
+-
+**Action Items:**
+-
+
+### Panel 3 — [Domain SME 3 / End User]
+**Score:** /10
+**Strengths:**
+-
+**Critical Issues:**
+-
+**Action Items:**
+-
+
+### Panel 4 — Gemini (Strategic)
+**Score:** /10 | **Verdict:**
+>
+
+### Panel 5 — Grok (Critical / Devil's Advocate)
+**Score:** /10 | **Verdict:**
+>
+
+### Panel 6 — Claude (Business + Technical)
+**Score:** /10 | **Verdict:**
+>
+
+### Consensus
+| Panel | Score | Verdict |
+|-------|-------|---------|
+| SME 1 | /10 | |
+| SME 2 | /10 | |
+| SME 3 | /10 | |
+| Gemini | /10 | |
+| Grok | /10 | |
+| Claude | /10 | |
+| **CONSENSUS** | **/10** | |
+
+**Non-Negotiable Fixes before Stage 4:**
+| Fix | Effort | Status |
+|-----|--------|--------|
+| | | [ ] |
+
+---
+
 ## Handoff to Stage 4
 
 <!-- Exact specification for the Claude Code session.

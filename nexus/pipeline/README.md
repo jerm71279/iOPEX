@@ -11,8 +11,13 @@ not mental context. Everything commits to GitHub.
 |-------|------|------|----------|
 | 1 — Ideation | Claude Chat | Define the problem, make early decisions, scope research | `stage1-ideation.md` |
 | 2 — Research | Claude Chrome | Answer the open questions from Stage 1 | `stage2-research.md` |
-| 3 — Organize | Claude Desktop / Co-Work | Architecture, build order, dependencies | `stage3-organize.md` |
+| 3 — Organize | Claude Desktop / Co-Work | Architecture, build order, dependencies + **AI Council Review gate** | `stage3-organize.md` |
 | 4 — Build | Claude Code | Ship it | `stage4-build.md` |
+
+> **AI Council Review** is a mandatory 6-panel gate at the end of Stage 3, before handoff to Stage 4.
+> 3 domain SME panels (tailored per project) + 3 AI perspectives (Gemini = Strategic, Grok = Critical, Claude = Technical).
+> Non-negotiable fixes must be resolved before Stage 4 begins.
+> Reference: `iOPEX/reference-docs/AI_Council_Review_Scaffold_Upgrade.docx`
 
 ## Usage
 
